@@ -6,7 +6,11 @@ using System.Reflection;
 using System.Text;
 using Boo.Lang.Compiler;
 using Boo.Lang.Compiler.Ast;
+using Boo.Lang.Compiler.Ast.Visitors;
 using Boo.Lang.Compiler.IO;
+using Boo.Lang.Compiler.Steps;
+using Boo.Lang.Compiler.TypeSystem;
+using Boo.Lang.Compiler.TypeSystem.Internal;
 using Boo.Lang.Compiler.TypeSystem.Reflection;
 using Boo.Lang.Compiler.TypeSystem.Services;
 using Mono.Cecil;
@@ -122,17 +126,17 @@ namespace UnityScript2CSharp
         {
             var pipeline = new Boo.Lang.Compiler.Pipelines.Compile { BreakOnErrors = false };
 
-            //pipeline.Remove(typeof(ConstantFolding));
-            //pipeline.Remove(typeof(ExpandPropertiesAndEvents));
-            //pipeline.Remove(typeof(CheckNeverUsedMembers));
-            //pipeline.Remove(typeof(ExpandVarArgsMethodInvocations));
-            //pipeline.Remove(typeof(InjectCallableConversions));
-            //pipeline.Remove(typeof(StricterErrorChecking));
-            //pipeline.Remove(typeof(RemoveDeadCode));
-            //pipeline.Remove(typeof(OptimizeIterationStatements));
+            pipeline.Remove(typeof(ConstantFolding));
+            pipeline.Remove(typeof(ExpandPropertiesAndEvents));
+            pipeline.Remove(typeof(CheckNeverUsedMembers));
+            pipeline.Remove(typeof(ExpandVarArgsMethodInvocations));
+            pipeline.Remove(typeof(InjectCallableConversions));
+            pipeline.Remove(typeof(StricterErrorChecking));
+            pipeline.Remove(typeof(RemoveDeadCode));
+            pipeline.Remove(typeof(OptimizeIterationStatements));
 
-            //pipeline.Remove(typeof(ProcessGenerators));
-            //pipeline.Remove(typeof(NormalizeIterationStatements));
+            pipeline.Remove(typeof(ProcessGenerators));
+            pipeline.Remove(typeof(NormalizeIterationStatements));
 
             var adjustedPipeline = UnityScriptCompiler.Pipelines.AdjustBooPipeline(pipeline);
             _compiler.Parameters.Pipeline = adjustedPipeline;
@@ -437,6 +441,24 @@ namespace UnityScript2CSharp
             node.Body.Accept(this);
         }
 
+        public override bool EnterBlock(Block node)
+        {
+            var ret = base.EnterBlock(node);
+
+            var parentMedhod = node.ParentNode as Method;
+            if (parentMedhod == null)
+                return ret;
+
+            foreach (var local in parentMedhod.Locals)
+            {
+                var internalLocal = local.Entity as InternalLocal;
+                if (internalLocal != null)
+                    internalLocal.OriginalDeclaration.ParentNode.Accept(this);
+            }
+
+            return ret;
+        }
+
         public override void OnConstructor(Constructor node)
         {
             System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
@@ -462,10 +484,22 @@ namespace UnityScript2CSharp
             base.OnGenericParameterDeclaration(node);
         }
 
+        public override void OnDeclarationStatement(DeclarationStatement node)
+        {
+            node.Declaration.Accept(this);
+            _builderAppend(" ");
+            _builderAppend(node.Declaration.Name);
+
+            if (node.Initializer != null)
+            {
+                _builderAppend(" = ");
+                node.Initializer.Accept(this);
+            }
+        }
+
         public override void OnDeclaration(Declaration node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
-            base.OnDeclaration(node);
+            _builderAppendIdented($" {F(node.Type.Entity)}");
         }
 
         public override void OnAttribute(Attribute node)
@@ -508,12 +542,6 @@ namespace UnityScript2CSharp
             _builderAppend(_newLine);
         }
 
-        public override void OnDeclarationStatement(DeclarationStatement node)
-        {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
-            base.OnDeclarationStatement(node);
-        }
-
         public override void OnMacroStatement(MacroStatement node)
         {
             System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
@@ -540,7 +568,10 @@ namespace UnityScript2CSharp
 
             node.TrueBlock.Accept(this);
             if (node.FalseBlock != null)
+            {
+                _builderAppendIdented("else");
                 node.FalseBlock.Accept(this);
+            }
         }
 
         public override void OnUnlessStatement(UnlessStatement node)
@@ -618,6 +649,9 @@ namespace UnityScript2CSharp
 
         public override void OnMethodInvocationExpression(MethodInvocationExpression node)
         {
+            if (node.Target.Entity.EntityType == EntityType.BuiltinFunction)
+                return;
+
             node.Target.Accept(this);
             _builderAppend('(');
             foreach (var argument in node.Arguments)
@@ -635,8 +669,12 @@ namespace UnityScript2CSharp
 
         public override void OnBinaryExpression(BinaryExpression node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
-            base.OnBinaryExpression(node);
+            if (node.IsSynthetic)
+                return;
+
+            node.Left.Accept(this);
+            _builderAppend($" {CSharpOperatorFor(node.Operator)} ");
+            node.Right.Accept(this);
         }
 
         public override void OnConditionalExpression(ConditionalExpression node)
@@ -699,8 +737,7 @@ namespace UnityScript2CSharp
 
         public override void OnNullLiteralExpression(NullLiteralExpression node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
-            base.OnNullLiteralExpression(node);
+            _builderAppend("null");
         }
 
         public override void OnSelfLiteralExpression(SelfLiteralExpression node)
@@ -854,6 +891,51 @@ namespace UnityScript2CSharp
         }
 
         private string CurrentIdentation { get; set; }
+
+
+        private string F(IEntity entity)
+        {
+            string typeName = null;
+            var externalType = entity as ExternalType;
+
+            if (externalType != null)
+            {
+                switch (externalType.ActualType.FullName)
+                {
+                    case "System.String":
+                        typeName = "string";
+                        break;
+
+                    case "System.Boolean":
+                        typeName = "bool";
+                        break;
+
+                    case "System.Object":
+                        typeName = "object";
+                        break;
+
+                    case "System.Int32":
+                        typeName = "int";
+                        break;
+
+                    case "System.Int64":
+                        typeName = "long";
+                        break;
+                }
+
+                if (typeName == null && _usings.Contains(externalType.ActualType.Namespace))
+                {
+                    typeName = externalType.Name;
+                }
+            }
+
+            return typeName ?? entity.Name;
+        }
+
+        public string CSharpOperatorFor(BinaryOperatorType op)
+        {
+            return (op != BinaryOperatorType.And) ? ((op != BinaryOperatorType.Or) ? BooPrinterVisitor.GetBinaryOperatorText(op) : "||") : "&&";
+        }
 
         private static string ModifiersToString(TypeMemberModifiers modifiers)
         {

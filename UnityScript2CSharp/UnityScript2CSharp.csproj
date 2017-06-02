@@ -33,16 +33,34 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Boo.Lang">
-      <HintPath>..\..\..\..\External\Mono\builds\monodistribution\lib\mono\2.0\Boo.Lang.dll</HintPath>
+      <HintPath>Libs\Boo.Lang.dll</HintPath>
     </Reference>
     <Reference Include="Boo.Lang.Compiler">
-      <HintPath>..\..\..\..\External\Mono\builds\monodistribution\lib\mono\2.0\Boo.Lang.Compiler.dll</HintPath>
+      <HintPath>Libs\Boo.Lang.Compiler.dll</HintPath>
     </Reference>
     <Reference Include="Boo.Lang.Extensions">
-      <HintPath>..\..\..\..\External\Mono\builds\monodistribution\lib\mono\2.0\Boo.Lang.Extensions.dll</HintPath>
+      <HintPath>Libs\Boo.Lang.Extensions.dll</HintPath>
     </Reference>
     <Reference Include="Boo.Lang.Parser">
-      <HintPath>..\..\..\..\External\Mono\builds\monodistribution\lib\mono\2.0\Boo.Lang.Parser.dll</HintPath>
+      <HintPath>Libs\Boo.Lang.Parser.dll</HintPath>
+    </Reference>
+    <Reference Include="Boo.Lang.PatternMatching">
+      <HintPath>Libs\Boo.Lang.PatternMatching.dll</HintPath>
+    </Reference>
+    <Reference Include="Boo.Lang.Useful">
+      <HintPath>Libs\Boo.Lang.Useful.dll</HintPath>
+    </Reference>
+    <Reference Include="Mono.Cecil, Version=0.9.6.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
+      <HintPath>..\packages\Mono.Cecil.0.9.6.4\lib\net45\Mono.Cecil.dll</HintPath>
+    </Reference>
+    <Reference Include="Mono.Cecil.Mdb, Version=0.9.6.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
+      <HintPath>..\packages\Mono.Cecil.0.9.6.4\lib\net45\Mono.Cecil.Mdb.dll</HintPath>
+    </Reference>
+    <Reference Include="Mono.Cecil.Pdb, Version=0.9.6.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
+      <HintPath>..\packages\Mono.Cecil.0.9.6.4\lib\net45\Mono.Cecil.Pdb.dll</HintPath>
+    </Reference>
+    <Reference Include="Mono.Cecil.Rocks, Version=0.9.6.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
+      <HintPath>..\packages\Mono.Cecil.0.9.6.4\lib\net45\Mono.Cecil.Rocks.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -52,23 +70,11 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
-    <Reference Include="Unity.Cecil">
-      <HintPath>..\..\..\..\External\Unity.Cecil\builds\lib\net40\Unity.Cecil.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.Cecil.Mdb">
-      <HintPath>..\..\..\..\External\Unity.Cecil\builds\lib\net40\Unity.Cecil.Mdb.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.Cecil.Pdb">
-      <HintPath>..\..\..\..\External\Unity.Cecil\builds\lib\net40\Unity.Cecil.Pdb.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.Cecil.Rocks">
-      <HintPath>..\..\..\..\External\Unity.Cecil\builds\lib\net40\Unity.Cecil.Rocks.dll</HintPath>
-    </Reference>
     <Reference Include="UnityScript">
-      <HintPath>..\..\..\..\External\Mono\builds\monodistribution\lib\mono\2.0\UnityScript.dll</HintPath>
+      <HintPath>Libs\UnityScript.dll</HintPath>
     </Reference>
     <Reference Include="UnityScript.Lang">
-      <HintPath>..\..\..\..\External\Mono\builds\monodistribution\lib\mono\2.0\UnityScript.Lang.dll</HintPath>
+      <HintPath>Libs\UnityScript.Lang.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -77,6 +83,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

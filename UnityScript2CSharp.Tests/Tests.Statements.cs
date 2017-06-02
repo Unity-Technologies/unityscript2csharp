@@ -14,6 +14,15 @@ namespace UnityScript2CSharp.Tests
         }
 
         [Test]
+        public void If_Else()
+        {
+            var sourceFiles = SingleSourceFor("if_else_statement.js", "function F(b:boolean) { if (b) return 1; else return 2; }");
+            var expectedConvertedContents = SingleSourceFor("if_else_statement.cs", DefaultUsings + @" public partial class if_else_statement : MonoBehaviour { public virtual int F(bool b) { if (b) { return 1; } else { return 2; } } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
         public void Return_Void()
         {
             var sourceFiles = SingleSourceFor("return_void.js", "function F() { return; }");

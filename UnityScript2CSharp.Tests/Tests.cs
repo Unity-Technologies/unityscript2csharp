@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using System.Text.RegularExpressions;
 using NUnit.Framework;
 
 namespace UnityScript2CSharp.Tests
@@ -151,6 +146,42 @@ namespace UnityScript2CSharp.Tests
         }
 
         [Test]
+        public void Locals_Infered_Type()
+        {
+            var sourceFiles = SingleSourceFor("locals_inferred.js", "function F() { var i = 2; }");
+            var expectedConvertedContents = SingleSourceFor("locals_inferred.cs", DefaultGeneratedClass + "locals_inferred : MonoBehaviour { public virtual void F() { int i = 2; } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
+        public void Locals()
+        {
+            var sourceFiles = SingleSourceFor("locals.js", "function F() { var i:int; }");
+            var expectedConvertedContents = SingleSourceFor("locals.cs", DefaultGeneratedClass + "locals : MonoBehaviour { public virtual void F() { int i; } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
+        public void Locals_With_Initializers()
+        {
+            var sourceFiles = SingleSourceFor("locals_initializers.js", "function F() { var i:int = 1; }");
+            var expectedConvertedContents = SingleSourceFor("locals_initializers.cs", DefaultGeneratedClass + "locals_initializers : MonoBehaviour { public virtual void F() { int i = 1; } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
+        public void Locals_With_Custom_Type()
+        {
+            var sourceFiles = SingleSourceFor("locals_custom.js", "class C { function F() { var c:C; } }");
+            var expectedConvertedContents = SingleSourceFor("locals_custom.cs", DefaultUsings + " public class C : object { public virtual void F() { C c; } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
         public void Generic_Methods()
         {
         }
@@ -192,47 +223,5 @@ namespace UnityScript2CSharp.Tests
         public void Scripts_In_Plugin_Folder_Works()
         {
         }
-
-        private static void AssertConversion(IList<SourceFile> sourceFiles, IList<SourceFile> expectedConverted)
-        {
-            var tempFolder = Path.Combine(Path.GetTempPath(), "UnityScript2CSharpConversionTests", SavePathFrom(TestContext.CurrentContext.Test.Name));
-            Console.WriteLine("Converted files saved to: {0}", tempFolder);
-
-            var converter = new UnityScript2CSharpConverter();
-            converter.Convert(
-                tempFolder,
-                sourceFiles,
-                new[] { "MY_DEFINE" },
-                new[]
-            {
-                typeof(object).Assembly.Location,
-                @"M:\Work\Repo\UnityTrunk\build\WindowsEditor\Data\Managed\UnityEngine.dll",
-                @"M:\Work\Repo\UnityTrunk\build\WindowsEditor\Data\Managed\UnityEditor.dll",
-            });
-
-            var r = new Regex("\\s{2,}|\\r\\n", RegexOptions.Multiline | RegexOptions.Compiled);
-            for (int i = 0; i < sourceFiles.Count; i++)
-            {
-                var convertedFilePath = Path.Combine(tempFolder, expectedConverted[i].FileName);
-                Assert.That(File.Exists(convertedFilePath), Is.True);
-
-                var generatedScript = File.ReadAllText(convertedFilePath);
-                generatedScript = r.Replace(generatedScript, " ");
-
-                Assert.That(generatedScript, Is.EqualTo(expectedConverted[i].Contents), Environment.NewLine + "Converted: " + Environment.NewLine + generatedScript + Environment.NewLine);
-            }
-        }
-
-        private static string SavePathFrom(string testName)
-        {
-            var sb = new StringBuilder(testName);
-            foreach (var invalidPathChar in Path.GetInvalidFileNameChars())
-            {
-                sb.Replace(invalidPathChar, '_');
-            }
-            return sb.ToString();
-        }
-
-        private const string DefaultUsings = "using UnityEngine; using UnityEditor; using System.Collections;";
     }
 }
