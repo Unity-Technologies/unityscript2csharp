@@ -499,7 +499,7 @@ namespace UnityScript2CSharp
 
         public override void OnDeclaration(Declaration node)
         {
-            _builderAppendIdented($" {F(node.Type.Entity)}");
+            _builderAppendIdented($" {node.Type.Entity.TypeName(_usings)}");
         }
 
         public override void OnAttribute(Attribute node)
@@ -563,7 +563,7 @@ namespace UnityScript2CSharp
         public override void OnIfStatement(IfStatement node)
         {
             _builderAppendIdented("if (");
-            node.Condition.Accept(this);
+            ProcessBooleanExpression(node.Condition);
             _builderAppend(")");
 
             node.TrueBlock.Accept(this);
@@ -571,6 +571,15 @@ namespace UnityScript2CSharp
             {
                 _builderAppendIdented("else");
                 node.FalseBlock.Accept(this);
+            }
+        }
+
+        private void ProcessBooleanExpression(Expression condition)
+        {
+            condition.Accept(this);
+            if (!condition.Entity.IsBoolean())
+            {
+                _builderAppend($" != {condition.Entity.DefaultValue()}");
             }
         }
 
@@ -891,46 +900,6 @@ namespace UnityScript2CSharp
         }
 
         private string CurrentIdentation { get; set; }
-
-
-        private string F(IEntity entity)
-        {
-            string typeName = null;
-            var externalType = entity as ExternalType;
-
-            if (externalType != null)
-            {
-                switch (externalType.ActualType.FullName)
-                {
-                    case "System.String":
-                        typeName = "string";
-                        break;
-
-                    case "System.Boolean":
-                        typeName = "bool";
-                        break;
-
-                    case "System.Object":
-                        typeName = "object";
-                        break;
-
-                    case "System.Int32":
-                        typeName = "int";
-                        break;
-
-                    case "System.Int64":
-                        typeName = "long";
-                        break;
-                }
-
-                if (typeName == null && _usings.Contains(externalType.ActualType.Namespace))
-                {
-                    typeName = externalType.Name;
-                }
-            }
-
-            return typeName ?? entity.Name;
-        }
 
         public string CSharpOperatorFor(BinaryOperatorType op)
         {

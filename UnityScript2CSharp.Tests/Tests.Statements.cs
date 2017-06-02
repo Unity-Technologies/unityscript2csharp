@@ -22,6 +22,17 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
+        [TestCase("int", "0")]
+        [TestCase("float", "0.0f")]
+        [TestCase("System.Object", "null", "object")]
+        public void If_Conditional_Bool_Convertion(string type, string comparedConstant, string csharpTypeName = null)
+        {
+            var sourceFiles = SingleSourceFor("if_conditional.js", $"function F(p:{type}) {{ if (p) {{ }} }}");
+            var expectedConvertedContents = SingleSourceFor("if_conditional.cs", DefaultGeneratedClass + $"if_conditional : MonoBehaviour {{ public virtual void F({csharpTypeName ?? type} p) {{ if (p != {comparedConstant}) {{ }} }} }}");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
         [Test]
         public void Return_Void()
         {
