@@ -15,12 +15,31 @@ using Boo.Lang.Compiler.TypeSystem.Reflection;
 using Boo.Lang.Compiler.TypeSystem.Services;
 using Mono.Cecil;
 using UnityScript;
-
+using UnityScript.Steps;
 using Attribute = Boo.Lang.Compiler.Ast.Attribute;
 using Module = Boo.Lang.Compiler.Ast.Module;
 
 namespace UnityScript2CSharp
 {
+    class SelectiveUnaryExpressionExpansionProcessUnityScriptMethods : ProcessUnityScriptMethods
+    {
+        public override void LeaveUnaryExpression(UnaryExpression node)
+        {
+            if (node.Operator == UnaryOperatorType.PostDecrement ||
+                node.Operator == UnaryOperatorType.PostIncrement ||
+                node.Operator == UnaryOperatorType.Increment ||
+                node.Operator == UnaryOperatorType.Decrement)
+                return; // do not expand post/pre increment/decrement (the syntax is the same as in C#
+
+            base.LeaveUnaryExpression(node);
+        }
+
+        public override void OnForStatement(ForStatement node)
+        {
+            Visit(node.Iterator);
+        }
+    }
+
     class Program
     {
         static void Main(string[] args)
@@ -137,8 +156,10 @@ namespace UnityScript2CSharp
 
             pipeline.Remove(typeof(ProcessGenerators));
             pipeline.Remove(typeof(NormalizeIterationStatements));
+            pipeline.Remove(typeof(ProcessMethodBodies));
 
             var adjustedPipeline = UnityScriptCompiler.Pipelines.AdjustBooPipeline(pipeline);
+            pipeline.Replace(typeof(ProcessUnityScriptMethods), new SelectiveUnaryExpressionExpansionProcessUnityScriptMethods());
             _compiler.Parameters.Pipeline = adjustedPipeline;
         }
 
@@ -185,26 +206,17 @@ namespace UnityScript2CSharp
     internal class UnityScript2CSharpConverterVisitor : DepthFirstVisitor
     {
         private readonly string _targetFolder;
-        private StringBuilder _builder;
-        private readonly string _newLine = Environment.NewLine;
         private IList<string> _usings;
-        private int _identation;
+        //private StringBuilder _builder;
+        //private int _identation;
+
+        private Writer _writer;
 
         public UnityScript2CSharpConverterVisitor(string targetFolder)
         {
             _targetFolder = targetFolder;
             if (!Directory.Exists(_targetFolder))
                 Directory.CreateDirectory(_targetFolder);
-        }
-
-        internal int Identation
-        {
-            get { return _identation; }
-            set
-            {
-                CurrentIdentation  = new String(' ', value * 4);
-                _identation = value;
-            }
         }
 
         public override void OnTypeMemberStatement(TypeMemberStatement node)
@@ -259,27 +271,28 @@ namespace UnityScript2CSharp
 
         private void _builderAppendIdented(string str)
         {
-            _builder.Append(CurrentIdentation);
-            _builder.Append(str);
+            _writer.IndentNextWrite = true;
+            _writer.Write(str);
         }
 
         private void _builderAppend(string str)
         {
-            _builder.Append(str);
+            _writer.Write(str);
         }
 
         private void _builderAppend(char str)
         {
-            _builder.Append(str);
+            _writer.Write(str);
         }
 
         private void _builderAppend(long str)
         {
-            _builder.Append(str);
+            _writer.Write(str);
         }
 
         public override void OnImport(Import node)
         {
+            // Left as a no op to avoid ????
         }
 
         public override void OnArrayTypeReference(ArrayTypeReference node)
@@ -321,36 +334,34 @@ namespace UnityScript2CSharp
         public override void OnModule(Module node)
         {
             _usings = GetImportedNamespaces(node);
-            _builder = new StringBuilder(FormatUsingsFrom(_usings));
+            _writer  = new Writer(FormatUsingsFrom(_usings));
 
             base.OnModule(node);
 
             var targetFilePath = Path.Combine(_targetFolder, node.Name + ".cs");
-            File.WriteAllText(targetFilePath, _builder.ToString());
+            File.WriteAllText(targetFilePath, _writer.Text);
         }
 
         public override void OnClassDefinition(ClassDefinition node)
         {
             _builderAppendIdented($"{ModifiersToString(node.Modifiers)} class {node.Name} : ");
-            var lastIndex = -1;
-            foreach (var baseType in node.BaseTypes)
+            for (var i = 0; i < node.BaseTypes.Count; i++)
             {
-                baseType.Accept(this);
-                lastIndex = _builder.Length;
-                _builderAppend(", ");
+                node.BaseTypes[i].Accept(this);
+                if ((i + 1) < node.BaseTypes.Count)
+                    _builderAppend(", ");
             }
-            _builder.Remove(lastIndex, 2);
-            _builderAppend(_newLine);
-            _builderAppend("{");
-            using (new BlockIdentation(this))
+            _writer.WriteLine();
+            _writer.WriteLine("{");
+            using (new BlockIdentation(_writer))
             {
-                _builderAppend(_newLine);
+                _writer.WriteLine();
                 foreach (var member in node.Members)
                 {
                     member.Accept(this);
                 }
             }
-            _builderAppend(_newLine);
+            _writer.WriteLine();
             _builderAppend("}");
         }
 
@@ -391,7 +402,7 @@ namespace UnityScript2CSharp
                 _builderAppend(" = ");
             }
 
-            _builder.AppendFormat(";{0}", _newLine);
+            _writer.WriteLine(";");
         }
 
         public override void OnProperty(Property node)
@@ -425,7 +436,7 @@ namespace UnityScript2CSharp
 
             _builderAppendIdented(ModifiersToString(node.Modifiers));
             _builderAppend(' ');
-            node.ReturnType.Accept(this);
+            AppendReturnType(node);
             _builderAppend(' ');
             _builderAppend(node.Name);
             _builderAppend('(');
@@ -499,7 +510,11 @@ namespace UnityScript2CSharp
 
         public override void OnDeclaration(Declaration node)
         {
-            _builderAppendIdented($" {node.Type.Entity.TypeName(_usings)}");
+            var typeName = node.Type != null ? node.Type.Entity.TypeName(_usings) : "var";
+            if (node.ParentNode.NodeType == NodeType.ForStatement)
+                _builderAppend($"{typeName}");
+            else
+                _builderAppendIdented($"{typeName}");
         }
 
         public override void OnAttribute(Attribute node)
@@ -531,15 +546,14 @@ namespace UnityScript2CSharp
             if (node.ParentNode.NodeType == NodeType.Module)
                 return;
 
-            _builderAppend(_newLine);
-            _builderAppendIdented("{");
-            _builderAppend(_newLine);
-            using (new BlockIdentation(this))
+            _writer.WriteLine();
+            _writer.WriteLine("{");
+
+            using (new BlockIdentation(_writer))
                 base.OnBlock(node);
 
-            _builderAppend(_newLine);
-            _builderAppendIdented("}");
-            _builderAppend(_newLine);
+            _writer.WriteLine();
+            _writer.WriteLine("}");
         }
 
         public override void OnMacroStatement(MacroStatement node)
@@ -591,14 +605,17 @@ namespace UnityScript2CSharp
 
         public override void OnForStatement(ForStatement node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
-            base.OnForStatement(node);
+            _builderAppendIdented("for(");
+            node.Declarations[0].Accept(this);
+            node.Block.Accept(this);
         }
 
         public override void OnWhileStatement(WhileStatement node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
-            base.OnWhileStatement(node);
+            _builderAppendIdented("while (");
+            node.Condition.Accept(this);
+            _builderAppend(")");
+            node.Block.Accept(this);
         }
 
         public override void OnBreakStatement(BreakStatement node)
@@ -641,7 +658,7 @@ namespace UnityScript2CSharp
         public override void OnExpressionStatement(ExpressionStatement node)
         {
             node.Expression.Accept(this);
-            _builderAppend(';');
+            _writer.WriteLine(";");
         }
 
         public override void OnOmittedExpression(OmittedExpression node)
@@ -672,8 +689,8 @@ namespace UnityScript2CSharp
 
         public override void OnUnaryExpression(UnaryExpression node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
-            base.OnUnaryExpression(node);
+            node.Operand.Accept(this);
+            _builderAppend(BooPrinterVisitor.GetUnaryOperatorText(node.Operator));
         }
 
         public override void OnBinaryExpression(BinaryExpression node)
@@ -717,7 +734,7 @@ namespace UnityScript2CSharp
 
         public override void OnStringLiteralExpression(StringLiteralExpression node)
         {
-            _builder.AppendFormat("\"{0}\"", node.Value);
+            _builderAppend(string.Format("\"{0}\"", node.Value));
         }
 
         public override void OnCharLiteralExpression(CharLiteralExpression node)
@@ -899,8 +916,6 @@ namespace UnityScript2CSharp
             base.OnStatementTypeMember(node);
         }
 
-        private string CurrentIdentation { get; set; }
-
         public string CSharpOperatorFor(BinaryOperatorType op)
         {
             return (op != BinaryOperatorType.And) ? ((op != BinaryOperatorType.Or) ? BooPrinterVisitor.GetBinaryOperatorText(op) : "||") : "&&";
@@ -913,8 +928,8 @@ namespace UnityScript2CSharp
 
         private string FormatUsingsFrom(IEnumerable<string> usings)
         {
-            var generatedUsings = usings.Aggregate("", (acc, curr) => acc + string.Format("using {0};{1}", curr, _newLine));
-            return generatedUsings + _newLine;
+            var generatedUsings = usings.Aggregate("", (acc, curr) => acc + string.Format("using {0};{1}", curr, Writer.NewLine));
+            return generatedUsings + Writer.NewLine;
         }
 
         private IList<string> GetImportedNamespaces(Module node)
@@ -923,13 +938,90 @@ namespace UnityScript2CSharp
             node.Accept(usingCollector);
             return usingCollector.Usings;
         }
+
+        private void AppendReturnType(Method node)
+        {
+            if (node.ReturnType != null)
+                node.ReturnType.Accept(this);
+            else
+                _builderAppend("void");
+        }
+    }
+
+    internal class Writer
+    {
+        private StringBuilder _builder;
+        private int _indentation;
+        private static readonly string _newLine = Environment.NewLine;
+
+        public Writer(string contents)
+        {
+            _builder = new StringBuilder(contents);
+        }
+
+        public bool IndentNextWrite { get; set; }
+
+        public string Text { get { return _builder.ToString();  } }
+
+        public int Identation
+        {
+            get { return _indentation; }
+            set
+            {
+                _indentation = value;
+                CurrentIdentation = new String(' ', _indentation * 4);
+            }
+        }
+
+        public void Write(string str)
+        {
+            IndentIfRequired();
+            _builder.Append(str);
+        }
+
+        public void Write(char ch)
+        {
+            IndentIfRequired();
+            _builder.Append(ch);
+        }
+
+        internal void Write(long l)
+        {
+            IndentIfRequired();
+            _builder.Append(l);
+        }
+
+        public void WriteLine()
+        {
+            _builder.Append(_newLine);
+            IndentNextWrite = true;
+        }
+
+        public void WriteLine(string str)
+        {
+            Write(str);
+            WriteLine();
+        }
+
+        public static string NewLine {  get { return _newLine; } }
+
+        private void IndentIfRequired()
+        {
+            if (IndentNextWrite)
+            {
+                _builder.Append(CurrentIdentation);
+                IndentNextWrite = false;
+            }
+        }
+
+        private string CurrentIdentation { get; set; }
     }
 
     internal class BlockIdentation : IDisposable
     {
-        private readonly UnityScript2CSharpConverterVisitor _identationAware;
+        private readonly Writer _identationAware;
 
-        public BlockIdentation(UnityScript2CSharpConverterVisitor identationAware)
+        public BlockIdentation(Writer identationAware)
         {
             _identationAware = identationAware;
             _identationAware.Identation++;
