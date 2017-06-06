@@ -14,6 +14,7 @@ using Boo.Lang.Compiler.TypeSystem;
 using Boo.Lang.Compiler.TypeSystem.Internal;
 using Boo.Lang.Compiler.TypeSystem.Reflection;
 using Boo.Lang.Compiler.TypeSystem.Services;
+using CommandLine;
 using Mono.Cecil;
 using UnityScript;
 using UnityScript.Steps;
@@ -42,43 +43,63 @@ namespace UnityScript2CSharp
         }
     }
 
+    public class CommandLineArguments
+    {
+        [Option('p', HelpText = "Path of project to be converted.")] public string ProjectPath { get; set; }
+
+        [Option('r', HelpText = "Assembly references required by the scripts (space separated list).")] public string References { get; set; }
+
+        [Option('d', HelpText = "Dump the list of scripts being processed.")] public bool Dump { get; set; }
+
+        [Option('i',  HelpText = "Ignore errors.")] public bool IgnoreErrors { get; set; }
+    }
+
+
     class Program
     {
         static void Main(string[] args)
         {
-            var projectFolder = args[0];
+            var options  = Parser.Default.ParseArguments<CommandLineArguments>(args);
+            if (options.Errors.Any())
+            {
+                return;
+            }
 
             var editorSubFolder = String.Format("{0}Editor{0}", Path.DirectorySeparatorChar);
             var pluginSubFolder = String.Format("{0}Plugins{0}", Path.DirectorySeparatorChar);
 
             Console.WriteLine($"Editor: {editorSubFolder}\r\nPlugin: {pluginSubFolder}");
 
-            var allFiles = Directory.GetFiles(Path.Combine(projectFolder, "Assets"), "*.js", SearchOption.AllDirectories);
+            var allFiles = Directory.GetFiles(Path.Combine(options.Value.ProjectPath, "Assets"), "*.js", SearchOption.AllDirectories);
             var filter = new Regex(string.Format(@"{0}{1}{0}", Path.DirectorySeparatorChar, editorSubFolder), RegexOptions.Compiled);
 
             var runtimeScripts = allFiles.Where(scriptPath => !filter.IsMatch(scriptPath)).Select(scriptPath => new SourceFile { FileName = scriptPath, Contents = File.ReadAllText(scriptPath)});
             var editorScripts = allFiles.Where(scriptPath => scriptPath.Contains(editorSubFolder)).Select(scriptPath => new SourceFile { FileName = scriptPath, Contents = File.ReadAllText(scriptPath) });
             var pluginScripts = allFiles.Where(scriptPath => scriptPath.Contains(pluginSubFolder)).Select(scriptPath => new SourceFile { FileName = scriptPath, Contents = File.ReadAllText(scriptPath) });
 
-            if (args.Length > 1 && args[1] == "--dump")
+            if (options.Value.Dump)
             {
                 DUMP("Runtime", runtimeScripts);
                 DUMP("Editor", editorScripts);
                 DUMP("Plugin", pluginScripts);
             }
 
-            var converter = new UnityScript2CSharpConverter();
+            var converter = new UnityScript2CSharpConverter(options.Value.IgnoreErrors);
+
+            var references = new List<string>(new [] 
+            {
+                typeof(object).Assembly.Location,
+                @"M:\Work\Repo\UnityTrunk\build\WindowsEditor\Data\Managed\UnityEngine.dll",
+                @"M:\Work\Repo\UnityTrunk\build\WindowsEditor\Data\Managed\UnityEditor.dll"
+            });
+
+            references.Add(options.Value.References);
 
             converter.Convert(
                 runtimeScripts,
 
                 new[] { "MY_DEFINE" },
-                new[]
-            {
-                typeof(object).Assembly.Location,
-                @"M:\Work\Repo\UnityTrunk\build\WindowsEditor\Data\Managed\UnityEngine.dll",
-                @"M:\Work\Repo\UnityTrunk\build\WindowsEditor\Data\Managed\UnityEditor.dll"
-            },
+                references,
                 HandleConvertedScript);
         }
 
@@ -89,7 +110,7 @@ namespace UnityScript2CSharp
 
             var jsMetaFile = scriptPath + ".meta";
             var csMetaFile = jsMetaFile.Replace(".js.", ".cs.");
-            File.Copy(jsMetaFile, csMetaFile);
+            File.Copy(jsMetaFile, csMetaFile, true);
 
             // Remove js + meta files
         }
@@ -118,24 +139,41 @@ namespace UnityScript2CSharp
 
     class UnityScript2CSharpConverter
     {
+        private readonly bool _ignoreErrors;
+
+        public UnityScript2CSharpConverter(bool ignoreErrors = false)
+        {
+            _ignoreErrors = ignoreErrors;
+        }
+
         public void Convert(IEnumerable<SourceFile> inputs, IEnumerable<string> definedSymbols, IEnumerable<string> referencedAssemblies, Action<string, string> onScriptConverted)
         {
             var comp = CreatAndInitializeCompiler(inputs, definedSymbols, referencedAssemblies);
             var result = comp.Run();
 
+            HandleCompilationResult(result);
+
+            var visitor = new UnityScript2CSharpConverterVisitor();
+            visitor.ScriptConverted += onScriptConverted;
+            result.CompileUnit.Accept(visitor);
+        }
+
+        public IEnumerable<string> CompilerErrors { get; private set; }
+
+        private void HandleCompilationResult(CompilerContext result)
+        {
             if (result.Errors.Count > 0)
             {
-                throw new Exception(result.Errors.Aggregate("", (acc, curr) => acc + Environment.NewLine + curr.ToString()));
+                if (!_ignoreErrors)
+                    throw new Exception(result.Errors.Aggregate("\t", (acc, curr) => acc + Environment.NewLine + "\t" + curr.ToString()));
+
+                CompilerErrors = result.Errors.Select(error => error.ToString());
             }
 
             if (result.Warnings.Count > 0)
             {
                 // throw new Exception(result.Warnings.Aggregate("", (acc, curr) => acc + Environment.NewLine + curr.ToString()));
             }
-
-            var visitor = new UnityScript2CSharpConverterVisitor();
-            visitor.ScriptConverted += onScriptConverted;
-            result.CompileUnit.Accept(visitor);
         }
 
         internal BooCompiler CreatAndInitializeCompiler(IEnumerable<SourceFile> inputs, IEnumerable<string> definedSymbols, IEnumerable<string> referencedAssemblies)
@@ -503,11 +541,16 @@ namespace UnityScript2CSharp
             foreach (var local in parentMedhod.Locals)
             {
                 var internalLocal = local.Entity as InternalLocal;
-                if (internalLocal != null)
+                if (!IsSynthetic(internalLocal))
                     internalLocal.OriginalDeclaration.ParentNode.Accept(this);
             }
 
             return ret;
+        }
+
+        private static bool IsSynthetic(InternalLocal internalLocal)
+        {
+            return internalLocal == null || internalLocal.OriginalDeclaration == null;
         }
 
         public override void OnConstructor(Constructor node)
@@ -547,13 +590,19 @@ namespace UnityScript2CSharp
 
         public override void OnDeclaration(Declaration node)
         {
-            var typeName = node.Type != null ? node.Type.Entity.TypeName(_usings) : "var";
-            if (node.ParentNode.NodeType == NodeType.ForStatement)
-                _builderAppend($"{typeName}");
+            if (node.Type != null)
+                node.Type.Accept(this);
             else
-                _builderAppendIdented($"{typeName}");
+                _builderAppend($"var ");
 
             _writer.Write($" {node.Name}");
+            //var typeName = node.Type != null ? node.Type.Entity.TypeName(_usings) : "var";
+            //if (node.ParentNode.NodeType == NodeType.ForStatement)
+            //    _builderAppend($"{typeName}");
+            //else
+            //    _builderAppendIdented($"{typeName}");
+
+            //_writer.Write($" {node.Name}");
         }
 
         public override void OnAttribute(Attribute node)
@@ -630,7 +679,9 @@ namespace UnityScript2CSharp
         private void ProcessBooleanExpression(Expression condition)
         {
             condition.Accept(this);
-            if (!condition.Entity.IsBoolean())
+            //if (!condition.Entity.IsBoolean())
+            //TODO: Crash when condition = "go.gameObject.GetComponent.<ParticleEmitter>()"
+            if (condition.Entity != null && !condition.Entity.IsBoolean())
             {
                 _builderAppend($" != {condition.Entity.DefaultValue()}");
             }
@@ -717,7 +768,10 @@ namespace UnityScript2CSharp
 
         public override void OnMethodInvocationExpression(MethodInvocationExpression node)
         {
-            if (node.Target.Entity.EntityType == EntityType.BuiltinFunction)
+            //if (node.Target.Entity.EntityType == EntityType.BuiltinFunction)
+            //    return;
+
+            if (node.Target.Entity != null && node.Target.Entity.EntityType == EntityType.BuiltinFunction)
                 return;
 
             node.Target.Accept(this);

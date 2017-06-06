@@ -9,6 +9,9 @@ namespace UnityScript2CSharp
         public static bool IsBoolean(this IEntity entity)
         {
             var typedEntity = (ITypedEntity)entity;
+            if (typedEntity.Type.IsArray)
+                return IsBoolean(((IArrayType)typedEntity.Type).ElementType);
+
             return typedEntity.Type.FullName == "boolean";
         }
 
