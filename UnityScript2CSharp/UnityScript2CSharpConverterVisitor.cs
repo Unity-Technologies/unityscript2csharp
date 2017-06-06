@@ -98,7 +98,7 @@ namespace UnityScript2CSharp
         public override void OnArrayTypeReference(ArrayTypeReference node)
         {
             node.ElementType.Accept(this);
-            _writer.Write("[]");
+            _writer.Write($"[{new String(',', (int) (node.Rank.Value -1))}]");
         }
 
         public override void OnCallableTypeReference(CallableTypeReference node)
@@ -700,16 +700,17 @@ namespace UnityScript2CSharp
             base.OnExtendedGeneratorExpression(node);
         }
 
-        public override void OnSlice(Slice node)
-        {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
-            base.OnSlice(node);
-        }
-
         public override void OnSlicingExpression(SlicingExpression node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
-            base.OnSlicingExpression(node);
+            node.Target.Accept(this);
+            _writer.Write("[");
+            foreach (var index in node.Indices)
+            {
+                index.Accept(this);
+                _writer.Write(",");
+            }
+            _writer.DiscardLastWrittenText();
+            _writer.Write("]");
         }
 
         public override void OnTryCastExpression(TryCastExpression node)

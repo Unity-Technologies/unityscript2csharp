@@ -7,11 +7,13 @@ namespace UnityScript2CSharp
     {
         private StringBuilder _builder;
         private int _indentation;
+        private int _checkPoint;
         private static readonly string _newLine = Environment.NewLine;
 
         public Writer(string contents)
         {
             _builder = new StringBuilder(contents);
+            _checkPoint = 0;
         }
 
         public bool IndentNextWrite { get; set; }
@@ -30,24 +32,28 @@ namespace UnityScript2CSharp
 
         public void Write(string str)
         {
+            _checkPoint = _builder.Length;
             IndentIfRequired();
             _builder.Append(str);
         }
 
         public void Write(char ch)
         {
+            _checkPoint = _builder.Length;
             IndentIfRequired();
             _builder.Append(ch);
         }
 
         internal void Write(long l)
         {
+            _checkPoint = _builder.Length;
             IndentIfRequired();
             _builder.Append(l);
         }
 
         public void WriteLine()
         {
+            _checkPoint = _builder.Length;
             _builder.Append(_newLine);
             IndentNextWrite = true;
         }
@@ -59,6 +65,12 @@ namespace UnityScript2CSharp
         }
 
         public static string NewLine {  get { return _newLine; } }
+
+        public void DiscardLastWrittenText()
+        {
+            _builder.Remove(_checkPoint, _builder.Length - _checkPoint);
+            _checkPoint = _builder.Length;
+        }
 
         private void IndentIfRequired()
         {

@@ -27,6 +27,30 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
+        [TestCase("int", "int")]
+        [TestCase("String", "string")]
+        [TestCase("System.Object", "object")]
+        [TestCase("boolean", "bool")]
+        public void Arrays_Item_Access(string usTypeName, string csTypeName)
+        {
+            var sourceFiles = SingleSourceFor("array_item_access.js", $"function F(a:{usTypeName} []) {{ return a[0]; }}");
+            var expectedConvertedContents = SingleSourceFor("array_item_access.cs", DefaultGeneratedClass + $@"array_item_access : MonoBehaviour {{ public virtual {csTypeName} F({csTypeName}[] a) {{ return a[0]; }} }}");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [TestCase("int", "int")]
+        [TestCase("String", "string")]
+        [TestCase("System.Object", "object")]
+        [TestCase("boolean", "bool")]
+        public void Multidiminsional_Arrays_Item_Access(string usTypeName, string csTypeName)
+        {
+            var sourceFiles = SingleSourceFor("multidimensiona_array_item_access.js", $"function F(a:{usTypeName}[,]) {{ return a[4,2]; }}");
+            var expectedConvertedContents = SingleSourceFor("multidimensiona_array_item_access.cs", DefaultGeneratedClass + $@"multidimensiona_array_item_access : MonoBehaviour {{ public virtual {csTypeName} F({csTypeName}[,] a) {{ return a[4,2]; }} }}");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
         [Test]
         public void Simple_Generic_Methods()
         {
