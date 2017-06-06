@@ -35,5 +35,17 @@ namespace UnityScript2CSharp.Tests
 
             AssertConversion(sourceFiles, expectedConvertedFiles);
         }
+
+        [TestCase("true", "bool")]
+        [TestCase("false", "bool")]
+        [TestCase("4.2f", "float")]
+        [TestCase("\"foo\"", "string")]
+        public void Literal_Expressions(string literal, string expectedInferredCSType)
+        {
+            var sourceFiles = SingleSourceFor("literal_expressions.js", $"function F() {{ return  {literal}; }}");
+            var expectedConvertedFiles = SingleSourceFor("literal_expressions.cs", DefaultGeneratedClass +  $"literal_expressions : MonoBehaviour {{ public virtual {expectedInferredCSType} F() {{ return {literal}; }} }}");
+
+            AssertConversion(sourceFiles, expectedConvertedFiles);
+        }
     }
 }

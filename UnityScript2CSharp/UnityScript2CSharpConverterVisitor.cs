@@ -592,8 +592,7 @@ namespace UnityScript2CSharp
 
         public override void OnDoubleLiteralExpression(DoubleLiteralExpression node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
-            base.OnDoubleLiteralExpression(node);
+            _writer.Write($"{node.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}f");
         }
 
         public override void OnNullLiteralExpression(NullLiteralExpression node)
@@ -614,8 +613,7 @@ namespace UnityScript2CSharp
 
         public override void OnBoolLiteralExpression(BoolLiteralExpression node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
-            base.OnBoolLiteralExpression(node);
+            _writer.Write(node.Value ? "true" : "false");
         }
 
         public override void OnRELiteralExpression(RELiteralExpression node)
