@@ -549,8 +549,16 @@ namespace UnityScript2CSharp
                 return;
             }
 
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
-            base.OnGenericReferenceExpression(node);
+            node.Target.Accept(this);
+            _writer.Write("<");
+            var lastArg = node.GenericArguments.Last();
+            foreach (var genericArgument in node.GenericArguments)
+            {
+                genericArgument.Accept(this);
+                if (genericArgument != lastArg)
+                    _writer.Write(", ");
+            }
+            _writer.Write(">");
         }
 
         public override void OnQuasiquoteExpression(QuasiquoteExpression node)
