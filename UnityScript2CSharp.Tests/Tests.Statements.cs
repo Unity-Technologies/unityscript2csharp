@@ -73,7 +73,7 @@ namespace UnityScript2CSharp.Tests
         public void Simple_For_Each()
         {
             var sourceFiles = SingleSourceFor("simple_foreach.js", "function F(e:IEnumerable) { for(var i in e) { } }");
-            var expectedConvertedContents = SingleSourceFor("simple_foreach.cs", DefaultGeneratedClass + "simple_foreach : MonoBehaviour { public virtual void F(IEnumerable e) { for(var i in e) { } } }");
+            var expectedConvertedContents = SingleSourceFor("simple_foreach.cs", DefaultGeneratedClass + "simple_foreach : MonoBehaviour { public virtual void F(IEnumerable e) { foreach (var i in e) { } } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }

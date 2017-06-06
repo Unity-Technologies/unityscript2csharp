@@ -355,13 +355,12 @@ namespace UnityScript2CSharp
             _writer.WriteLine("{");
             using (new BlockIdentation(_writer))
             {
-                _writer.WriteLine();
                 foreach (var member in node.Members)
                 {
                     member.Accept(this);
                 }
+                _writer.WriteLine();
             }
-            _writer.WriteLine();
             _builderAppend("}");
         }
 
@@ -498,9 +497,6 @@ namespace UnityScript2CSharp
         public override void OnDeclarationStatement(DeclarationStatement node)
         {
             node.Declaration.Accept(this);
-            _builderAppend(" ");
-            _builderAppend(node.Declaration.Name);
-
             if (node.Initializer != null)
             {
                 _builderAppend(" = ");
@@ -515,6 +511,8 @@ namespace UnityScript2CSharp
                 _builderAppend($"{typeName}");
             else
                 _builderAppendIdented($"{typeName}");
+
+            _writer.Write($" {node.Name}");
         }
 
         public override void OnAttribute(Attribute node)
@@ -605,8 +603,11 @@ namespace UnityScript2CSharp
 
         public override void OnForStatement(ForStatement node)
         {
-            _builderAppendIdented("for(");
+            _writer.Write("foreach (");
             node.Declarations[0].Accept(this);
+            _writer.Write(" in ");
+            node.Iterator.Accept(this);
+            _writer.WriteLine(")");
             node.Block.Accept(this);
         }
 
