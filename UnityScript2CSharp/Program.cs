@@ -207,8 +207,6 @@ namespace UnityScript2CSharp
     {
         private readonly string _targetFolder;
         private IList<string> _usings;
-        //private StringBuilder _builder;
-        //private int _identation;
 
         private Writer _writer;
 
@@ -292,7 +290,7 @@ namespace UnityScript2CSharp
 
         public override void OnImport(Import node)
         {
-            // Left as a no op to avoid ????
+            // Left as a no op because we handle "imports" in a separate visitor
         }
 
         public override void OnArrayTypeReference(ArrayTypeReference node)
