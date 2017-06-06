@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using Boo.Lang.Compiler;
 using Boo.Lang.Compiler.Ast;
 using Boo.Lang.Compiler.Ast.Visitors;
@@ -44,18 +45,62 @@ namespace UnityScript2CSharp
     {
         static void Main(string[] args)
         {
+            var projectFolder = args[0];
+
+            var editorSubFolder = String.Format("{0}Editor{0}", Path.DirectorySeparatorChar);
+            var pluginSubFolder = String.Format("{0}Plugins{0}", Path.DirectorySeparatorChar);
+
+            Console.WriteLine($"Editor: {editorSubFolder}\r\nPlugin: {pluginSubFolder}");
+
+            var allFiles = Directory.GetFiles(Path.Combine(projectFolder, "Assets"), "*.js", SearchOption.AllDirectories);
+            var filter = new Regex(string.Format(@"{0}{1}{0}", Path.DirectorySeparatorChar, editorSubFolder), RegexOptions.Compiled);
+            //var filter = new Regex(string.Format(@"{0}{1}{0}|{0}{2}{0}", Path.DirectorySeparatorChar, editorSubFolder, pluginSubFolder), RegexOptions.Compiled);
+
+            var runtimeScripts = allFiles.Where(scriptPath => !filter.IsMatch(scriptPath)).Select(scriptPath => new SourceFile { FileName = scriptPath, Contents = File.ReadAllText(scriptPath)});
+            var editorScripts = allFiles.Where(scriptPath => scriptPath.Contains(editorSubFolder)).Select(scriptPath => new SourceFile { FileName = scriptPath, Contents = File.ReadAllText(scriptPath) });
+            var pluginScripts = allFiles.Where(scriptPath => scriptPath.Contains(pluginSubFolder)).Select(scriptPath => new SourceFile { FileName = scriptPath, Contents = File.ReadAllText(scriptPath) });
+
+            if (args.Length > 1 && args[1] == "--dump")
+            {
+                DUMP("Runtime", runtimeScripts);
+                DUMP("Editor", editorScripts);
+                DUMP("Plugin", pluginScripts);
+            }
+
             var converter = new UnityScript2CSharpConverter();
-            var targetFolder = Path.Combine(Path.GetTempPath(), "Bar");
 
             converter.Convert(
-                targetFolder,
-                new[] {new SourceFile { FileName = "foo.js", Contents = "function F() { return 1; }"} },
-                new[] {"MY_DEFINE"},
+                runtimeScripts,
+
+                new[] { "MY_DEFINE" },
                 new[]
             {
                 typeof(object).Assembly.Location,
-                @"M:\Work\Repo\UnityTrunk\build\WindowsEditor\Data\Managed\UnityEngine.dll"
-            });
+                @"M:\Work\Repo\UnityTrunk\build\WindowsEditor\Data\Managed\UnityEngine.dll",
+                @"M:\Work\Repo\UnityTrunk\build\WindowsEditor\Data\Managed\UnityEditor.dll"
+            },
+                HandleConvertedScript);
+        }
+
+        private static void HandleConvertedScript(string scriptPath, string content)
+        {
+            var csPath = Path.ChangeExtension(scriptPath, ".cs");
+            File.WriteAllText(csPath, content);
+
+            var jsMetaFile = scriptPath + ".meta";
+            var csMetaFile = jsMetaFile.Replace(".js.", ".cs.");
+            File.Copy(jsMetaFile, csMetaFile);
+
+            // Remove js + meta files
+        }
+
+        private static void DUMP(string desc, IEnumerable<SourceFile> scripts)
+        {
+            Console.WriteLine($"\r\n{desc} Scripts");
+            foreach (var rts in scripts)
+            {
+                Console.WriteLine(rts.FileName);
+            }
         }
     }
 
@@ -73,7 +118,7 @@ namespace UnityScript2CSharp
 
     class UnityScript2CSharpConverter
     {
-        public void Convert(string targetFolder, IEnumerable<SourceFile> inputs, IEnumerable<string> definedSymbols, IEnumerable<string> referencedAssemblies)
+        public void Convert(IEnumerable<SourceFile> inputs, IEnumerable<string> definedSymbols, IEnumerable<string> referencedAssemblies, Action<string, string> onScriptConverted)
         {
             var comp = CreatAndInitializeCompiler(inputs, definedSymbols, referencedAssemblies);
             var result = comp.Run();
@@ -88,7 +133,9 @@ namespace UnityScript2CSharp
                 // throw new Exception(result.Warnings.Aggregate("", (acc, curr) => acc + Environment.NewLine + curr.ToString()));
             }
 
-            result.CompileUnit.Accept(new UnityScript2CSharpConverterVisitor(targetFolder));
+            var visitor = new UnityScript2CSharpConverterVisitor();
+            visitor.ScriptConverted += onScriptConverted;
+            result.CompileUnit.Accept(visitor);
         }
 
         internal BooCompiler CreatAndInitializeCompiler(IEnumerable<SourceFile> inputs, IEnumerable<string> definedSymbols, IEnumerable<string> referencedAssemblies)
@@ -205,17 +252,11 @@ namespace UnityScript2CSharp
 
     internal class UnityScript2CSharpConverterVisitor : DepthFirstVisitor
     {
-        private readonly string _targetFolder;
         private IList<string> _usings;
 
         private Writer _writer;
 
-        public UnityScript2CSharpConverterVisitor(string targetFolder)
-        {
-            _targetFolder = targetFolder;
-            if (!Directory.Exists(_targetFolder))
-                Directory.CreateDirectory(_targetFolder);
-        }
+        public event Action<string, string> ScriptConverted;
 
         public override void OnTypeMemberStatement(TypeMemberStatement node)
         {
@@ -336,8 +377,9 @@ namespace UnityScript2CSharp
 
             base.OnModule(node);
 
-            var targetFilePath = Path.Combine(_targetFolder, node.Name + ".cs");
-            File.WriteAllText(targetFilePath, _writer.Text);
+            var handler = ScriptConverted;
+            if (handler != null)
+                handler(node.LexicalInfo.FullPath, _writer.Text);
         }
 
         public override void OnClassDefinition(ClassDefinition node)

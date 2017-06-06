@@ -51,7 +51,6 @@ namespace UnityScript2CSharp.Tests
 
             var converter = new UnityScript2CSharpConverter();
             converter.Convert(
-                tempFolder,
                 sourceFiles,
                 new[] { "MY_DEFINE" },
                 new[]
@@ -59,7 +58,13 @@ namespace UnityScript2CSharp.Tests
                 typeof(object).Assembly.Location,
                 $@"{UnityInstallFolder}Data\Managed\UnityEngine.dll",
                 $@"{UnityInstallFolder}Data\Managed\UnityEditor.dll",
-            });
+            },
+
+                (name, content) =>
+                {
+                    var targetFilePath = Path.Combine(tempFolder, Path.GetFileNameWithoutExtension(name) + ".cs");
+                    File.WriteAllText(targetFilePath, content);
+                });
 
             var r = new Regex("\\s{2,}|\\r\\n", RegexOptions.Multiline | RegexOptions.Compiled);
             for (int i = 0; i < sourceFiles.Count; i++)
