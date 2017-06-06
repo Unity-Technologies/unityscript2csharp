@@ -63,6 +63,10 @@ namespace UnityScript2CSharp.Tests
                 (name, content) =>
                 {
                     var targetFilePath = Path.Combine(tempFolder, Path.GetFileNameWithoutExtension(name) + ".cs");
+                    var targetFolder = Path.GetDirectoryName(targetFilePath);
+                    if (!Directory.Exists(targetFolder))
+                        Directory.CreateDirectory(targetFolder);
+
                     File.WriteAllText(targetFilePath, content);
                 });
 
