@@ -9,7 +9,7 @@ namespace UnityScript2CSharp.Tests
         public void Simplest()
         {
             var sourceFiles = new[] { new SourceFile { FileName = "foo.js", Contents = "class Foo { }" } };
-            var expectedConvertedContents = new[] { new SourceFile { FileName = "foo.cs", Contents = DefaultUsings + @" public class Foo : object { }"} };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "foo.cs", Contents = DefaultUsings + @" public class Foo { }"} };
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -23,7 +23,7 @@ namespace UnityScript2CSharp.Tests
         public void Primitive_Types_Mapping(string usType, string csType)
         {
             var sourceFiles = new[] { new SourceFile { FileName = "primitive-types.js", Contents = $"class Foo {{ var v:{usType}; }}" } };
-            var expectedConvertedContents = new[] { new SourceFile { FileName = "primitive-types.cs", Contents = DefaultUsings + $@" public class Foo : object {{ public {csType} v; }}" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "primitive-types.cs", Contents = DefaultUsings + $@" public class Foo {{ public {csType} v; }}" } };
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -39,8 +39,8 @@ namespace UnityScript2CSharp.Tests
 
             var expectedConvertedContents = new[]
             {
-                new SourceFile { FileName = "foo.cs", Contents = DefaultUsings +  " public class Foo : object { }" },
-                new SourceFile { FileName = "bar.cs", Contents = DefaultUsings +  " public class Bar : object { }" }
+                new SourceFile { FileName = "foo.cs", Contents = DefaultUsings +  " public class Foo { }" },
+                new SourceFile { FileName = "bar.cs", Contents = DefaultUsings +  " public class Bar { }" }
             };
 
             AssertConversion(sourceFiles, expectedConvertedContents);
@@ -50,7 +50,7 @@ namespace UnityScript2CSharp.Tests
         public void Simple_Field_No_Explicit_Class()
         {
             SourceFile[] sources = { new SourceFile("field.js", "var i:int;") };
-            SourceFile[] expectedConverted = { new SourceFile("field.cs", DefaultUsings + " public partial class field : MonoBehaviour { public int i; }") };
+            SourceFile[] expectedConverted = { new SourceFile("field.cs", DefaultUsings + " public class field : MonoBehaviour { public int i; }") };
 
             AssertConversion(sources, expectedConverted);
         }
@@ -59,7 +59,7 @@ namespace UnityScript2CSharp.Tests
         public void Field_Initializers()
         {
             SourceFile[] sources = { new SourceFile("field.js", "var i = 1;") };
-            SourceFile[] expectedConverted = { new SourceFile("field.cs", DefaultUsings + " public partial class field : MonoBehaviour { public int i = 1; }") };
+            SourceFile[] expectedConverted = { new SourceFile("field.cs", DefaultUsings + " public class field : MonoBehaviour { public int i = 1; }") };
 
             AssertConversion(sources, expectedConverted);
         }
@@ -68,7 +68,7 @@ namespace UnityScript2CSharp.Tests
         public void Additional_Imports()
         {
             SourceFile[] sources = { new SourceFile("additional_imports.js", "import System.Text; var sb: StringBuilder;") };
-            SourceFile[] expectedConverted = { new SourceFile("additional_imports.cs", "using System.Text; " + DefaultUsings + " public partial class additional_imports : MonoBehaviour { public StringBuilder sb; }") };
+            SourceFile[] expectedConverted = { new SourceFile("additional_imports.cs", "using System.Text; " + DefaultUsings + " public class additional_imports : MonoBehaviour { public StringBuilder sb; }") };
 
             AssertConversion(sources, expectedConverted);
         }
@@ -77,19 +77,18 @@ namespace UnityScript2CSharp.Tests
         public void Fully_Qualified_Type_References()
         {
             SourceFile[] sources = { new SourceFile("fqtr.js", "var sb: System.Text.StringBuilder;") };
-            SourceFile[] expectedConverted = { new SourceFile("fqtr.cs", DefaultUsings + " public partial class fqtr : MonoBehaviour { public System.Text.StringBuilder sb; }") };
+            SourceFile[] expectedConverted = { new SourceFile("fqtr.cs", DefaultUsings + " public class fqtr : MonoBehaviour { public System.Text.StringBuilder sb; }") };
 
             AssertConversion(sources, expectedConverted);
         }
 
         [TestCase("public", null)]
-        [TestCase("partial", "public partial")]
         [TestCase("internal", null)]
-        [TestCase("internal partial", null)]
         public void Type_Declaration_Modifiers(string modifier, string expectedModifiers)
         {
             var sourceFiles = new[] { new SourceFile { FileName = "foo.js", Contents = modifier + " class Foo { }" } };
-            var expectedConvertedContents = new[] { new SourceFile { FileName = "foo.cs", Contents = DefaultUsings +  $@" {expectedModifiers ?? modifier} class Foo : object {{ }}" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "foo.cs", Contents = DefaultUsings +  $@" {expectedModifiers ?? modifier} class Foo {{ }}" } };
+
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
@@ -100,7 +99,7 @@ namespace UnityScript2CSharp.Tests
         public void Field_Declaration_Modifiers(string modifier, string expectedModifiers)
         {
             var sourceFiles = new[] { new SourceFile { FileName = "field-modifiers.js", Contents = "class FieldModifiers { " + modifier + " var i : int; }" } };
-            var expectedConvertedContents = new[] { new SourceFile { FileName = "field-modifiers.cs", Contents = DefaultUsings +  $@" public class FieldModifiers : object {{ {expectedModifiers ?? modifier} int i; }}" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "field-modifiers.cs", Contents = DefaultUsings +  $@" public class FieldModifiers {{ {expectedModifiers ?? modifier} int i; }}" } };
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
@@ -108,7 +107,7 @@ namespace UnityScript2CSharp.Tests
         public void Simple_Method_No_Params()
         {
             var sourceFiles = new[] { new SourceFile { FileName = "smnp.js", Contents = "function F() {}" } };
-            var expectedConvertedContents = new[] { new SourceFile { FileName = "smnp.cs", Contents = DefaultUsings + $@" public partial class smnp : MonoBehaviour {{ public virtual void F() {{ }} }}" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "smnp.cs", Contents = DefaultUsings + $@" public class smnp : MonoBehaviour {{ public virtual void F() {{ }} }}" } };
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
@@ -118,7 +117,7 @@ namespace UnityScript2CSharp.Tests
         public void Simple_Method_Params(string paramsUS, string paramsCS)
         {
             var sourceFiles = new[] { new SourceFile { FileName = "smp.js", Contents = $"function F({paramsUS}) {{}}" } };
-            var expectedConvertedContents = new[] { new SourceFile { FileName = "smp.cs", Contents = DefaultUsings + $@" public partial class smp : MonoBehaviour {{ public virtual void F({paramsCS}) {{ }} }}" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "smp.cs", Contents = DefaultUsings + $@" public class smp : MonoBehaviour {{ public virtual void F({paramsCS}) {{ }} }}" } };
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
@@ -176,7 +175,7 @@ namespace UnityScript2CSharp.Tests
         public void Locals_With_Custom_Type()
         {
             var sourceFiles = SingleSourceFor("locals_custom.js", "class C { function F() { var c:C; } }");
-            var expectedConvertedContents = SingleSourceFor("locals_custom.cs", DefaultUsings + " public class C : object { public virtual void F() { C c; } }");
+            var expectedConvertedContents = SingleSourceFor("locals_custom.cs", DefaultUsings + " public class C { public virtual void F() { C c; } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }

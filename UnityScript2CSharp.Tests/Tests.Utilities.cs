@@ -94,6 +94,6 @@ namespace UnityScript2CSharp.Tests
         }
 
         private const string DefaultUsings = "using UnityEngine; using UnityEditor; using System.Collections;";
-        private const string DefaultGeneratedClass =  DefaultUsings + " public partial class ";
+        private const string DefaultGeneratedClass =  DefaultUsings + " public class ";
     }
 }

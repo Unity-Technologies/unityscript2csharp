@@ -17,6 +17,7 @@ using Boo.Lang.Compiler.TypeSystem.Services;
 using Mono.Cecil;
 using UnityScript;
 using UnityScript.Steps;
+using UnityScript2CSharp.Steps;
 using Attribute = Boo.Lang.Compiler.Ast.Attribute;
 using Module = Boo.Lang.Compiler.Ast.Module;
 
@@ -54,7 +55,6 @@ namespace UnityScript2CSharp
 
             var allFiles = Directory.GetFiles(Path.Combine(projectFolder, "Assets"), "*.js", SearchOption.AllDirectories);
             var filter = new Regex(string.Format(@"{0}{1}{0}", Path.DirectorySeparatorChar, editorSubFolder), RegexOptions.Compiled);
-            //var filter = new Regex(string.Format(@"{0}{1}{0}|{0}{2}{0}", Path.DirectorySeparatorChar, editorSubFolder, pluginSubFolder), RegexOptions.Compiled);
 
             var runtimeScripts = allFiles.Where(scriptPath => !filter.IsMatch(scriptPath)).Select(scriptPath => new SourceFile { FileName = scriptPath, Contents = File.ReadAllText(scriptPath)});
             var editorScripts = allFiles.Where(scriptPath => scriptPath.Contains(editorSubFolder)).Select(scriptPath => new SourceFile { FileName = scriptPath, Contents = File.ReadAllText(scriptPath) });
@@ -207,6 +207,7 @@ namespace UnityScript2CSharp
 
             var adjustedPipeline = UnityScriptCompiler.Pipelines.AdjustBooPipeline(pipeline);
             pipeline.Replace(typeof(ProcessUnityScriptMethods), new SelectiveUnaryExpressionExpansionProcessUnityScriptMethods());
+            adjustedPipeline.Add(new RenameArrayDeclaration());
             _compiler.Parameters.Pipeline = adjustedPipeline;
         }
 
@@ -336,8 +337,8 @@ namespace UnityScript2CSharp
 
         public override void OnArrayTypeReference(ArrayTypeReference node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
-            base.OnArrayTypeReference(node);
+            node.ElementType.Accept(this);
+            _writer.Write("[]");
         }
 
         public override void OnCallableTypeReference(CallableTypeReference node)
@@ -720,12 +721,13 @@ namespace UnityScript2CSharp
                 return;
 
             node.Target.Accept(this);
-            _builderAppend('(');
+            _writer.Write(_currentBrackets[0]);
             foreach (var argument in node.Arguments)
             {
                 argument.Accept(this);
             }
-            _builderAppend(')');
+            _writer.Write(_currentBrackets[1]);
+            _currentBrackets = RoundBrackets;
         }
 
         public override void OnUnaryExpression(UnaryExpression node)
@@ -763,6 +765,14 @@ namespace UnityScript2CSharp
 
         public override void OnGenericReferenceExpression(GenericReferenceExpression node)
         {
+            if (IsArrayInstantiation(node))
+            {
+                _writer.Write("new ");
+                node.GenericArguments[0].Accept(this);
+                _currentBrackets = SquareBrackets;
+                return;
+            }
+
             System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
             base.OnGenericReferenceExpression(node);
         }
@@ -809,8 +819,7 @@ namespace UnityScript2CSharp
 
         public override void OnSelfLiteralExpression(SelfLiteralExpression node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
-            base.OnSelfLiteralExpression(node);
+            _writer.Write("this");
         }
 
         public override void OnSuperLiteralExpression(SuperLiteralExpression node)
@@ -987,6 +996,18 @@ namespace UnityScript2CSharp
             else
                 _builderAppend("void");
         }
+
+        private static bool IsArrayInstantiation(GenericReferenceExpression node)
+        {
+            // Arrays in UnityScript are represented as a GenericReferenceExpession
+            var target = node.Target as ReferenceExpression;
+            return target != null && target.Name == "array";
+        }
+
+        private char[] _currentBrackets = RoundBrackets;
+
+        private static char[] RoundBrackets = {'(', ')'};
+        private static char[] SquareBrackets = {'[', ']'};
     }
 
     internal class Writer
