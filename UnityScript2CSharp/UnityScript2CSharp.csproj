@@ -84,10 +84,19 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BlockIdentation.cs" />
+    <Compile Include="CommandLineArguments.cs" />
     <Compile Include="EntityExtensions.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SourceFile.cs" />
+    <Compile Include="Steps\SelectiveUnaryExpressionExpansionProcessUnityScriptMethods.cs" />
     <Compile Include="Steps\RenameArrayDeclaration.cs" />
+    <Compile Include="Steps\TransformKnownCalls.cs" />
+    <Compile Include="UnityScript2CSharpConverter.cs" />
+    <Compile Include="UnityScript2CSharpConverterVisitor.cs" />
+    <Compile Include="UsingCollector.cs" />
+    <Compile Include="Writer.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
