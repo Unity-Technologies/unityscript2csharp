@@ -42,7 +42,7 @@ namespace UnityScript2CSharp
             if (result.Errors.Count > 0)
             {
                 if (!_ignoreErrors)
-                    throw new Exception(result.Errors.Aggregate("\t", (acc, curr) => acc + Environment.NewLine + "\t" + curr.ToString()));
+                    throw new Exception(result.Errors.Aggregate("\t", (acc, curr) => acc + Environment.NewLine + "\t" + curr.Message + Environment.NewLine + "\t" + curr.InnerException));
 
                 CompilerErrors = result.Errors.Select(error => error.ToString());
             }
@@ -126,7 +126,7 @@ namespace UnityScript2CSharp
 
             adjustedPipeline.Remove(typeof(BindEnumMembers));
             adjustedPipeline.Remove(typeof(CheckIdentifiers));
-            
+
             //adjustedPipeline.Add(new TransformKnownCalls());
             _compiler.Parameters.Pipeline = adjustedPipeline;
         }

@@ -21,13 +21,13 @@ namespace UnityScript2CSharp
 
         public override void OnTypeMemberStatement(TypeMemberStatement node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnTypeMemberStatement(node);
         }
 
         public override void OnExplicitMemberInfo(ExplicitMemberInfo node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnExplicitMemberInfo(node);
         }
 
@@ -103,31 +103,31 @@ namespace UnityScript2CSharp
 
         public override void OnCallableTypeReference(CallableTypeReference node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnCallableTypeReference(node);
         }
 
         public override void OnGenericTypeReference(GenericTypeReference node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnGenericTypeReference(node);
         }
 
         public override void OnGenericTypeDefinitionReference(GenericTypeDefinitionReference node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnGenericTypeDefinitionReference(node);
         }
 
         public override void OnCallableDefinition(CallableDefinition node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnCallableDefinition(node);
         }
 
         public override void OnNamespaceDeclaration(NamespaceDeclaration node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnNamespaceDeclaration(node);
         }
 
@@ -167,13 +167,13 @@ namespace UnityScript2CSharp
 
         public override void OnStructDefinition(StructDefinition node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnStructDefinition(node);
         }
 
         public override void OnInterfaceDefinition(InterfaceDefinition node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnInterfaceDefinition(node);
         }
 
@@ -222,25 +222,25 @@ namespace UnityScript2CSharp
 
         public override void OnProperty(Property node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnProperty(node);
         }
 
         public override void OnEvent(Event node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnEvent(node);
         }
 
         public override void OnLocal(Local node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnLocal(node);
         }
 
         public override void OnBlockExpression(BlockExpression node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnBlockExpression(node);
         }
 
@@ -292,13 +292,13 @@ namespace UnityScript2CSharp
 
         public override void OnConstructor(Constructor node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             //base.OnConstructor(node);
         }
 
         public override void OnDestructor(Destructor node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnDestructor(node);
         }
 
@@ -311,7 +311,7 @@ namespace UnityScript2CSharp
 
         public override void OnGenericParameterDeclaration(GenericParameterDeclaration node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnGenericParameterDeclaration(node);
         }
 
@@ -344,25 +344,25 @@ namespace UnityScript2CSharp
 
         public override void OnAttribute(Attribute node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnAttribute(node);
         }
 
         public override void OnStatementModifier(StatementModifier node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnStatementModifier(node);
         }
 
         public override void OnGotoStatement(GotoStatement node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnGotoStatement(node);
         }
 
         public override void OnLabelStatement(LabelStatement node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnLabelStatement(node);
         }
 
@@ -383,19 +383,19 @@ namespace UnityScript2CSharp
 
         public override void OnMacroStatement(MacroStatement node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnMacroStatement(node);
         }
 
         public override void OnTryStatement(TryStatement node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnTryStatement(node);
         }
 
         public override void OnExceptionHandler(ExceptionHandler node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnExceptionHandler(node);
         }
 
@@ -426,7 +426,7 @@ namespace UnityScript2CSharp
 
         public override void OnUnlessStatement(UnlessStatement node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnUnlessStatement(node);
         }
 
@@ -450,13 +450,13 @@ namespace UnityScript2CSharp
 
         public override void OnBreakStatement(BreakStatement node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnBreakStatement(node);
         }
 
         public override void OnContinueStatement(ContinueStatement node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnContinueStatement(node);
         }
 
@@ -469,19 +469,19 @@ namespace UnityScript2CSharp
 
         public override void OnYieldStatement(YieldStatement node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnYieldStatement(node);
         }
 
         public override void OnRaiseStatement(RaiseStatement node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnRaiseStatement(node);
         }
 
         public override void OnUnpackStatement(UnpackStatement node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnUnpackStatement(node);
         }
 
@@ -493,13 +493,13 @@ namespace UnityScript2CSharp
 
         public override void OnOmittedExpression(OmittedExpression node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnOmittedExpression(node);
         }
 
         public override void OnExpressionPair(ExpressionPair node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnExpressionPair(node);
         }
 
@@ -539,7 +539,7 @@ namespace UnityScript2CSharp
 
         public override void OnConditionalExpression(ConditionalExpression node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnConditionalExpression(node);
         }
 
@@ -578,7 +578,7 @@ namespace UnityScript2CSharp
 
         public override void OnQuasiquoteExpression(QuasiquoteExpression node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnQuasiquoteExpression(node);
         }
 
@@ -589,13 +589,13 @@ namespace UnityScript2CSharp
 
         public override void OnCharLiteralExpression(CharLiteralExpression node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnCharLiteralExpression(node);
         }
 
         public override void OnTimeSpanLiteralExpression(TimeSpanLiteralExpression node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnTimeSpanLiteralExpression(node);
         }
 
@@ -622,7 +622,7 @@ namespace UnityScript2CSharp
 
         public override void OnSuperLiteralExpression(SuperLiteralExpression node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnSuperLiteralExpression(node);
         }
 
@@ -633,85 +633,85 @@ namespace UnityScript2CSharp
 
         public override void OnRELiteralExpression(RELiteralExpression node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnRELiteralExpression(node);
         }
 
         public override void OnSpliceExpression(SpliceExpression node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnSpliceExpression(node);
         }
 
         public override void OnSpliceTypeReference(SpliceTypeReference node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnSpliceTypeReference(node);
         }
 
         public override void OnSpliceMemberReferenceExpression(SpliceMemberReferenceExpression node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnSpliceMemberReferenceExpression(node);
         }
 
         public override void OnSpliceTypeMember(SpliceTypeMember node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnSpliceTypeMember(node);
         }
 
         public override void OnSpliceTypeDefinitionBody(SpliceTypeDefinitionBody node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnSpliceTypeDefinitionBody(node);
         }
 
         public override void OnSpliceParameterDeclaration(SpliceParameterDeclaration node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnSpliceParameterDeclaration(node);
         }
 
         public override void OnExpressionInterpolationExpression(ExpressionInterpolationExpression node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnExpressionInterpolationExpression(node);
         }
 
         public override void OnHashLiteralExpression(HashLiteralExpression node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnHashLiteralExpression(node);
         }
 
         public override void OnListLiteralExpression(ListLiteralExpression node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnListLiteralExpression(node);
         }
 
         public override void OnCollectionInitializationExpression(CollectionInitializationExpression node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnCollectionInitializationExpression(node);
         }
 
         public override void OnArrayLiteralExpression(ArrayLiteralExpression node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnArrayLiteralExpression(node);
         }
 
         public override void OnGeneratorExpression(GeneratorExpression node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnGeneratorExpression(node);
         }
 
         public override void OnExtendedGeneratorExpression(ExtendedGeneratorExpression node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnExtendedGeneratorExpression(node);
         }
 
@@ -730,37 +730,42 @@ namespace UnityScript2CSharp
 
         public override void OnTryCastExpression(TryCastExpression node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnTryCastExpression(node);
+        }
+
+        private void NotSupported(Node node)
+        {
+            Console.WriteLine("Node type not supported yet : {0}\n\t{1} ({3})\n\t{2}", node.GetType().Name, node, node.ParentNode, node.LexicalInfo);
         }
 
         public override void OnCastExpression(CastExpression node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnCastExpression(node);
         }
 
         public override void OnTypeofExpression(TypeofExpression node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnTypeofExpression(node);
         }
 
         public override void OnCustomStatement(CustomStatement node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnCustomStatement(node);
         }
 
         public override void OnCustomExpression(CustomExpression node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnCustomExpression(node);
         }
 
         public override void OnStatementTypeMember(StatementTypeMember node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
+            NotSupported(node);
             base.OnStatementTypeMember(node);
         }
 
