@@ -179,14 +179,29 @@ namespace UnityScript2CSharp
 
         public override void OnEnumDefinition(EnumDefinition node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
-            base.OnEnumDefinition(node);
+            _writer.IndentNextWrite = true;
+            _writer.WriteLine($"{ModifiersToString(node.Modifiers)} enum {node.Name}");
+            _writer.WriteLine("{");
+            using (new BlockIdentation(_writer))
+            {
+                var last = node.Members.LastOrDefault();
+                foreach (var enumMember in node.Members)
+                {
+                    enumMember.Accept(this);
+                    _writer.WriteLine(enumMember != last ? "," : string.Empty);
+                }
+            }
+            _writer.Write("}");
         }
 
         public override void OnEnumMember(EnumMember node)
         {
-            System.Console.WriteLine("Node type not supported yet : {0}\n\t{1}\n\t{2}", node.GetType().Name, node.ToString(), node.ParentNode.ToString());
-            base.OnEnumMember(node);
+            _writer.Write(node.Name);
+            if (node.Initializer != null)
+            {
+                _writer.Write($" = ");
+                node.Initializer.Accept(this);
+            }
         }
 
         public override void OnField(Field node)

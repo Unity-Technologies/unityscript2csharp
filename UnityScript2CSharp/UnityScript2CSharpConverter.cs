@@ -123,6 +123,10 @@ namespace UnityScript2CSharp
             var adjustedPipeline = UnityScriptCompiler.Pipelines.AdjustBooPipeline(pipeline);
             pipeline.Replace(typeof(ProcessUnityScriptMethods), new SelectiveUnaryExpressionExpansionProcessUnityScriptMethods());
             adjustedPipeline.Add(new RenameArrayDeclaration());
+
+            adjustedPipeline.Remove(typeof(BindEnumMembers));
+            adjustedPipeline.Remove(typeof(CheckIdentifiers));
+            
             //adjustedPipeline.Add(new TransformKnownCalls());
             _compiler.Parameters.Pipeline = adjustedPipeline;
         }
