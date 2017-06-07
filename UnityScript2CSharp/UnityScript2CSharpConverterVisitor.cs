@@ -456,8 +456,7 @@ namespace UnityScript2CSharp
 
         public override void OnContinueStatement(ContinueStatement node)
         {
-            NotSupported(node);
-            base.OnContinueStatement(node);
+            _writer.Write("continue;");
         }
 
         public override void OnReturnStatement(ReturnStatement node)
