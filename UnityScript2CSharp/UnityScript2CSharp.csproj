@@ -93,6 +93,7 @@
     <Compile Include="Steps\SelectiveUnaryExpressionExpansionProcessUnityScriptMethods.cs" />
     <Compile Include="Steps\RenameArrayDeclaration.cs" />
     <Compile Include="Steps\TransformKnownCalls.cs" />
+    <Compile Include="SwitchConverter.cs" />
     <Compile Include="UnityScript2CSharpConverter.cs" />
     <Compile Include="UnityScript2CSharpConverterVisitor.cs" />
     <Compile Include="UsingCollector.cs" />
