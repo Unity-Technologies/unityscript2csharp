@@ -4,7 +4,7 @@ namespace UnityScript2CSharp
 {
     public class CommandLineArguments
     {
-        [Option('p', HelpText = "Path of project to be converted.")] public string ProjectPath { get; set; }
+        [Option('p', Required = true, HelpText = "Path of project to be converted.")] public string ProjectPath { get; set; }
 
         [Option('r', HelpText = "Assembly references required by the scripts (space separated list).")] public string References { get; set; }
 
