@@ -254,16 +254,7 @@ namespace UnityScript2CSharp
             AppendReturnType(node);
             _builderAppend(' ');
             _builderAppend(node.Name);
-            _builderAppend('(');
-
-            var last = node.Parameters.LastOrDefault();
-            foreach (var parameter in node.Parameters)
-            {
-                parameter.Accept(this);
-                if (parameter != last)
-                    _builderAppend(", ");
-            }
-            _builderAppend(')');
+            WriteParameterList(node.Parameters);
             node.Body.Accept(this);
         }
 
@@ -292,8 +283,31 @@ namespace UnityScript2CSharp
 
         public override void OnConstructor(Constructor node)
         {
-            NotSupported(node);
-            //base.OnConstructor(node);
+            var stmts = node.Body.Statements;
+            var expressionStatement = stmts[0] as ExpressionStatement;
+            var superInvocationCandidate = expressionStatement != null ? expressionStatement.Expression as MethodInvocationExpression : null;
+            if (superInvocationCandidate != null && superInvocationCandidate.Target.NodeType == NodeType.SuperLiteralExpression)
+            {
+                stmts.Remove(stmts.First);
+            }
+
+            if (stmts.Count == 0)
+                return;
+
+            _builderAppendIdented(ModifiersToString(node.Modifiers));
+            _builderAppend(' ');
+            _builderAppend(node.DeclaringType.Name);
+
+            WriteParameterList(node.Parameters);
+
+            // Only field initializations are added to ctors in UnityScript (all of them marked as synthetic)
+            // When visiting binary expressions we need to know whether to ignore synthetic expressions because local variables (with initializers) have
+            // both the initialization and a binary expression (basically representing the same initialization). So, usually we ignore all synthetic binary
+            // expressions, unless they are inside a ctor.
+            RunRegardlessOfBeingSynthetic(delegate
+                {
+                    node.Body.Accept(this);
+                });
         }
 
         public override void OnDestructor(Destructor node)
@@ -330,7 +344,7 @@ namespace UnityScript2CSharp
             if (node.Type != null)
                 node.Type.Accept(this);
             else
-                _builderAppend($"var");
+                _builderAppend("var");
 
             _writer.Write($" {node.Name}");
         }
@@ -523,7 +537,7 @@ namespace UnityScript2CSharp
 
         public override void OnBinaryExpression(BinaryExpression node)
         {
-            if (node.IsSynthetic)
+            if (node.IsSynthetic && _ignoreSyntheticExpressions)
                 return;
 
             node.Left.Accept(this);
@@ -820,7 +834,35 @@ namespace UnityScript2CSharp
                 _writer.Write(postFix);
         }
 
+        private void WriteParameterList(ParameterDeclarationCollection parameters)
+        {
+            var last = parameters.LastOrDefault();
+
+            _builderAppend('(');
+            foreach (var parameter in parameters)
+            {
+                parameter.Accept(this);
+                if (parameter != last)
+                    _builderAppend(", ");
+            }
+            _builderAppend(')');
+        }
+
+        private void RunRegardlessOfBeingSynthetic(Action action)
+        {
+            _ignoreSyntheticExpressions = false;
+            try
+            {
+                action();
+            }
+            finally
+            {
+                _ignoreSyntheticExpressions = true;
+            }
+        }
+
         private char[] _currentBrackets = RoundBrackets;
+        private bool _ignoreSyntheticExpressions = true;
 
         private static char[] RoundBrackets = {'(', ')'};
         private static char[] SquareBrackets = {'[', ']'};

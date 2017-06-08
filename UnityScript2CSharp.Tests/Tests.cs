@@ -55,11 +55,11 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sources, expectedConverted);
         }
 
-        [Test, Ignore("UnityScript/Boo never sets the initialization list")]
+        [Test]
         public void Field_Initializers()
         {
             SourceFile[] sources = { new SourceFile("field.js", "var i = 1;") };
-            SourceFile[] expectedConverted = { new SourceFile("field.cs", DefaultUsings + " public partial class field : MonoBehaviour { public int i = 1; }") };
+            SourceFile[] expectedConverted = { new SourceFile("field.cs", DefaultUsings + " public partial class field : MonoBehaviour { public int i; public field() { this.i = 1; } }") };
 
             AssertConversion(sources, expectedConverted);
         }
@@ -209,7 +209,24 @@ namespace UnityScript2CSharp.Tests
         public void Global_Statements()
         {
             var sourceFiles = new[] { new SourceFile { FileName = "gs.js", Contents = "Debug.Log(\"foo\");" } };
-            var expectedConvertedContents = new[] { new SourceFile { FileName = "gs.cs", Contents = DefaultUsings + " public partial class gs : MonoBehaviour { public virtual void Main() { Debug.Log(\"foo\"); } }" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "gs.cs", Contents = DefaultGeneratedClass + "gs : MonoBehaviour { public virtual void Main() { Debug.Log(\"foo\"); } }" } };
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
+        public void No_Constructor()
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "noctor.js", Contents = "class NoCtor { }" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "noctor.cs", Contents = DefaultUsings + " public class NoCtor : object { }" } };
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
+        public void Constructor_Due_To_Field_Initialization()
+        {
+            // This test is similar to Field_Initializers but it focus on the ctor being created instead
+            var sourceFiles = new[] { new SourceFile { FileName = "ctor_field_init.js", Contents = "private var i:int = 10; var s:String = \"foo\"; " } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "ctor_field_init.cs", Contents = DefaultGeneratedClass + "ctor_field_init : MonoBehaviour { private int i; public string s; public ctor_field_init() { this.i = 10; this.s = \"foo\"; } }" } };
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
