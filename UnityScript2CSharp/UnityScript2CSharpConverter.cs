@@ -42,7 +42,7 @@ namespace UnityScript2CSharp
             if (result.Errors.Count > 0)
             {
                 if (!_ignoreErrors)
-                    throw new Exception(result.Errors.Aggregate("\t", (acc, curr) => acc + Environment.NewLine + "\t" + curr.Message + Environment.NewLine + "\t" + curr.InnerException));
+                    throw new Exception(result.Errors.Aggregate("\t", (acc, curr) => acc + Environment.NewLine + "\t" + curr + Environment.NewLine + "\t" + curr.InnerException));
 
                 CompilerErrors = result.Errors.Select(error => error.ToString());
             }
@@ -79,16 +79,14 @@ namespace UnityScript2CSharp
                 //actualAssemblyReferences.Add(assembly);
             }
 
-            var compilerParameters = (UnityScriptCompilerParameters)_compiler.Parameters;
-
-            compilerParameters.AddToEnvironment(
+            _compiler.Parameters.AddToEnvironment(
                 typeof(TypeInferenceRuleProvider),
                 () => new CustomTypeInferenceRuleProvider("UnityEngineInternal.TypeInferenceRuleAttribute"));
 
-            compilerParameters.ScriptMainMethod = "Main";
-            compilerParameters.Imports = new Boo.Lang.List<String> { "UnityEngine", "UnityEditor", "System.Collections" };
+            _compiler.Parameters.ScriptMainMethod = "Main";
+            _compiler.Parameters.Imports = new Boo.Lang.List<String> { "UnityEngine", "UnityEditor", "System.Collections" };
 
-            compilerParameters.ScriptBaseType = FindMonoBehaviour(assemblyReferences);
+            _compiler.Parameters.ScriptBaseType = FindMonoBehaviour(assemblyReferences);
         }
 
         private Type FindMonoBehaviour(IEnumerable<string> references)
