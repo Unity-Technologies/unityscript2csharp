@@ -84,5 +84,32 @@ namespace UnityScript2CSharp.Tests
 
             AssertConversion(sourceFiles, expectedConvertedFiles);
         }
+
+        [Test]
+        public void Cast()
+        {
+            var sourceFiles = SingleSourceFor("cast.js", "function F(o:Object) { return o cast int; }");
+            var expectedConvertedFiles = SingleSourceFor("cast.cs", DefaultGeneratedClass + "cast : MonoBehaviour { public virtual int F(object o) { return (int) o; } }");
+
+            AssertConversion(sourceFiles, expectedConvertedFiles);
+        }
+
+        [Test]
+        public void As_Simple() //TryCastExpression
+        {
+            var sourceFiles = SingleSourceFor("as_simple.js", "function F(o:Object) { return o as as_simple; }");
+            var expectedConvertedFiles = SingleSourceFor("as_simple.cs", DefaultGeneratedClass + "as_simple : MonoBehaviour { public virtual as_simple F(object o) { return o as as_simple; } }");
+
+            AssertConversion(sourceFiles, expectedConvertedFiles);
+        }
+
+        [Test]
+        public void As_Complex() //TryCastExpression
+        {
+            var sourceFiles = SingleSourceFor("as_complex.js", "function F(o:Object) : Object { return (o as as_complex).F(o); }");
+            var expectedConvertedFiles = SingleSourceFor("as_complex.cs", DefaultGeneratedClass + "as_complex : MonoBehaviour { public virtual object F(object o) { return (o as as_complex).F(o); } }");
+
+            AssertConversion(sourceFiles, expectedConvertedFiles);
+        }
     }
 }

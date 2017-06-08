@@ -284,6 +284,9 @@ namespace UnityScript2CSharp
         public override void OnConstructor(Constructor node)
         {
             var stmts = node.Body.Statements;
+            if (stmts.Count == 0)
+                return;
+
             var expressionStatement = stmts[0] as ExpressionStatement;
             var superInvocationCandidate = expressionStatement != null ? expressionStatement.Expression as MethodInvocationExpression : null;
             if (superInvocationCandidate != null && superInvocationCandidate.Target.NodeType == NodeType.SuperLiteralExpression)
@@ -549,9 +552,9 @@ namespace UnityScript2CSharp
         {
             node.Condition.Accept(this);
             _writer.Write(" ? ");
-            VistWrap(node.TrueValue, node.TrueValue.NodeType == NodeType.ConditionalExpression, "(", ")");
+            VisitWrapping(node.TrueValue, node.TrueValue.NodeType == NodeType.ConditionalExpression, "(", ")");
             _writer.Write(" : ");
-            VistWrap(node.FalseValue, node.FalseValue.NodeType == NodeType.ConditionalExpression, "(", ")");
+            VisitWrapping(node.FalseValue, node.FalseValue.NodeType == NodeType.ConditionalExpression, "(", ")");
         }
 
         public override void OnReferenceExpression(ReferenceExpression node)
@@ -741,8 +744,12 @@ namespace UnityScript2CSharp
 
         public override void OnTryCastExpression(TryCastExpression node)
         {
-            NotSupported(node);
-            base.OnTryCastExpression(node);
+            var mre = node.ParentNode as MemberReferenceExpression;
+            var isTargetOfMemberReferenceExpression = mre != null && mre.Target == node;
+
+            VisitWrapping(node.Target, isTargetOfMemberReferenceExpression, "(");
+            _writer.Write(" as ");
+            VisitWrapping(node.Type, isTargetOfMemberReferenceExpression, posfix: ")");
         }
 
         private void NotSupported(Node node)
@@ -752,8 +759,10 @@ namespace UnityScript2CSharp
 
         public override void OnCastExpression(CastExpression node)
         {
-            NotSupported(node);
-            base.OnCastExpression(node);
+            _writer.Write("(");
+            node.Type.Accept(this);
+            _writer.Write(") ");
+            node.Target.Accept(this);
         }
 
         public override void OnTypeofExpression(TypeofExpression node)
@@ -823,15 +832,15 @@ namespace UnityScript2CSharp
             return target != null && target.Name == "array";
         }
 
-        private void VistWrap(Expression node, bool mustWrap, string prefix, string postFix)
+        private void VisitWrapping(Node node, bool mustWrap, string prefix = null, string posfix = null)
         {
-            if (mustWrap)
+            if (mustWrap && prefix != null)
                 _writer.Write(prefix);
 
             node.Accept(this);
 
-            if (mustWrap)
-                _writer.Write(postFix);
+            if (mustWrap && posfix != null)
+                _writer.Write(posfix);
         }
 
         private void WriteParameterList(ParameterDeclarationCollection parameters)
