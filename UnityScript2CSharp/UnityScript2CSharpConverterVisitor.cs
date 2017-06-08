@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Boo.Lang.Compiler.Ast;
@@ -534,8 +533,11 @@ namespace UnityScript2CSharp
 
         public override void OnConditionalExpression(ConditionalExpression node)
         {
-            NotSupported(node);
-            base.OnConditionalExpression(node);
+            node.Condition.Accept(this);
+            _writer.Write(" ? ");
+            VistWrap(node.TrueValue, node.TrueValue.NodeType == NodeType.ConditionalExpression, "(", ")");
+            _writer.Write(" : ");
+            VistWrap(node.FalseValue, node.FalseValue.NodeType == NodeType.ConditionalExpression, "(", ")");
         }
 
         public override void OnReferenceExpression(ReferenceExpression node)
@@ -805,6 +807,17 @@ namespace UnityScript2CSharp
             // Arrays in UnityScript are represented as a GenericReferenceExpession
             var target = node.Target as ReferenceExpression;
             return target != null && target.Name == "array";
+        }
+
+        private void VistWrap(Expression node, bool mustWrap, string prefix, string postFix)
+        {
+            if (mustWrap)
+                _writer.Write(prefix);
+
+            node.Accept(this);
+
+            if (mustWrap)
+                _writer.Write(postFix);
         }
 
         private char[] _currentBrackets = RoundBrackets;

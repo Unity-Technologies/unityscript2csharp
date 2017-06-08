@@ -70,5 +70,19 @@ namespace UnityScript2CSharp.Tests
 
             AssertConversion(sourceFiles, expectedConvertedFiles);
         }
+
+        [TestCase("i > 10", "true : false", "bool")]
+        [TestCase("i == 10", "0 : 42", "int")]
+        [TestCase("i == 10", "1.1f : 42.1f", "float")]
+        [TestCase("i > 0 && i < 42", "null : this", "ternary_operator")]
+        [TestCase("i > 0 ? (i < 42", "1 : 2) : 3", "int")]
+        //[TestCase("i > 10", "'A' : 'V'", "char")] // char -> string ?
+        public void Ternary_Operator(string condition, string values, string inferredReturnTypeName)
+        {
+            var sourceFiles = SingleSourceFor("ternary_operator.js", $"function F(i:int) {{ return {condition} ? {values}; }}");
+            var expectedConvertedFiles = SingleSourceFor("ternary_operator.cs", DefaultGeneratedClass + $"ternary_operator : MonoBehaviour {{ public virtual {inferredReturnTypeName} F(int i) {{ return {condition} ? {values}; }} }}");
+
+            AssertConversion(sourceFiles, expectedConvertedFiles);
+        }
     }
 }
