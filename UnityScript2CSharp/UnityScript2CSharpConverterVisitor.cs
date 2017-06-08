@@ -474,7 +474,9 @@ namespace UnityScript2CSharp
         public override void OnReturnStatement(ReturnStatement node)
         {
             _builderAppendIdented("return ");
-            base.OnReturnStatement(node);
+
+            if (node.Expression != null)
+                node.Expression.Accept(this);
             _writer.WriteLine(";");
         }
 
@@ -516,9 +518,6 @@ namespace UnityScript2CSharp
 
         public override void OnMethodInvocationExpression(MethodInvocationExpression node)
         {
-            //if (node.Target.Entity.EntityType == EntityType.BuiltinFunction)
-            //    return;
-
             if (node.Target.Entity != null && node.Target.Entity.EntityType == EntityType.BuiltinFunction)
                 return;
 
@@ -534,8 +533,17 @@ namespace UnityScript2CSharp
 
         public override void OnUnaryExpression(UnaryExpression node)
         {
+            bool postOperator = AstUtil.IsPostUnaryOperator(node.Operator);
+            var operatorText = BooPrinterVisitor.GetUnaryOperatorText(node.Operator);
+            if (!postOperator)
+            {
+                _builderAppend(operatorText);
+            }
             node.Operand.Accept(this);
-            _builderAppend(BooPrinterVisitor.GetUnaryOperatorText(node.Operator));
+            if (postOperator)
+            {
+                _builderAppend(operatorText);
+            }
         }
 
         public override void OnBinaryExpression(BinaryExpression node)

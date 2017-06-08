@@ -111,5 +111,34 @@ namespace UnityScript2CSharp.Tests
 
             AssertConversion(sourceFiles, expectedConvertedFiles);
         }
+
+        [Test]
+        public void Pre_Increment_Decrement()
+        {
+            var sourceFiles = SingleSourceFor("pre_increment_decrement.js", "function F(i:int) { return ++i + i++; }");
+            var expectedConvertedContents = SingleSourceFor("pre_increment_decrement.cs", DefaultGeneratedClass + @"pre_increment_decrement : MonoBehaviour { public virtual int F(int i) { return ++i + i++; } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [TestCase("var j = i++; return j", "int j = i++; return j")]
+        [TestCase("return i++", "return i++")]
+        [TestCase("return i++ > 10 ? 1 : 0", "return i++ > 10 ? 1 : 0")]
+        public void Post_Increment(string usExpression, string csExpression)
+        {
+            var sourceFiles = SingleSourceFor("post_increment.js", $"function F(i:int) {{ {usExpression}; }}");
+            var expectedConvertedContents = SingleSourceFor("post_increment.cs", DefaultGeneratedClass + $"post_increment : MonoBehaviour {{ public virtual int F(int i) {{ {csExpression}; }} }}");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
+        public void Post_Increment_When_Result_Is_Not_Used_Is_Converted_To_Pre_Increment() // This test is here only to document the behavior
+        {
+            var sourceFiles = SingleSourceFor("post_increment1.js", "function F(i:int) { i++; }");
+            var expectedConvertedContents = SingleSourceFor("post_increment1.cs", DefaultGeneratedClass + @"post_increment1 : MonoBehaviour { public virtual void F(int i) { ++i; } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
     }
 }
