@@ -482,8 +482,13 @@ namespace UnityScript2CSharp
 
         public override void OnYieldStatement(YieldStatement node)
         {
-            NotSupported(node);
-            base.OnYieldStatement(node);
+            _writer.Write("yield return ");
+            if (node.Expression != null)
+                node.Expression.Accept(this);
+            else
+                _writer.Write("null");
+
+            _writer.WriteLine(";");
         }
 
         public override void OnRaiseStatement(RaiseStatement node)

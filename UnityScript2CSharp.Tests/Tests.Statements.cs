@@ -151,5 +151,37 @@ namespace UnityScript2CSharp.Tests
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
+
+        [Test]
+        public void Yield_Return_Type_Inference()
+        {
+            var sourceFiles = SingleSourceFor("yield_return_type.js", "function F() { yield 1; yield 2; yield 3; }");
+            var expectedConvertedContents = SingleSourceFor("yield_return_type.cs", DefaultGeneratedClass + "yield_return_type : MonoBehaviour { public virtual IEnumerator F() { yield return 1; yield return 2; yield return 3; } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
+        public void Yield_Without_Values()
+        {
+            var sourceFiles = SingleSourceFor("yield_without_values.js", "function F() { yield 1; yield ; yield 3; }");
+            var expectedConvertedContents = SingleSourceFor("yield_without_values.cs", DefaultGeneratedClass + "yield_without_values : MonoBehaviour { public virtual IEnumerator F() { yield return 1; yield return null; yield return 3; } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
+        public void Return_As_Yield_Break()
+        {
+            var sourceFiles = SingleSourceFor("yield_break.js", "function F(i:int) { while (i < 10) { if (i % 2 == 0) return; yield i++; } }");
+            var expectedConvertedContents = SingleSourceFor("yield_break.cs", DefaultGeneratedClass + "yield_break : MonoBehaviour { public virtual IEnumerator F(int i) { while (i < 10) { if (i % 2 == 0) { yield break; } yield return i++; } } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
+        public void Yield_Simple()
+        {
+        }
     }
 }
