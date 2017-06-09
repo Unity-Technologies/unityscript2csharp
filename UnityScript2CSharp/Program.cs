@@ -9,12 +9,12 @@ namespace UnityScript2CSharp
 {
     class Program
     {
-        static void Main(string[] args)
+        static int Main(string[] args)
         {
             var options  = Parser.Default.ParseArguments<CommandLineArguments>(args);
             if (options.Errors.Any())
             {
-                return;
+                return -2;
             }
 
             var editorSubFolder = String.Format("{0}Editor{0}", Path.DirectorySeparatorChar);
@@ -38,14 +38,17 @@ namespace UnityScript2CSharp
 
             var converter = new UnityScript2CSharpConverter(options.Value.IgnoreErrors);
 
-            var references = new List<string>(new[]
-            {
-                typeof(object).Assembly.Location,
-                @"M:\Work\Repo\UnityTrunk\build\WindowsEditor\Data\Managed\UnityEngine.dll",
-                @"M:\Work\Repo\UnityTrunk\build\WindowsEditor\Data\Managed\UnityEditor.dll"
-            });
+            var references = new List<string>(options.Value.References);
+            references.Add(typeof(object).Assembly.Location);
 
-            references.Add(options.Value.References);
+            foreach (var reference in options.Value.References)
+            {
+                if (!File.Exists(reference))
+                {
+                    Console.WriteLine($"Cannot find referenced assembly: {reference}");
+                    return -1;
+                }
+            }
 
             converter.Convert(
                 runtimeScripts,
@@ -53,6 +56,8 @@ namespace UnityScript2CSharp
                 new[] { "MY_DEFINE" },
                 references,
                 HandleConvertedScript);
+
+            return 0;
         }
 
         private static void HandleConvertedScript(string scriptPath, string content)

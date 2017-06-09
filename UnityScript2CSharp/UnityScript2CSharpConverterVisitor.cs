@@ -473,11 +473,25 @@ namespace UnityScript2CSharp
 
         public override void OnReturnStatement(ReturnStatement node)
         {
+            if (TryHandleYieldBreak(node))
+                return;
+
             _builderAppendIdented("return ");
 
             if (node.Expression != null)
                 node.Expression.Accept(this);
             _writer.WriteLine(";");
+        }
+
+        private bool TryHandleYieldBreak(ReturnStatement node)
+        {
+            var declaringMethod = node.GetAncestor<Method>();
+            var isReturningIEnumerable = declaringMethod.ReturnType.Entity.FullName == typeof(System.Collections.IEnumerator).FullName;
+
+            if (isReturningIEnumerable)
+                _writer.WriteLine("yield break;");
+
+            return isReturningIEnumerable;
         }
 
         public override void OnYieldStatement(YieldStatement node)
