@@ -109,8 +109,12 @@ namespace UnityScript2CSharp
 
         public override void OnGenericTypeReference(GenericTypeReference node)
         {
-            NotSupported(node);
-            base.OnGenericTypeReference(node);
+            _writer.Write($"{node.Name}<");
+            foreach (var argument in node.GenericArguments)
+            {
+                argument.Accept(this);
+            }
+            _writer.Write(">");
         }
 
         public override void OnGenericTypeDefinitionReference(GenericTypeDefinitionReference node)
@@ -604,6 +608,9 @@ namespace UnityScript2CSharp
                 _currentBrackets = SquareBrackets;
                 return;
             }
+
+            if (node.Entity?.EntityType == EntityType.Constructor)
+                _writer.Write("new ");
 
             node.Target.Accept(this);
             _writer.Write("<");

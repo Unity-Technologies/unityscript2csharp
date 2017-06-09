@@ -182,13 +182,12 @@ namespace UnityScript2CSharp.Tests
         }
 
         [Test]
-        public void Generic_Methods()
-        {
-        }
-
-        [Test]
         public void Generic_Types()
         {
+            var sourceFiles = SingleSourceFor("generic_type.js", "import System.Collections.Generic; var f:List.<int> = new List.<int>(); function F() { var l:List.<int> = new List.<int>(); }");
+            var expectedConvertedContents = SingleSourceFor("generic_type.cs", "using System.Collections.Generic; " + DefaultGeneratedClass + "generic_type : MonoBehaviour { public System.Collections.Generic.List<int> f; public virtual void F() { System.Collections.Generic.List<int> l = new List<int>(); } public generic_type() { this.f = new List<int>(); } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
         [Test]
