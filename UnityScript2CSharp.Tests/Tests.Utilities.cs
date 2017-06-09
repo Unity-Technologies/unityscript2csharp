@@ -49,6 +49,7 @@ namespace UnityScript2CSharp.Tests
             var tempFolder = Path.Combine(Path.GetTempPath(), "UnityScript2CSharpConversionTests", SavePathFrom(TestContext.CurrentContext.Test.Name));
             Console.WriteLine("Converted files saved to: {0}", tempFolder);
 
+            var unityWorkspaceRoot = GetUnityWorkspaceRoot();
             var converter = new UnityScript2CSharpConverter();
             converter.Convert(
                 sourceFiles,
@@ -58,6 +59,7 @@ namespace UnityScript2CSharp.Tests
                 typeof(object).Assembly.Location,
                 $@"{UnityInstallFolder}Data\Managed\UnityEngine.dll",
                 $@"{UnityInstallFolder}Data\Managed\UnityEditor.dll",
+
             },
 
                 (name, content) =>
@@ -83,6 +85,22 @@ namespace UnityScript2CSharp.Tests
             }
         }
 
+        private static string GetUnityWorkspaceRoot()
+        {
+            var currentFolder = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            var probeStarttingPoint = currentFolder;
+
+            while (currentFolder.Length > 0)
+            {
+                if (File.Exists(Path.Combine(currentFolder, "build.pl")))
+                    return currentFolder;
+
+                currentFolder = Path.GetDirectoryName(currentFolder);
+            }
+
+            throw  new Exception($"Unable to resolve workspace root from {probeStarttingPoint}");
+        }
+
         private static string SavePathFrom(string testName)
         {
             var sb = new StringBuilder(testName);
@@ -94,6 +112,6 @@ namespace UnityScript2CSharp.Tests
         }
 
         private const string DefaultUsings = "using UnityEngine; using UnityEditor; using System.Collections;";
-        private const string DefaultGeneratedClass =  DefaultUsings + " public class ";
+        private const string DefaultGeneratedClass =  DefaultUsings + " public partial class ";
     }
 }
