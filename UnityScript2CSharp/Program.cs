@@ -50,14 +50,21 @@ namespace UnityScript2CSharp
                 }
             }
 
-            converter.Convert(
-                runtimeScripts,
-
-                new[] { "MY_DEFINE" },
-                references,
-                HandleConvertedScript);
+            ConvertScripts("runtime", runtimeScripts, converter, references);
+            ConvertScripts("editor", editorScripts, converter, references);
+            ConvertScripts("plugins", pluginScripts, converter, references);
 
             return 0;
+        }
+
+        private static void ConvertScripts(string scriptType, IEnumerable<SourceFile> runtimeScripts, UnityScript2CSharpConverter converter, List<string> references)
+        {
+            Console.WriteLine("Converting '{0}' ", scriptType);
+            converter.Convert(
+                runtimeScripts,
+                new[] {"MY_DEFINE"},
+                references,
+                HandleConvertedScript);
         }
 
         private static void HandleConvertedScript(string scriptPath, string content)
