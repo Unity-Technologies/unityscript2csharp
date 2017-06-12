@@ -823,7 +823,7 @@ namespace UnityScript2CSharp
             base.OnStatementTypeMember(node);
         }
 
-        public string CSharpOperatorFor(BinaryOperatorType op)
+        private string CSharpOperatorFor(BinaryOperatorType op)
         {
             return (op != BinaryOperatorType.And) ? ((op != BinaryOperatorType.Or) ? BooPrinterVisitor.GetBinaryOperatorText(op) : "||") : "&&";
         }
