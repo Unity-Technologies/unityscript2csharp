@@ -466,8 +466,7 @@ namespace UnityScript2CSharp
 
         public override void OnBreakStatement(BreakStatement node)
         {
-            NotSupported(node);
-            base.OnBreakStatement(node);
+            _writer.WriteLine("break;");
         }
 
         public override void OnContinueStatement(ContinueStatement node)

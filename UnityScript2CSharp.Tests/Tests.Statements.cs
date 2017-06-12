@@ -180,8 +180,12 @@ namespace UnityScript2CSharp.Tests
         }
 
         [Test]
-        public void Yield_Simple()
+        public void Break()
         {
+            var sourceFiles = SingleSourceFor("break_statement.js", "function F(i:int) { while (true) { if (i++ == 0) break; return i; } }");
+            var expectedConvertedContents = SingleSourceFor("break_statement.cs", DefaultGeneratedClass + "break_statement : MonoBehaviour { public virtual int F(int i) { while (true) { if (i++ == 0) { break; } return i; } } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
         }
     }
 }
