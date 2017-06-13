@@ -125,7 +125,6 @@ namespace UnityScript2CSharp
             adjustedPipeline.Remove(typeof(BindEnumMembers));
             adjustedPipeline.Remove(typeof(CheckIdentifiers));
 
-            //adjustedPipeline.Add(new TransformKnownCalls());
             _compiler.Parameters.Pipeline = adjustedPipeline;
         }
 

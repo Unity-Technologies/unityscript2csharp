@@ -43,7 +43,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="NonGeneric.cs" />
+    <Compile Include="Tests.Operators.cs" />
+    <Compile Include="TestSubjects.cs" />
     <Compile Include="Tests.Utilities.cs" />
     <Compile Include="Tests.Expressions.cs" />
     <Compile Include="Tests.Statements.cs" />

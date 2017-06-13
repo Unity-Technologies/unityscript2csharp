@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using Boo.Lang.Compiler.TypeSystem;
 using Boo.Lang.Compiler.TypeSystem.Reflection;
 
@@ -12,7 +14,7 @@ namespace UnityScript2CSharp
             if (typedEntity.Type.IsArray)
                 return IsBoolean(((IArrayType)typedEntity.Type).ElementType);
 
-            return typedEntity.Type.FullName == "boolean";
+            return typedEntity.Type.FullName == "boolean" || typedEntity.Type.GetMembers().OfType<IMethod>().Any(m  => m.Name == "op_Implicit" && IsBoolean(m.ReturnType));
         }
 
         public static string DefaultValue(this IEntity entity)

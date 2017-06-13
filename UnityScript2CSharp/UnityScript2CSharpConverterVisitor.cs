@@ -543,6 +543,9 @@ namespace UnityScript2CSharp
             if (node.Target.Entity != null && node.Target.Entity.EntityType == EntityType.BuiltinFunction)
                 return;
 
+            if (HandleOperatorsReplacedWithMethods(node))
+                return;
+
             node.Target.Accept(this);
             _writer.Write(_currentBrackets[0]);
             foreach (var argument in node.Arguments)
@@ -553,10 +556,66 @@ namespace UnityScript2CSharp
             _currentBrackets = RoundBrackets;
         }
 
+        private bool HandleOperatorsReplacedWithMethods(MethodInvocationExpression node)
+        {
+            var isOperator = node.Target.Entity != null &&
+                (node.Target.Entity.Name.StartsWith("op_")  || node.Target.Entity.FullName == "Boo.Lang.Runtime.RuntimeServices.EqualityOperator");
+            if (!isOperator)
+                return false;
+
+            var args = node.Arguments;
+
+            if (args.Count == 1) // Unary operators..
+            {
+                _writer.Write(OperatorSymbolFor(node.Target.Entity.Name, node.LexicalInfo));
+                args[0].Accept(this);
+                return true;
+            }
+
+
+            // Binary operators...
+            var needParentheses = (node.ParentNode as MemberReferenceExpression)?.Target == node ||
+                (node.ParentNode as UnaryExpression)?.Operand == node;
+            if (needParentheses)
+                _writer.Write("(");
+
+            args[0].Accept(this);
+            _writer.Write($" {OperatorSymbolFor(node.Target.Entity.Name, node.LexicalInfo)} ");
+            args[1].Accept(this);
+
+            if (needParentheses)
+                _writer.Write(")");
+
+            return true;
+        }
+
+        private string OperatorSymbolFor(string ilOperatorName, LexicalInfo debuInfo)
+        {
+            switch (ilOperatorName)
+            {
+                //TODO: Add all operators...
+                case "op_Multiply": return "*";
+                case "op_Division": return "/";
+                case "op_Addition": return "+";
+                case "op_Subtraction": return "-";
+                case "op_Implicit": return string.Empty;
+
+                case "op_Inequality": return "!=";
+
+                case "op_Equality":
+                case "EqualityOperator": return "==";
+
+                case "op_UnaryNegation": return "-";
+
+                default:
+                    throw new Exception("Mapping for operator not implemented yet: " + ilOperatorName + " @ " + debuInfo);
+            }
+        }
+
         public override void OnUnaryExpression(UnaryExpression node)
         {
             bool postOperator = AstUtil.IsPostUnaryOperator(node.Operator);
-            var operatorText = BooPrinterVisitor.GetUnaryOperatorText(node.Operator);
+            var operatorText = node.Operator == UnaryOperatorType.LogicalNot ? "!" : BooPrinterVisitor.GetUnaryOperatorText(node.Operator);
             if (!postOperator)
             {
                 _builderAppend(operatorText);

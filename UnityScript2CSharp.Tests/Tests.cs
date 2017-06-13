@@ -133,16 +133,19 @@ namespace UnityScript2CSharp.Tests
         [Test]
         public void Property_Getter()
         {
+            Assert.Fail("Need to test");
         }
 
         [Test]
         public void Property_Setter()
         {
+            Assert.Fail("Need to test");
         }
 
         [Test]
         public void Property_Full()
         {
+            Assert.Fail("Need to test");
         }
 
         [Test]

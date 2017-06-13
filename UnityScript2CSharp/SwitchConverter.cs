@@ -184,16 +184,6 @@ namespace UnityScript2CSharp
                 _literals.Add(node.Value);
             }
 
-            public override void OnReferenceExpression(ReferenceExpression node)
-            {
-                base.OnReferenceExpression(node);
-            }
-
-            public override void OnBinaryExpression(BinaryExpression node)
-            {
-                base.OnBinaryExpression(node);
-            }
-
             public static IEnumerable<string> Collect(BinaryExpression binaryExpression)
             {
                 return _instance.CollectInternal(binaryExpression);
