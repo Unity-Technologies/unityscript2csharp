@@ -283,7 +283,7 @@ namespace UnityScript2CSharp
             foreach (var local in parentMedhod.Locals)
             {
                 var internalLocal = local.Entity as InternalLocal;
-                if (!IsSynthetic(internalLocal) && !HasAutoLocalDeclaration(local, parentMedhod.Body))
+                if (!IsSynthetic(internalLocal) && !HasAutoLocalDeclaration(parentMedhod.Body, local))
                     internalLocal.OriginalDeclaration.ParentNode.Accept(this);
             }
 
@@ -292,19 +292,9 @@ namespace UnityScript2CSharp
 
         // In unity script, assignments to undeclared variables introduces a variable declaration;
         // the related assignment (a binary expression) is marked as "synthetic"
-        private bool HasAutoLocalDeclaration(Local local, Block parentMedhodBody)
+        private bool HasAutoLocalDeclaration(Block blockToLookIn, Local local)
         {
-            var toBeFound = new ReferenceExpression(local.Name);
-            var found = parentMedhodBody.Statements.OfType<ExpressionStatement>().Any(es =>
-                {
-                    var candidateAssignment = (es.Expression as BinaryExpression);
-                    if (candidateAssignment == null || candidateAssignment.Operator != BinaryOperatorType.Assign || !candidateAssignment.IsSynthetic)
-                        return false;
-
-                    return candidateAssignment.Left.Matches(toBeFound);
-                });
-
-            return found;
+            return AutoVarDeclarationFinder.Find(blockToLookIn, local) != null;
         }
 
         public override void OnConstructor(Constructor node)
@@ -598,7 +588,8 @@ namespace UnityScript2CSharp
 
         public override void OnBinaryExpression(BinaryExpression node)
         {
-            if (node.Operator == BinaryOperatorType.Assign && node.Left.NodeType == NodeType.ReferenceExpression && node.IsSynthetic)
+            var isDeclarationStatement = node.Operator == BinaryOperatorType.Assign && node.Left.NodeType == NodeType.ReferenceExpression && node.IsSynthetic;
+            if (isDeclarationStatement)
             {
                 var localDeclaration = (InternalLocal)node.Left.Entity;
                 localDeclaration.OriginalDeclaration.Type.Accept(this);
@@ -606,7 +597,7 @@ namespace UnityScript2CSharp
             }
 
             node.Left.Accept(this);
-            _builderAppend($" {CSharpOperatorFor(node.Operator)} ");
+            _writer.Write($" {CSharpOperatorFor(node.Operator)} ");
             node.Right.Accept(this);
         }
 
@@ -1050,5 +1041,39 @@ namespace UnityScript2CSharp
 
         private static char[] RoundBrackets = {'(', ')'};
         private static char[] SquareBrackets = {'[', ']'};
+    }
+
+    internal class AutoVarDeclarationFinder : FastDepthFirstVisitor
+    {
+        private readonly Block _whereToLookFor;
+        private ReferenceExpression _toBeFound;
+        private Node _found;
+
+        private static AutoVarDeclarationFinder _instance = new AutoVarDeclarationFinder();
+
+        public static Node Find(Block block, Local tbf)
+        {
+            return _instance.StartSearch(block, tbf);
+        }
+
+        private Node StartSearch(Block whereToLookFor, Local tbf)
+        {
+            _found = null;
+            _toBeFound = new ReferenceExpression(tbf.Name);
+            whereToLookFor.Accept(this);
+
+            return _found;
+        }
+
+        public override void OnBinaryExpression(BinaryExpression node)
+        {
+            if (node.Operator == BinaryOperatorType.Assign && node.IsSynthetic && node.Left.Matches(_toBeFound))
+            {
+                _found = node;
+                return;
+            }
+
+            base.OnBinaryExpression(node); // Continue to search...
+        }
     }
 }

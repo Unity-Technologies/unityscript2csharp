@@ -176,6 +176,15 @@ namespace UnityScript2CSharp.Tests
         }
 
         [Test]
+        public void Locals_As_Child_Of_If_Statement()
+        {
+            var sourceFiles = SingleSourceFor("locals_child.js", "function F(i:int) { if (i == 0) { var j = i + 1; return j; } return i; }");
+            var expectedConvertedContents = SingleSourceFor("locals_child.cs", DefaultGeneratedClass + "locals_child : MonoBehaviour { public virtual int F(int i) { if (i == 0) { int j = i + 1; return j; } return i; } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
         public void Locals_With_Initializers()
         {
             var sourceFiles = SingleSourceFor("locals_initializers.js", "function F() { var i:int = 1; }");
