@@ -131,8 +131,8 @@ namespace UnityScript2CSharp
 
         public override void OnNamespaceDeclaration(NamespaceDeclaration node)
         {
+            // UnityScript does not support namespaces..
             NotSupported(node);
-            base.OnNamespaceDeclaration(node);
         }
 
         public override void OnModule(Module node)
@@ -203,7 +203,7 @@ namespace UnityScript2CSharp
             _writer.Write(node.Name);
             if (node.Initializer != null)
             {
-                _writer.Write($" = ");
+                _writer.Write(" = ");
                 node.Initializer.Accept(this);
             }
         }
@@ -273,16 +273,28 @@ namespace UnityScript2CSharp
             foreach (var local in parentMedhod.Locals)
             {
                 var internalLocal = local.Entity as InternalLocal;
-                if (!IsSynthetic(internalLocal))
+                if (!IsSynthetic(internalLocal) && !HasAutoLocalDeclaration(local, parentMedhod.Body))
                     internalLocal.OriginalDeclaration.ParentNode.Accept(this);
             }
 
             return ret;
         }
 
-        private static bool IsSynthetic(InternalLocal internalLocal)
+        // In unity script, assignments to undeclared variables introduces a variable declaration;
+        // the related assignment (a binary expression) is marked as "synthetic"
+        private bool HasAutoLocalDeclaration(Local local, Block parentMedhodBody)
         {
-            return internalLocal == null || internalLocal.OriginalDeclaration == null;
+            var toBeFound = new ReferenceExpression(local.Name);
+            var found = parentMedhodBody.Statements.OfType<ExpressionStatement>().Any(es =>
+                {
+                    var candidateAssignment = (es.Expression as BinaryExpression);
+                    if (candidateAssignment == null || candidateAssignment.Operator != BinaryOperatorType.Assign || !candidateAssignment.IsSynthetic)
+                        return false;
+
+                    return candidateAssignment.Left.Matches(toBeFound);
+                });
+
+            return found;
         }
 
         public override void OnConstructor(Constructor node)
@@ -371,13 +383,11 @@ namespace UnityScript2CSharp
         public override void OnGotoStatement(GotoStatement node)
         {
             NotSupported(node);
-            base.OnGotoStatement(node);
-            //_writer.Write($"goto {node.Label.Name};");
         }
 
         public override void OnLabelStatement(LabelStatement node)
         {
-            _writer.WriteLine($"{node.Name}:");
+            NotSupported(node);
         }
 
         public override void OnBlock(Block node)
@@ -429,17 +439,6 @@ namespace UnityScript2CSharp
             }
         }
 
-        private void ProcessBooleanExpression(Expression condition)
-        {
-            condition.Accept(this);
-            //if (!condition.Entity.IsBoolean())
-            //TODO: Crash when condition = "go.gameObject.GetComponent.<ParticleEmitter>()"
-            if (condition.Entity != null && !condition.Entity.IsBoolean())
-            {
-                _builderAppend($" != {condition.Entity.DefaultValue()}");
-            }
-        }
-
         public override void OnUnlessStatement(UnlessStatement node)
         {
             NotSupported(node);
@@ -479,22 +478,15 @@ namespace UnityScript2CSharp
             if (TryHandleYieldBreak(node))
                 return;
 
-            _builderAppendIdented("return ");
+            _builderAppendIdented("return");
 
             if (node.Expression != null)
+            {
+                _writer.Write(" ");
                 node.Expression.Accept(this);
+            }
+
             _writer.WriteLine(";");
-        }
-
-        private bool TryHandleYieldBreak(ReturnStatement node)
-        {
-            var declaringMethod = node.GetAncestor<Method>();
-            var isReturningIEnumerable = declaringMethod.ReturnType.Entity.FullName == typeof(System.Collections.IEnumerator).FullName;
-
-            if (isReturningIEnumerable)
-                _writer.WriteLine("yield break;");
-
-            return isReturningIEnumerable;
         }
 
         public override void OnYieldStatement(YieldStatement node)
@@ -556,62 +548,6 @@ namespace UnityScript2CSharp
             _currentBrackets = RoundBrackets;
         }
 
-        private bool HandleOperatorsReplacedWithMethods(MethodInvocationExpression node)
-        {
-            var isOperator = node.Target.Entity != null &&
-                (node.Target.Entity.Name.StartsWith("op_")  || node.Target.Entity.FullName == "Boo.Lang.Runtime.RuntimeServices.EqualityOperator");
-            if (!isOperator)
-                return false;
-
-            var args = node.Arguments;
-
-            if (args.Count == 1) // Unary operators..
-            {
-                _writer.Write(OperatorSymbolFor(node.Target.Entity.Name, node.LexicalInfo));
-                args[0].Accept(this);
-                return true;
-            }
-
-
-            // Binary operators...
-            var needParentheses = (node.ParentNode as MemberReferenceExpression)?.Target == node ||
-                (node.ParentNode as UnaryExpression)?.Operand == node;
-            if (needParentheses)
-                _writer.Write("(");
-
-            args[0].Accept(this);
-            _writer.Write($" {OperatorSymbolFor(node.Target.Entity.Name, node.LexicalInfo)} ");
-            args[1].Accept(this);
-
-            if (needParentheses)
-                _writer.Write(")");
-
-            return true;
-        }
-
-        private string OperatorSymbolFor(string ilOperatorName, LexicalInfo debuInfo)
-        {
-            switch (ilOperatorName)
-            {
-                //TODO: Add all operators...
-                case "op_Multiply": return "*";
-                case "op_Division": return "/";
-                case "op_Addition": return "+";
-                case "op_Subtraction": return "-";
-                case "op_Implicit": return string.Empty;
-
-                case "op_Inequality": return "!=";
-
-                case "op_Equality":
-                case "EqualityOperator": return "==";
-
-                case "op_UnaryNegation": return "-";
-
-                default:
-                    throw new Exception("Mapping for operator not implemented yet: " + ilOperatorName + " @ " + debuInfo);
-            }
-        }
-
         public override void OnUnaryExpression(UnaryExpression node)
         {
             bool postOperator = AstUtil.IsPostUnaryOperator(node.Operator);
@@ -629,8 +565,12 @@ namespace UnityScript2CSharp
 
         public override void OnBinaryExpression(BinaryExpression node)
         {
-            if (node.IsSynthetic && _ignoreSyntheticExpressions)
-                return;
+            if (node.Operator == BinaryOperatorType.Assign && node.Left.NodeType == NodeType.ReferenceExpression && node.IsSynthetic)
+            {
+                var localDeclaration = (InternalLocal)node.Left.Entity;
+                localDeclaration.OriginalDeclaration.Type.Accept(this);
+                _writer.Write(" ");
+            }
 
             node.Left.Accept(this);
             _builderAppend($" {CSharpOperatorFor(node.Operator)} ");
@@ -708,7 +648,6 @@ namespace UnityScript2CSharp
         public override void OnIntegerLiteralExpression(IntegerLiteralExpression node)
         {
             _builderAppend(node.Value);
-            base.OnIntegerLiteralExpression(node);
         }
 
         public override void OnDoubleLiteralExpression(DoubleLiteralExpression node)
@@ -844,11 +783,6 @@ namespace UnityScript2CSharp
             VisitWrapping(node.Type, isTargetOfMemberReferenceExpression, posfix: ")");
         }
 
-        private void NotSupported(Node node)
-        {
-            Console.WriteLine("Node type not supported yet : {0}\n\t{1} ({3})\n\t{2}", node.GetType().Name, node, node.ParentNode, node.LexicalInfo);
-        }
-
         public override void OnCastExpression(CastExpression node)
         {
             _writer.Write("(");
@@ -879,6 +813,83 @@ namespace UnityScript2CSharp
         {
             NotSupported(node);
             base.OnStatementTypeMember(node);
+        }
+
+        private void ProcessBooleanExpression(Expression condition)
+        {
+            condition.Accept(this);
+            //if (!condition.Entity.IsBoolean())
+            //TODO: Crash when condition = "go.gameObject.GetComponent.<ParticleEmitter>()"
+            if (condition.Entity != null && !condition.Entity.IsBoolean())
+            {
+                _builderAppend($" != {condition.Entity.DefaultValue()}");
+            }
+        }
+
+        private bool TryHandleYieldBreak(ReturnStatement node)
+        {
+            var declaringMethod = node.GetAncestor<Method>();
+            var isReturningIEnumerable = declaringMethod.ReturnType.Entity.FullName == typeof(System.Collections.IEnumerator).FullName;
+
+            if (isReturningIEnumerable)
+                _writer.WriteLine("yield break;");
+
+            return isReturningIEnumerable;
+        }
+
+        private bool HandleOperatorsReplacedWithMethods(MethodInvocationExpression node)
+        {
+            var isOperator = node.Target.Entity != null &&
+                (node.Target.Entity.Name.StartsWith("op_") || node.Target.Entity.FullName == "Boo.Lang.Runtime.RuntimeServices.EqualityOperator");
+            if (!isOperator)
+                return false;
+
+            var args = node.Arguments;
+
+            if (args.Count == 1) // Unary operators..
+            {
+                _writer.Write(OperatorSymbolFor(node.Target.Entity.Name, node.LexicalInfo));
+                args[0].Accept(this);
+                return true;
+            }
+
+            // Binary operators...
+            var needParentheses = (node.ParentNode as MemberReferenceExpression)?.Target == node ||
+                (node.ParentNode as UnaryExpression)?.Operand == node;
+            if (needParentheses)
+                _writer.Write("(");
+
+            args[0].Accept(this);
+            _writer.Write($" {OperatorSymbolFor(node.Target.Entity.Name, node.LexicalInfo)} ");
+            args[1].Accept(this);
+
+            if (needParentheses)
+                _writer.Write(")");
+
+            return true;
+        }
+
+        private string OperatorSymbolFor(string ilOperatorName, LexicalInfo debuInfo)
+        {
+            switch (ilOperatorName)
+            {
+                //TODO: Add all operators...
+                case "op_Multiply": return "*";
+                case "op_Division": return "/";
+                case "op_Addition": return "+";
+                case "op_Subtraction": return "-";
+                case "op_Implicit": return string.Empty;
+
+                case "op_Inequality": return "!=";
+
+                case "op_Equality":
+                case "EqualityOperator": return "==";
+
+                case "op_UnaryNegation": return "-";
+
+                default:
+                    throw new Exception("Mapping for operator not implemented yet: " + ilOperatorName + " @ " + debuInfo);
+            }
         }
 
         private string CSharpOperatorFor(BinaryOperatorType op)
@@ -960,6 +971,16 @@ namespace UnityScript2CSharp
             {
                 _ignoreSyntheticExpressions = true;
             }
+        }
+
+        private static bool IsSynthetic(InternalLocal internalLocal)
+        {
+            return internalLocal == null || internalLocal.OriginalDeclaration == null;
+        }
+
+        private void NotSupported(Node node)
+        {
+            Console.WriteLine("Node type not supported yet : {0}\n\t{1} ({3})\n\t{2}", node.GetType().Name, node, node.ParentNode, node.LexicalInfo);
         }
 
         private char[] _currentBrackets = RoundBrackets;

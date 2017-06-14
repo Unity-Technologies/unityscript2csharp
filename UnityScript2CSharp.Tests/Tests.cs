@@ -167,6 +167,15 @@ namespace UnityScript2CSharp.Tests
         }
 
         [Test]
+        public void Locals2()
+        {
+            var sourceFiles = SingleSourceFor("locals2.js", "function F(i:int) { if (i == 0) return; var j = i; F(j); j = i++; }");
+            var expectedConvertedContents = SingleSourceFor("locals2.cs", DefaultGeneratedClass + "locals2 : MonoBehaviour { public virtual void F(int i) { if (i == 0) { return; } int j = i; this.F(j); j = i++; } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
         public void Locals_With_Initializers()
         {
             var sourceFiles = SingleSourceFor("locals_initializers.js", "function F() { var i:int = 1; }");
@@ -179,7 +188,7 @@ namespace UnityScript2CSharp.Tests
         public void Locals_With_Custom_Type()
         {
             var sourceFiles = SingleSourceFor("locals_custom.js", "class C { function F() { var c:C; } }");
-            var expectedConvertedContents = SingleSourceFor("locals_custom.cs", DefaultUsings + " public class C : object { public virtual void F() { C c; } }");
+            var expectedConvertedContents = SingleSourceFor("locals_custom.cs", DefaultUsings + " public class C : object { public virtual void F() { C c = null; } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
