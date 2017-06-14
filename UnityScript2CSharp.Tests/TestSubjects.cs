@@ -22,4 +22,12 @@ namespace UnityScript2CSharp.Tests
 
         public string Message = "Foo";
     }
+
+    public class Properties
+    {
+        public int this[int i]
+        {
+            get { return i; }
+        }
+    }
 }

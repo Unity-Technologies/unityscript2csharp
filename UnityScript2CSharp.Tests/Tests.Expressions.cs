@@ -140,5 +140,41 @@ namespace UnityScript2CSharp.Tests
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
+
+        [Test]
+        public void New_Expression()
+        {
+            var sourceFiles = SingleSourceFor("new_expression.js", "import System.Text; function F(o:Object) : StringBuilder { F(new StringBuilder()); return new StringBuilder(); }");
+            var expectedConvertedContents = SingleSourceFor("new_expression.cs", "using System.Text; " + DefaultGeneratedClass + @"new_expression : MonoBehaviour { public virtual StringBuilder F(object o) { this.F(new StringBuilder()); return new StringBuilder(); } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
+        public void Method_Invocation()
+        {
+            var sourceFiles = SingleSourceFor("method_invocation.js", "function F(i:int, o:Object) { F(i, o); F(0, null); }");
+            var expectedConvertedContents = SingleSourceFor("method_invocation.cs", DefaultGeneratedClass + @"method_invocation : MonoBehaviour { public virtual void F(int i, object o) { this.F(i, o); this.F(0, null); } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
+        public void TypeOf()
+        {
+            var sourceFiles = SingleSourceFor("typeof_expression.js", "function F() { return typeof(int); }");
+            var expectedConvertedContents = SingleSourceFor("typeof_expression.cs", DefaultGeneratedClass + @"typeof_expression : MonoBehaviour { public virtual System.Type F() { return typeof(int); } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
+        public void Indexers()
+        {
+            var sourceFiles = SingleSourceFor("indexers.js", "import UnityScript2CSharp.Tests; function F(p:Properties) { return p[42]; }");
+            var expectedConvertedContents = SingleSourceFor("indexers.cs", "using UnityScript2CSharp.Tests; " + DefaultGeneratedClass + @"indexers : MonoBehaviour { public virtual int F(Properties p) { return p[42]; } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
     }
 }

@@ -242,6 +242,22 @@ namespace UnityScript2CSharp.Tests
         }
 
         [Test]
+        public void Ensure_Unqualified_Object_Type_References_Is_Resolved_To_System_Object()
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "object_type_ref.js", Contents = "function F(o:Object) : System.Type { F(new Object()); return typeof(Object); }" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "object_type_ref.cs", Contents = DefaultGeneratedClass + "object_type_ref : MonoBehaviour { public virtual System.Type F(object o) { this.F(new object()); return typeof(object); } }" } };
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
+        public void Ensure_Qualified_UnityEngine_Object_Type_References_Is_Not_Resolved_To_System_Object()
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "unity_object_type_ref.js", Contents = "function F() { return new UnityEngine.Object(); }" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "unity_object_type_ref.cs", Contents = DefaultGeneratedClass + "unity_object_type_ref : MonoBehaviour { public virtual UnityEngine.Object F() { return new UnityEngine.Object(); } }" } };
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
         public void Test_Formatting()
         {
         }

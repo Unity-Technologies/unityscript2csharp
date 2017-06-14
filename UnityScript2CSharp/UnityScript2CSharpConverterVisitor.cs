@@ -60,7 +60,8 @@ namespace UnityScript2CSharp
                         break;
                 }
 
-                if (typeName == null && _usings.Contains(externalType.ActualType.Namespace))
+                // UnityEngine.Object always need to be qualified.
+                if (typeName == null && _usings.Contains(externalType.ActualType.Namespace) && externalType.ActualType.FullName != "UnityEngine.Object")
                 {
                     typeName = externalType.Name;
                 }
@@ -160,13 +161,16 @@ namespace UnityScript2CSharp
             _writer.WriteLine("{");
             using (new BlockIdentation(_writer))
             {
+                var lastMember = node.Members.LastOrDefault();
                 foreach (var member in node.Members)
                 {
                     member.Accept(this);
+                    if (member != lastMember)
+                        _writer.WriteLine();
                 }
                 _writer.WriteLine();
             }
-            _builderAppend("}");
+            _writer.Write("}");
         }
 
         public override void OnStructDefinition(StructDefinition node)
@@ -255,7 +259,7 @@ namespace UnityScript2CSharp
 
             _builderAppendIdented(ModifiersToString(node.Modifiers));
             _builderAppend(' ');
-            AppendReturnType(node);
+            node.ReturnType.Accept(this);
             _builderAppend(' ');
             _builderAppend(node.Name);
             WriteParameterList(node.Parameters);
@@ -538,14 +542,23 @@ namespace UnityScript2CSharp
             if (HandleOperatorsReplacedWithMethods(node))
                 return;
 
+            HandleNewExpression(node);
+
             node.Target.Accept(this);
-            _writer.Write(_currentBrackets[0]);
-            foreach (var argument in node.Arguments)
-            {
-                argument.Accept(this);
-            }
-            _writer.Write(_currentBrackets[1]);
+
+            WriteParameterList(node.Arguments);
             _currentBrackets = RoundBrackets;
+        }
+
+        private void HandleNewExpression(MethodInvocationExpression node)
+        {
+            if (node.Target.Entity == null)
+                return;
+
+            if (node.Target.Entity.EntityType != EntityType.Constructor)
+                return;
+
+            _writer.Write("new ");
         }
 
         public override void OnUnaryExpression(UnaryExpression node)
@@ -588,12 +601,23 @@ namespace UnityScript2CSharp
 
         public override void OnReferenceExpression(ReferenceExpression node)
         {
-            _builderAppend(node.Name);
+            if (IsSystemObjectCtor(node))
+            {
+                _builderAppend("object");
+            }
+            else
+                _builderAppend(node.Name);
         }
 
         public override void OnMemberReferenceExpression(MemberReferenceExpression node)
         {
             node.Target.Accept(this);
+            if (node.ParentNode.IsIndexerReference())
+            {
+                _currentBrackets = SquareBrackets;
+                return;
+            }
+
             _builderAppend($".{node.Name}");
         }
 
@@ -606,9 +630,6 @@ namespace UnityScript2CSharp
                 _currentBrackets = SquareBrackets;
                 return;
             }
-
-            if (node.Entity?.EntityType == EntityType.Constructor)
-                _writer.Write("new ");
 
             node.Target.Accept(this);
             _writer.Write("<");
@@ -793,8 +814,9 @@ namespace UnityScript2CSharp
 
         public override void OnTypeofExpression(TypeofExpression node)
         {
-            NotSupported(node);
-            base.OnTypeofExpression(node);
+            _writer.Write("typeof(");
+            node.Type.Accept(this);
+            _writer.Write(")");
         }
 
         public override void OnCustomStatement(CustomStatement node)
@@ -920,14 +942,6 @@ namespace UnityScript2CSharp
             return usingCollector.Usings;
         }
 
-        private void AppendReturnType(Method node)
-        {
-            if (node.ReturnType != null)
-                node.ReturnType.Accept(this);
-            else
-                _builderAppend("void");
-        }
-
         private static bool IsArrayInstantiation(GenericReferenceExpression node)
         {
             // Arrays in UnityScript are represented as a GenericReferenceExpession
@@ -946,18 +960,17 @@ namespace UnityScript2CSharp
                 _writer.Write(posfix);
         }
 
-        private void WriteParameterList(ParameterDeclarationCollection parameters)
+        private void WriteParameterList(IEnumerable<Node> parameters)
         {
             var last = parameters.LastOrDefault();
-
-            _builderAppend('(');
+            _writer.Write(_currentBrackets[0]);
             foreach (var parameter in parameters)
             {
                 parameter.Accept(this);
                 if (parameter != last)
                     _builderAppend(", ");
             }
-            _builderAppend(')');
+            _writer.Write(_currentBrackets[1]);
         }
 
         private void RunRegardlessOfBeingSynthetic(Action action)
@@ -976,6 +989,22 @@ namespace UnityScript2CSharp
         private static bool IsSynthetic(InternalLocal internalLocal)
         {
             return internalLocal == null || internalLocal.OriginalDeclaration == null;
+        }
+
+        private static bool IsSystemObjectCtor(ReferenceExpression node)
+        {
+            var ctor = node.Entity as IConstructor;
+            if (ctor == null)
+                return false;
+
+            if (node.Name != "Object")
+                return false;
+
+            var declaringType = ctor.DeclaringType.Type as ExternalType;
+            if (declaringType == null)
+                return false;
+
+            return declaringType.ActualType.FullName == "System.Object";
         }
 
         private void NotSupported(Node node)

@@ -109,6 +109,7 @@
     <Compile Include="BlockIdentation.cs" />
     <Compile Include="CommandLineArguments.cs" />
     <Compile Include="EntityExtensions.cs" />
+    <Compile Include="NodeExtensions.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SourceFile.cs" />
