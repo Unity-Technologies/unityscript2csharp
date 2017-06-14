@@ -150,6 +150,8 @@ namespace UnityScript2CSharp
 
         public override void OnClassDefinition(ClassDefinition node)
         {
+            WriteAttributes(node.Attributes);
+
             _builderAppendIdented($"{ModifiersToString(node.Modifiers)} class {node.Name} : ");
             for (var i = 0; i < node.BaseTypes.Count; i++)
             {
@@ -214,6 +216,8 @@ namespace UnityScript2CSharp
 
         public override void OnField(Field node)
         {
+            WriteAttributes(node.Attributes);
+
             _builderAppend(ModifiersToString(node.Modifiers));
             _builderAppend(' ');
             node.Type.Accept(this);
@@ -256,6 +260,8 @@ namespace UnityScript2CSharp
         {
             if (node.Name == "Main")
                 return;
+
+            WriteAttributes(node.Attributes);
 
             _builderAppendIdented(ModifiersToString(node.Modifiers));
             _builderAppend(' ');
@@ -374,8 +380,21 @@ namespace UnityScript2CSharp
 
         public override void OnAttribute(Attribute node)
         {
-            NotSupported(node);
-            base.OnAttribute(node);
+            var fullList = node.Arguments.Concat<Node>(node.NamedArguments).ToArray();
+
+            _writer.Write($"[{node.Name.Substring(0, node.Name.Length - "Attribute".Length)}");
+
+            var needParentheses = fullList.Any();
+
+            if (needParentheses)
+                _writer.Write("(");
+
+            WriteCommaSeparatedList(fullList);
+
+            if (needParentheses)
+                _writer.Write(")");
+
+            _writer.WriteLine("]");
         }
 
         public override void OnStatementModifier(StatementModifier node)
@@ -530,8 +549,9 @@ namespace UnityScript2CSharp
 
         public override void OnExpressionPair(ExpressionPair node)
         {
-            NotSupported(node);
-            base.OnExpressionPair(node);
+            node.First.Accept(this);
+            _writer.Write(" = ");
+            node.Second.Accept(this);
         }
 
         public override void OnMethodInvocationExpression(MethodInvocationExpression node)
@@ -962,15 +982,20 @@ namespace UnityScript2CSharp
 
         private void WriteParameterList(IEnumerable<Node> parameters)
         {
-            var last = parameters.LastOrDefault();
             _writer.Write(_currentBrackets[0]);
+            WriteCommaSeparatedList(parameters);
+            _writer.Write(_currentBrackets[1]);
+        }
+
+        private void WriteCommaSeparatedList(IEnumerable<Node> parameters)
+        {
+            var last = parameters.LastOrDefault();
             foreach (var parameter in parameters)
             {
                 parameter.Accept(this);
                 if (parameter != last)
                     _builderAppend(", ");
             }
-            _writer.Write(_currentBrackets[1]);
         }
 
         private void RunRegardlessOfBeingSynthetic(Action action)
@@ -1005,6 +1030,14 @@ namespace UnityScript2CSharp
                 return false;
 
             return declaringType.ActualType.FullName == "System.Object";
+        }
+
+        private void WriteAttributes(AttributeCollection attributes)
+        {
+            foreach (var attribute in attributes)
+            {
+                attribute.Accept(this);
+            }
         }
 
         private void NotSupported(Node node)

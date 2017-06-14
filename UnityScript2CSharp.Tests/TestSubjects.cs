@@ -30,4 +30,17 @@ namespace UnityScript2CSharp.Tests
             get { return i; }
         }
     }
+
+    public class AttrAttribute : System.Attribute
+    {
+        public AttrAttribute()
+        {
+        }
+
+        public AttrAttribute(int i)
+        {
+        }
+
+        public bool Prop { get; set; }
+    }
 }
