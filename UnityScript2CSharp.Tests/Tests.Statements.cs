@@ -1,3 +1,4 @@
+using System;
 using NUnit.Framework;
 
 namespace UnityScript2CSharp.Tests
@@ -130,6 +131,15 @@ namespace UnityScript2CSharp.Tests
         {
             var sourceFiles = SingleSourceFor("switch_multiple_statements.js", "function F(i:int) { var l:int; switch(i) { case 1: l = i; i = i + 1; break; case 2: i = 0; break; } return l + i; }");
             var expectedConvertedContents = SingleSourceFor("switch_multiple_statements.cs", DefaultGeneratedClass + "switch_multiple_statements : MonoBehaviour { public virtual int F(int i) { int l; switch (i) { case 1: l = i; i = i + 1; break; case 2: i = 0; break; } return l + i; } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
+        public void Switch_On_Enum()
+        {
+            var sourceFiles = SingleSourceFor("switch_on_enum.js", "import System; function F(t:DateTimeKind) { switch(t) { case DateTimeKind.Utc: return 0; case DateTimeKind.Local: return 1; } return 2; }");
+            var expectedConvertedContents = SingleSourceFor("switch_on_enum.cs", "using System; " + DefaultGeneratedClass + "switch_on_enum : MonoBehaviour { public virtual int F(DateTimeKind t) { switch (t) { case DateTimeKind.Utc: return 0; break; case DateTimeKind.Local: return 1; break; } return 2; } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }

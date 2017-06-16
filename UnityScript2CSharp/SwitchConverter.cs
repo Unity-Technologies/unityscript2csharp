@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Boo.Lang.Compiler.Ast;
+using Boo.Lang.Compiler.TypeSystem.Reflection;
 
 namespace UnityScript2CSharp
 {
@@ -143,7 +144,8 @@ namespace UnityScript2CSharp
 
             using (new BlockIdentation(_writer))
             {
-                var caseStatements = caseBlock.Statements.Take(caseBlock.Statements.Count - 1).Where(stmt => stmt.NodeType != NodeType.LabelStatement);
+                var caseStatements = caseBlock.Statements.Where(stmt => stmt.NodeType != NodeType.LabelStatement).Take(caseBlock.Statements.Count - 1);
+                //var caseStatements = caseBlock.Statements.Take(caseBlock.Statements.Count - 1).Where(stmt => stmt.NodeType != NodeType.LabelStatement);
                 foreach (var statement in caseStatements)
                 {
                     statement.Accept(_us2CsVisitor);
@@ -182,6 +184,22 @@ namespace UnityScript2CSharp
             public override void OnCharLiteralExpression(CharLiteralExpression node)
             {
                 _literals.Add(node.Value);
+            }
+
+            public override void OnMemberReferenceExpression(MemberReferenceExpression node)
+            {
+                var target = node.Target as ReferenceExpression;
+                if (target != null)
+                {
+                    var type = target.Entity as ExternalType;
+                    if (type != null && type.IsEnum)
+                    {
+                        _literals.Add(node.ToCodeString());
+                        return;
+                    }
+                }
+
+                base.OnMemberReferenceExpression(node);
             }
 
             public static IEnumerable<string> Collect(BinaryExpression binaryExpression)
