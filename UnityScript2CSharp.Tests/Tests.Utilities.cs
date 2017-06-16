@@ -81,7 +81,7 @@ namespace UnityScript2CSharp.Tests
                 var generatedScript = File.ReadAllText(convertedFilePath);
                 generatedScript = r.Replace(generatedScript, " ");
 
-                Assert.That(generatedScript, Is.EqualTo(expectedConverted[i].Contents), Environment.NewLine + "Converted: " + Environment.NewLine + generatedScript + Environment.NewLine);
+                Assert.That(generatedScript.Trim(), Is.EqualTo(expectedConverted[i].Contents), Environment.NewLine + "Converted: " + Environment.NewLine + generatedScript + Environment.NewLine);
             }
         }
 

@@ -136,10 +136,19 @@ namespace UnityScript2CSharp.Tests
         }
 
         [Test]
-        public void Switch_On_Enum()
+        public void Switch_On_Extern_Enum()
         {
             var sourceFiles = SingleSourceFor("switch_on_enum.js", "import System; function F(t:DateTimeKind) { switch(t) { case DateTimeKind.Utc: return 0; case DateTimeKind.Local: return 1; } return 2; }");
             var expectedConvertedContents = SingleSourceFor("switch_on_enum.cs", "using System; " + DefaultGeneratedClass + "switch_on_enum : MonoBehaviour { public virtual int F(DateTimeKind t) { switch (t) { case DateTimeKind.Utc: return 0; break; case DateTimeKind.Local: return 1; break; } return 2; } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
+        public void Switch_On_Local_Enum()
+        {
+            var sourceFiles = SingleSourceFor("switch_local_enum.js", "enum E { First, Second } function F(t:E) { switch(t) { case E.First: return 0; case E.Second: return 1; } return 2; }");
+            var expectedConvertedContents = SingleSourceFor("switch_local_enum.cs", DefaultUsings + " public enum E { First, Second } public partial class switch_local_enum : MonoBehaviour { public virtual int F(E t) { switch (t) { case E.First: return 0; break; case E.Second: return 1; break; } return 2; } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }

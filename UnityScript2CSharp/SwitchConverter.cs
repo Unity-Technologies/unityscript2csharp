@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Boo.Lang.Compiler.Ast;
-using Boo.Lang.Compiler.TypeSystem.Reflection;
+using Boo.Lang.Compiler.TypeSystem;
 
 namespace UnityScript2CSharp
 {
@@ -145,7 +145,6 @@ namespace UnityScript2CSharp
             using (new BlockIdentation(_writer))
             {
                 var caseStatements = caseBlock.Statements.Where(stmt => stmt.NodeType != NodeType.LabelStatement).Take(caseBlock.Statements.Count - 1);
-                //var caseStatements = caseBlock.Statements.Take(caseBlock.Statements.Count - 1).Where(stmt => stmt.NodeType != NodeType.LabelStatement);
                 foreach (var statement in caseStatements)
                 {
                     statement.Accept(_us2CsVisitor);
@@ -191,7 +190,7 @@ namespace UnityScript2CSharp
                 var target = node.Target as ReferenceExpression;
                 if (target != null)
                 {
-                    var type = target.Entity as ExternalType;
+                    var type = target.Entity as IType;
                     if (type != null && type.IsEnum)
                     {
                         _literals.Add(node.ToCodeString());

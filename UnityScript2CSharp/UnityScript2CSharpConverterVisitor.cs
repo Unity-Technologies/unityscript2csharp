@@ -172,7 +172,7 @@ namespace UnityScript2CSharp
                 }
                 _writer.WriteLine();
             }
-            _writer.Write("}");
+            _writer.WriteLine("}");
         }
 
         public override void OnStructDefinition(StructDefinition node)
@@ -201,7 +201,7 @@ namespace UnityScript2CSharp
                     _writer.WriteLine(enumMember != last ? "," : string.Empty);
                 }
             }
-            _writer.Write("}");
+            _writer.WriteLine("}");
         }
 
         public override void OnEnumMember(EnumMember node)
