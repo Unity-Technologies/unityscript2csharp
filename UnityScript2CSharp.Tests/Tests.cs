@@ -279,6 +279,14 @@ namespace UnityScript2CSharp.Tests
         }
 
         [Test]
+        public void Static_Constructor()
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "static_constructor.js", Contents = "public static var value : int = 42;" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "static_constructor.cs", Contents = DefaultGeneratedClass + "static_constructor : MonoBehaviour { public static int value; static static_constructor() { static_constructor.value = 42; } }" } };
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
         public void Ensure_Unqualified_Object_Type_References_Is_Resolved_To_System_Object()
         {
             var sourceFiles = new[] { new SourceFile { FileName = "object_type_ref.js", Contents = "function F(o:Object) : System.Type { F(new Object()); return typeof(Object); }" } };

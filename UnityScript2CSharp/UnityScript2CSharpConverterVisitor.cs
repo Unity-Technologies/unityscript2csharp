@@ -5,6 +5,7 @@ using System.Text;
 using Boo.Lang.Compiler.Ast;
 using Boo.Lang.Compiler.Ast.Visitors;
 using Boo.Lang.Compiler.TypeSystem;
+using Boo.Lang.Compiler.TypeSystem.Core;
 using Boo.Lang.Compiler.TypeSystem.Internal;
 using Boo.Lang.Compiler.TypeSystem.Reflection;
 using Attribute = Boo.Lang.Compiler.Ast.Attribute;
@@ -300,21 +301,13 @@ namespace UnityScript2CSharp
 
         public override void OnConstructor(Constructor node)
         {
-            var stmts = node.Body.Statements;
+            var stmts = CtorStatementsWithoutSuperInvocation(node);
             if (stmts.Count == 0)
                 return;
 
-            var expressionStatement = stmts[0] as ExpressionStatement;
-            var superInvocationCandidate = expressionStatement != null ? expressionStatement.Expression as MethodInvocationExpression : null;
-            if (superInvocationCandidate != null && superInvocationCandidate.Target.NodeType == NodeType.SuperLiteralExpression)
-            {
-                stmts.Remove(stmts.First);
-            }
+            var ctorModifiers = node.IsStatic? TypeMemberModifiers.Static : node.Modifiers;
+            _builderAppendIdented(ModifiersToString(ctorModifiers));
 
-            if (stmts.Count == 0)
-                return;
-
-            _builderAppendIdented(ModifiersToString(node.Modifiers));
             _builderAppend(' ');
             _builderAppend(node.DeclaringType.Name);
 
@@ -324,10 +317,7 @@ namespace UnityScript2CSharp
             // When visiting binary expressions we need to know whether to ignore synthetic expressions because local variables (with initializers) have
             // both the initialization and a binary expression (basically representing the same initialization). So, usually we ignore all synthetic binary
             // expressions, unless they are inside a ctor.
-            RunRegardlessOfBeingSynthetic(delegate
-                {
-                    node.Body.Accept(this);
-                });
+            RunRegardlessOfBeingSynthetic(delegate { node.Body.Accept(this); });
         }
 
         public override void OnDestructor(Destructor node)
@@ -1049,6 +1039,23 @@ namespace UnityScript2CSharp
                 return false;
 
             return declaringType.ActualType.FullName == "System.Object";
+        }
+
+        private static StatementCollection CtorStatementsWithoutSuperInvocation(Constructor node)
+        {
+            var stmts = node.Body.Statements;
+            if (stmts.Count == 0)
+                return stmts;
+
+            var expressionStatement = stmts[0] as ExpressionStatement;
+            var superInvocationCandidate = expressionStatement != null
+                ? expressionStatement.Expression as MethodInvocationExpression
+                : null;
+            if (superInvocationCandidate != null && superInvocationCandidate.Target.NodeType == NodeType.SuperLiteralExpression)
+            {
+                stmts.Remove(stmts.First);
+            }
+            return stmts;
         }
 
         private void WriteAttributes(AttributeCollection attributes)
