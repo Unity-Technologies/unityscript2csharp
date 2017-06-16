@@ -113,10 +113,7 @@ namespace UnityScript2CSharp
         public override void OnGenericTypeReference(GenericTypeReference node)
         {
             _writer.Write($"{node.Name}<");
-            foreach (var argument in node.GenericArguments)
-            {
-                argument.Accept(this);
-            }
+            WriteCommaSeparatedList(node.GenericArguments);
             _writer.Write(">");
         }
 
@@ -305,7 +302,7 @@ namespace UnityScript2CSharp
             if (stmts.Count == 0)
                 return;
 
-            var ctorModifiers = node.IsStatic? TypeMemberModifiers.Static : node.Modifiers;
+            var ctorModifiers = node.IsStatic ? TypeMemberModifiers.Static : node.Modifiers;
             _builderAppendIdented(ModifiersToString(ctorModifiers));
 
             _builderAppend(' ');
@@ -613,11 +610,9 @@ namespace UnityScript2CSharp
         public override void OnReferenceExpression(ReferenceExpression node)
         {
             if (IsSystemObjectCtor(node))
-            {
-                _builderAppend("object");
-            }
+                _writer.Write("object");
             else
-                _builderAppend(node.Name);
+                _writer.Write(node.Name);
         }
 
         public override void OnMemberReferenceExpression(MemberReferenceExpression node)
