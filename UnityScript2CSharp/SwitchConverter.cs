@@ -29,8 +29,7 @@ namespace UnityScript2CSharp
 
             var conditionVarInitialization = ((ExpressionStatement)candidateBlock.Statements[0]).Expression as BinaryExpression;
 
-            // First statment of blobk should be something like "$switch$1 = i;"
-            if (conditionVarInitialization == null || conditionVarInitialization.Left.NodeType != NodeType.ReferenceExpression)
+            if (!IsSwitchVariableInitialization(conditionVarInitialization))
                 return false;
 
             // Next statement should be something like: "if ($switch$1 == 1)"
@@ -44,6 +43,14 @@ namespace UnityScript2CSharp
 
             WriteSwitchStatement(candidateBlock, conditionVarInitialization);
             return true;
+        }
+
+        private static bool IsSwitchVariableInitialization(BinaryExpression conditionVarInitialization)
+        {
+            // First statment of blobk should be something like "$switch$1 = i;"
+            return conditionVarInitialization != null
+                && conditionVarInitialization.Left.NodeType == NodeType.ReferenceExpression
+                && conditionVarInitialization.Left.ToCodeString().Contains("$switch");
         }
 
         private void WriteSwitchStatement(Block node, BinaryExpression conditionVarInitialization)
