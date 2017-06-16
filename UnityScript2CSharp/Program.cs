@@ -23,13 +23,13 @@ namespace UnityScript2CSharp
             Console.WriteLine($"Editor: {editorSubFolder}\r\nPlugin: {pluginSubFolder}");
 
             var allFiles = Directory.GetFiles(Path.Combine(options.Value.ProjectPath, "Assets"), "*.js", SearchOption.AllDirectories);
-            var filter = new Regex(string.Format(@"{0}{1}{0}", Path.DirectorySeparatorChar, editorSubFolder), RegexOptions.Compiled);
+            var filter = new Regex(string.Format(@"{0}{1}{0}|{0}{2}{0}", Path.DirectorySeparatorChar, editorSubFolder, pluginSubFolder), RegexOptions.Compiled);
 
             var runtimeScripts = allFiles.Where(scriptPath => !filter.IsMatch(scriptPath)).Select(scriptPath => new SourceFile { FileName = scriptPath, Contents = File.ReadAllText(scriptPath)});
             var editorScripts = allFiles.Where(scriptPath => scriptPath.Contains(editorSubFolder)).Select(scriptPath => new SourceFile { FileName = scriptPath, Contents = File.ReadAllText(scriptPath) });
             var pluginScripts = allFiles.Where(scriptPath => scriptPath.Contains(pluginSubFolder)).Select(scriptPath => new SourceFile { FileName = scriptPath, Contents = File.ReadAllText(scriptPath) });
 
-            if (options.Value.Dump)
+            if (options.Value.ShowScripts)
             {
                 DumpScripts("Runtime", runtimeScripts);
                 DumpScripts("Editor", editorScripts);
@@ -41,42 +41,58 @@ namespace UnityScript2CSharp
             var references = new List<string>(options.Value.References);
             references.Add(typeof(object).Assembly.Location);
 
+            if (!ValidateAssemblyReferences(options))
+                return -1;
+
+            ConvertScripts("runtime", runtimeScripts, converter, references, options.Value.Defines, options.Value.RemoveOriginalFiles);
+            ConvertScripts("editor", editorScripts, converter, references, options.Value.Defines, options.Value.RemoveOriginalFiles);
+            ConvertScripts("plugins", pluginScripts, converter, references, options.Value.Defines, options.Value.RemoveOriginalFiles);
+
+            return 0;
+        }
+
+        private static bool ValidateAssemblyReferences(ParserResult<CommandLineArguments> options)
+        {
+            bool ok = true;
             foreach (var reference in options.Value.References)
             {
                 if (!File.Exists(reference))
                 {
                     Console.WriteLine($"Cannot find referenced assembly: {reference}");
-                    return -1;
+                    ok = false;
                 }
             }
-
-            ConvertScripts("runtime", runtimeScripts, converter, references, options.Value.Defines);
-            ConvertScripts("editor", editorScripts, converter, references, options.Value.Defines);
-            ConvertScripts("plugins", pluginScripts, converter, references, options.Value.Defines);
-
-            return 0;
+            return ok;
         }
 
-        private static void ConvertScripts(string scriptType, IEnumerable<SourceFile> runtimeScripts, UnityScript2CSharpConverter converter, List<string> references, IEnumerable<string> defines)
+        private static void ConvertScripts(string scriptType, IEnumerable<SourceFile> runtimeScripts, UnityScript2CSharpConverter converter, IEnumerable<string> references, IEnumerable<string> defines, bool removeOriginalFiles)
         {
             Console.WriteLine("Converting '{0}' ", scriptType);
             converter.Convert(
                 runtimeScripts,
                 defines,
                 references,
-                HandleConvertedScript);
+                (scriptPath, context) => HandleConvertedScript(scriptPath, context, removeOriginalFiles));
         }
 
-        private static void HandleConvertedScript(string scriptPath, string content)
+        private static void HandleConvertedScript(string scriptPath, string content, bool removeOriginalFiles)
         {
             var csPath = Path.ChangeExtension(scriptPath, ".cs");
             File.WriteAllText(csPath, content);
 
             var jsMetaFile = scriptPath + ".meta";
             var csMetaFile = jsMetaFile.Replace(".js.", ".cs.");
-            File.Copy(jsMetaFile, csMetaFile, true);
 
-            // Remove js + meta files
+            File.Move(jsMetaFile, csMetaFile);
+
+            if (removeOriginalFiles)
+            {
+                File.Delete(scriptPath);
+            }
+            else
+            {
+                File.Move(scriptPath, scriptPath + ".old");
+            }
         }
 
         private static void DumpScripts(string desc, IEnumerable<SourceFile> scripts)
