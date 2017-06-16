@@ -353,9 +353,10 @@ namespace UnityScript2CSharp
             node.Declaration.Accept(this);
             if (node.Initializer != null)
             {
-                _builderAppend(" = ");
+                _writer.Write(" = ");
                 node.Initializer.Accept(this);
             }
+            _writer.WriteLine(";");
         }
 
         public override void OnDeclaration(Declaration node)
@@ -528,7 +529,10 @@ namespace UnityScript2CSharp
         public override void OnExpressionStatement(ExpressionStatement node)
         {
             node.Expression.Accept(this);
-            _writer.WriteLine(";");
+            if (!_lastIgnored)
+                _writer.WriteLine(";");
+
+            _lastIgnored = false;
         }
 
         public override void OnOmittedExpression(OmittedExpression node)
@@ -547,7 +551,12 @@ namespace UnityScript2CSharp
         public override void OnMethodInvocationExpression(MethodInvocationExpression node)
         {
             if (node.Target.Entity != null && node.Target.Entity.EntityType == EntityType.BuiltinFunction)
+            {
+                _lastIgnored = true;
                 return;
+            }
+
+            _lastIgnored = false;
 
             if (HandleOperatorsReplacedWithMethods(node))
                 return;
@@ -1041,6 +1050,7 @@ namespace UnityScript2CSharp
 
         private static char[] RoundBrackets = {'(', ')'};
         private static char[] SquareBrackets = {'[', ']'};
+        private bool _lastIgnored;
     }
 
     internal class AutoVarDeclarationFinder : FastDepthFirstVisitor
