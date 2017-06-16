@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using NUnit.Framework;
 
 namespace UnityScript2CSharp.Tests
@@ -329,6 +330,14 @@ namespace UnityScript2CSharp.Tests
         }
 
         [Test]
+        public void String_Literals([ValueSource("StringLiteralTestProvider")] string str)
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "string_literals.js", Contents = $"function F() {{ return \"{str}\"; }}" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "string_literals.cs", Contents = DefaultGeneratedClass + $"string_literals : MonoBehaviour {{ public virtual string F() {{ return \"{str}\"; }} }}" } };
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
         public void Test_Formatting()
         {
         }
@@ -341,6 +350,16 @@ namespace UnityScript2CSharp.Tests
         [Test]
         public void Scripts_In_Plugin_Folder_Works()
         {
+        }
+
+        private static IEnumerable<string> StringLiteralTestProvider()
+        {
+            yield return @"\nFoo";
+            yield return @"Foo\n";
+            yield return @"\nFoo\n";
+            yield return @"\tFoo\n";
+            yield return @"\""Foo\""";
+            yield return @"\""Foo\n\""";
         }
     }
 }

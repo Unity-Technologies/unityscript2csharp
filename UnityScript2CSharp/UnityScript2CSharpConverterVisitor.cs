@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Boo.Lang.Compiler.Ast;
 using Boo.Lang.Compiler.Ast.Visitors;
 using Boo.Lang.Compiler.TypeSystem;
@@ -671,7 +672,25 @@ namespace UnityScript2CSharp
 
         public override void OnStringLiteralExpression(StringLiteralExpression node)
         {
-            _builderAppend(string.Format("\"{0}\"", node.Value));
+            var replacements = new Dictionary<string, string>
+            {
+                {"\n", "\\n"},
+                {"\r", "\\r"},
+                {"\a", "\\a"},
+                {"\b", "\\b"},
+                {"\f", "\\f"},
+                {"\t", "\\t"},
+                {"\v", "\\v"},
+                {"\"", "\\\""},
+            };
+
+            var value = new StringBuilder(node.Value);
+            foreach (var replacement in replacements)
+            {
+                value.Replace(replacement.Key, replacement.Value);
+            }
+
+            _builderAppend(string.Format("\"{0}\"", value));
         }
 
         public override void OnCharLiteralExpression(CharLiteralExpression node)
