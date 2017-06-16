@@ -624,7 +624,20 @@ namespace UnityScript2CSharp
                 return;
             }
 
-            _builderAppend($".{node.Name}");
+            _builderAppend($".{NameFor(node)}");
+        }
+
+        private string NameFor(MemberReferenceExpression node)
+        {
+            if (node.Target.ExpressionType == null || !node.Target.ExpressionType.IsArray)
+                return node.Name;
+
+            // convert acess to array members to "CamelCase"
+            var name = new StringBuilder();
+            name.Append(Char.ToUpper(node.Name[0]));
+            name.Append(node.Name.Substring(1));
+
+            return name.ToString();
         }
 
         public override void OnGenericReferenceExpression(GenericReferenceExpression node)

@@ -51,6 +51,15 @@ namespace UnityScript2CSharp.Tests
         }
 
         [Test]
+        public void Array_Members()
+        {
+            var sourceFiles = SingleSourceFor("array_members.js", "function F(a:int[]) { return a.length; }");
+            var expectedConvertedContents = SingleSourceFor("array_members.cs", DefaultGeneratedClass + "array_members : MonoBehaviour { public virtual int F(int[] a) { return a.Length; } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
         public void Simple_Generic_Methods()
         {
             var sourceFiles = SingleSourceFor("simple_generic_method.js", "import UnityScript2CSharp.Tests; function F(o:NonGeneric) { return o.ToName.<NonGeneric>(42); }");
