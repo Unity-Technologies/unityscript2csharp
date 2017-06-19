@@ -549,7 +549,23 @@ namespace UnityScript2CSharp
 
             node.Target.Accept(this);
 
-            WriteParameterList(node.Arguments);
+            var externalMethod = node.Target.Entity as ExternalMethod;
+            Action<Node, int> refOutWriter = delegate {};
+
+            if (externalMethod != null)
+            {
+                refOutWriter = (arg, index) =>
+                    {
+                        var param = externalMethod.MethodInfo.GetParameters()[index];
+                        if (param.ParameterType.IsByRef && !param.IsOut)
+                            _writer.Write("ref ");
+                        else if (param.IsOut)
+                            _writer.Write("out ");
+                    };
+            }
+
+            WriteParameterList(node.Arguments, refOutWriter);
+
             _currentBrackets = RoundBrackets;
         }
 
@@ -978,20 +994,23 @@ namespace UnityScript2CSharp
                 _writer.Write(posfix);
         }
 
-        private void WriteParameterList(IEnumerable<Node> parameters)
+        private void WriteParameterList<T>(IEnumerable<T> parameters, Action<T, int> preWrite = null) where T : Node
         {
             _writer.Write(_currentBrackets[0]);
-            WriteCommaSeparatedList(parameters);
+            WriteCommaSeparatedList(parameters, preWrite);
             _writer.Write(_currentBrackets[1]);
         }
 
-        private void WriteCommaSeparatedList(IEnumerable<Node> parameters)
+        private void WriteCommaSeparatedList<T>(IEnumerable<T> items, Action<T, int> preWrite = null) where T : Node
         {
-            var last = parameters.LastOrDefault();
-            foreach (var parameter in parameters)
+            preWrite = preWrite ?? delegate(T t, int i) {};
+            var index = 0;
+            var last = items.LastOrDefault();
+            foreach (var item in items)
             {
-                parameter.Accept(this);
-                if (parameter != last)
+                preWrite(item, index++);
+                item.Accept(this);
+                if (item != last)
                     _builderAppend(", ");
             }
         }

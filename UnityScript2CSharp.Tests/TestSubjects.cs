@@ -57,4 +57,13 @@ namespace UnityScript2CSharp.Tests
     {
         public static object M(Type t) { return null; }
     }
+
+    public class Methods
+    {
+        public static void OutRef(out int i, ref int j)
+        {
+            i = 10;
+            j = i;
+        }
+    }
 }
