@@ -5,7 +5,6 @@ using System.Text;
 using Boo.Lang.Compiler.Ast;
 using Boo.Lang.Compiler.Ast.Visitors;
 using Boo.Lang.Compiler.TypeSystem;
-using Boo.Lang.Compiler.TypeSystem.Core;
 using Boo.Lang.Compiler.TypeSystem.Internal;
 using Boo.Lang.Compiler.TypeSystem.Reflection;
 using Attribute = Boo.Lang.Compiler.Ast.Attribute;
@@ -621,20 +620,7 @@ namespace UnityScript2CSharp
                 return;
             }
 
-            _builderAppend($".{NameFor(node)}");
-        }
-
-        private string NameFor(MemberReferenceExpression node)
-        {
-            if (node.Target.ExpressionType == null || !node.Target.ExpressionType.IsArray)
-                return node.Name;
-
-            // convert acess to array members to "CamelCase"
-            var name = new StringBuilder();
-            name.Append(Char.ToUpper(node.Name[0]));
-            name.Append(node.Name.Substring(1));
-
-            return name.ToString();
+            _builderAppend($".{node.Name}");
         }
 
         public override void OnGenericReferenceExpression(GenericReferenceExpression node)
@@ -840,10 +826,19 @@ namespace UnityScript2CSharp
 
         public override void OnCastExpression(CastExpression node)
         {
+            var mre = node.ParentNode as TryCastExpression;
+            var isTargetOfExpression = mre != null && mre.Target == node;
+
+            if (isTargetOfExpression)
+                _writer.Write("(");
+
             _writer.Write("(");
             node.Type.Accept(this);
             _writer.Write(") ");
             node.Target.Accept(this);
+
+            if (isTargetOfExpression)
+                _writer.Write(")");
         }
 
         public override void OnTypeofExpression(TypeofExpression node)

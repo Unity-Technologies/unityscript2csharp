@@ -169,6 +169,15 @@ namespace UnityScript2CSharp.Tests
         }
 
         [Test]
+        public void Method_Taking_System_Type()
+        {
+            var sourceFiles = SingleSourceFor("system_type_as_parameter.js", "function F() { return System.Type.GetTypeCode(int); }");
+            var expectedConvertedContents = SingleSourceFor("system_type_as_parameter.cs", DefaultGeneratedClass + @"system_type_as_parameter : MonoBehaviour { public virtual System.TypeCode F() { return System.Type.GetTypeCode(typeof(int)); } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
         public void TypeOf()
         {
             var sourceFiles = SingleSourceFor("typeof_expression.js", "function F() { return typeof(int); }");

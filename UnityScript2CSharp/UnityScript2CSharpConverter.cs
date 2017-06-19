@@ -120,7 +120,11 @@ namespace UnityScript2CSharp
 
             var adjustedPipeline = UnityScriptCompiler.Pipelines.AdjustBooPipeline(pipeline);
             pipeline.Replace(typeof(ProcessUnityScriptMethods), new SelectiveUnaryExpressionExpansionProcessUnityScriptMethods());
+            adjustedPipeline.Add(new InferredMethodReturnTypeFix());
+
             adjustedPipeline.Add(new RenameArrayDeclaration());
+            adjustedPipeline.Add(new InjectTypeOfExpressionsInArgumentsOfSystemType());
+            adjustedPipeline.Add(new ReplaceArrayMemberReferenceWithCamelCaseVersion());
 
             adjustedPipeline.Remove(typeof(BindEnumMembers));
             adjustedPipeline.Remove(typeof(CheckIdentifiers));

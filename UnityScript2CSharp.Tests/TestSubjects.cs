@@ -1,3 +1,5 @@
+using System;
+
 namespace UnityScript2CSharp.Tests
 {
     public class NonGeneric
@@ -43,4 +45,10 @@ namespace UnityScript2CSharp.Tests
 
         public bool Prop { get; set; }
     }
+
+    public class SystemTypeAsParameter
+    {
+        public static object M(Type t) { return null; }
+    }
+
 }
