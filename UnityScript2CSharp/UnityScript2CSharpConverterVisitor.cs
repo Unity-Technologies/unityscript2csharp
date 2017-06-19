@@ -152,12 +152,9 @@ namespace UnityScript2CSharp
             WriteAttributes(node.Attributes);
 
             _builderAppendIdented($"{ModifiersToString(node.Modifiers)} class {node.Name} : ");
-            for (var i = 0; i < node.BaseTypes.Count; i++)
-            {
-                node.BaseTypes[i].Accept(this);
-                if ((i + 1) < node.BaseTypes.Count)
-                    _builderAppend(", ");
-            }
+
+            WriteCommaSeparatedList(node.BaseTypes);
+
             _writer.WriteLine();
             _writer.WriteLine("{");
             using (new BlockIdentation(_writer))

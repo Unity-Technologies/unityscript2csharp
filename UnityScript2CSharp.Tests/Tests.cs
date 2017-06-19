@@ -123,14 +123,6 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
-        //[Test]
-        //public void Literal_Tests()
-        //{
-        //    var sourceFiles = SourcesFor("literal.js", "class LiteralTests { function F() { var i = 1; var d = 1d; } }");
-        //    var expectedConvertedContents = SourcesFor("literal.cs", "class LiteralTests { public void F() { int i = 1; var d = 1d; } }");
-        //    AssertConversion(sourceFiles, expectedConvertedContents);
-        //}
-
         [Test]
         public void Property_Getter()
         {
@@ -342,6 +334,14 @@ namespace UnityScript2CSharp.Tests
         {
             var sourceFiles = new[] { new SourceFile { FileName = "string_literals.js", Contents = $"function F() {{ return \"{str}\"; }}" } };
             var expectedConvertedContents = new[] { new SourceFile { FileName = "string_literals.cs", Contents = DefaultGeneratedClass + $"string_literals : MonoBehaviour {{ public virtual string F() {{ return \"{str}\"; }} }}" } };
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
+        public void Base_Types()
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "base_types.js", Contents = "class Foo implements System.ICloneable, System.IDisposable { function Dispose() {} function Clone() { return null; } }" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "base_types.cs", Contents = DefaultUsings + " public class Foo : object, System.ICloneable, System.IDisposable { public virtual void Dispose() { } public virtual object Clone() { return null; } }" } };
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
