@@ -111,7 +111,6 @@
     <Compile Include="EntityExtensions.cs" />
     <Compile Include="Steps\InferredMethodReturnTypeFix.cs" />
     <Compile Include="Steps\InjectTypeOfExpressionsInArgumentsOfSystemType.cs" />
-    <Compile Include="NodeExtensions.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Steps\ReplaceArrayMemberReferenceWithCamelCaseVersion.cs" />
@@ -119,6 +118,7 @@
     <Compile Include="Steps\SelectiveUnaryExpressionExpansionProcessUnityScriptMethods.cs" />
     <Compile Include="Steps\RenameArrayDeclaration.cs" />
     <Compile Include="Steps\TransformKnownCalls.cs" />
+    <Compile Include="Steps\ReplaceGetSetItemMethodsWithOriginalIndexers.cs" />
     <Compile Include="SwitchConverter.cs" />
     <Compile Include="UnityScript2CSharpConverter.cs" />
     <Compile Include="UnityScript2CSharpConverterVisitor.cs" />

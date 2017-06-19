@@ -45,7 +45,7 @@ namespace UnityScript2CSharp.Tests
         public void Multidiminsional_Arrays_Item_Access(string usTypeName, string csTypeName)
         {
             var sourceFiles = SingleSourceFor("multidimensiona_array_item_access.js", $"function F(a:{usTypeName}[,]) {{ return a[4,2]; }}");
-            var expectedConvertedContents = SingleSourceFor("multidimensiona_array_item_access.cs", DefaultGeneratedClass + $@"multidimensiona_array_item_access : MonoBehaviour {{ public virtual {csTypeName} F({csTypeName}[,] a) {{ return a[4,2]; }} }}");
+            var expectedConvertedContents = SingleSourceFor("multidimensiona_array_item_access.cs", DefaultGeneratedClass + $@"multidimensiona_array_item_access : MonoBehaviour {{ public virtual {csTypeName} F({csTypeName}[,] a) {{ return a[4, 2]; }} }}");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -189,8 +189,8 @@ namespace UnityScript2CSharp.Tests
         [Test]
         public void Indexers()
         {
-            var sourceFiles = SingleSourceFor("indexers.js", "import UnityScript2CSharp.Tests; function F(p:Properties) { return p[42]; }");
-            var expectedConvertedContents = SingleSourceFor("indexers.cs", "using UnityScript2CSharp.Tests; " + DefaultGeneratedClass + @"indexers : MonoBehaviour { public virtual int F(Properties p) { return p[42]; } }");
+            var sourceFiles = SingleSourceFor("indexers.js", "import UnityScript2CSharp.Tests; function F(p:Properties) { p[0] = 1; p[1, \"foo\"] = 2; return p[42]; }");
+            var expectedConvertedContents = SingleSourceFor("indexers.cs", "using UnityScript2CSharp.Tests; " + DefaultGeneratedClass + "indexers : MonoBehaviour { public virtual int F(Properties p) { p[0] = 1; p[1, \"foo\"] = 2; return p[42]; } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }

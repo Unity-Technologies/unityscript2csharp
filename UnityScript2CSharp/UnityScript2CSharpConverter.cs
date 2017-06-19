@@ -128,6 +128,7 @@ namespace UnityScript2CSharp
 
             adjustedPipeline.Remove(typeof(BindEnumMembers));
             adjustedPipeline.Remove(typeof(CheckIdentifiers));
+            adjustedPipeline.Add(new ReplaceGetSetItemMethodsWithOriginalIndexers());
 
             _compiler.Parameters.Pipeline = adjustedPipeline;
         }

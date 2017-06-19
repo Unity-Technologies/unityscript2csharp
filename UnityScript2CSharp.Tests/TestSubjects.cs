@@ -27,9 +27,16 @@ namespace UnityScript2CSharp.Tests
 
     public class Properties
     {
+        public int this[int i, string j]
+        {
+            get { return i; }
+            set {}
+        }
+
         public int this[int i]
         {
             get { return i; }
+            set {}
         }
     }
 
@@ -50,5 +57,4 @@ namespace UnityScript2CSharp.Tests
     {
         public static object M(Type t) { return null; }
     }
-
 }

@@ -614,12 +614,6 @@ namespace UnityScript2CSharp
         public override void OnMemberReferenceExpression(MemberReferenceExpression node)
         {
             node.Target.Accept(this);
-            if (node.ParentNode.IsIndexerReference())
-            {
-                _currentBrackets = SquareBrackets;
-                return;
-            }
-
             _builderAppend($".{node.Name}");
         }
 
@@ -805,12 +799,7 @@ namespace UnityScript2CSharp
         {
             node.Target.Accept(this);
             _writer.Write("[");
-            foreach (var index in node.Indices)
-            {
-                index.Accept(this);
-                _writer.Write(",");
-            }
-            _writer.DiscardLastWrittenText();
+            WriteCommaSeparatedList(node.Indices);
             _writer.Write("]");
         }
 
