@@ -318,6 +318,15 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
+        [Test]
+        public void Non_Compliant_Attribute_Type_Name()
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "non_compliant_attribute_type_name.js", Contents = "import UnityScript2CSharp.Tests; @NonCompliant class C {}" } };
+
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "non_compliant_attribute_type_name.cs", Contents = "using UnityScript2CSharp.Tests; " + DefaultUsings + " [UnityScript2CSharp.Tests.NonCompliant] public class C : object { }" } };
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
         [TestCase(""), Category("Attributes")]
         [TestCase("42"), Category("Attributes")]
         [TestCase("42, Prop = true"), Category("Attributes")]

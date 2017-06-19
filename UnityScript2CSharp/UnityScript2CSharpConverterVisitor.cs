@@ -357,7 +357,13 @@ namespace UnityScript2CSharp
         {
             var fullList = node.Arguments.Concat<Node>(node.NamedArguments).ToArray();
 
-            _writer.Write($"[{node.Name.Substring(0, node.Name.Length - "Attribute".Length)}");
+            var attributeTypeName = node.Name;
+            var attributeTypeNameSufix = "Attribute";
+
+            if (attributeTypeName.EndsWith(attributeTypeNameSufix))
+                attributeTypeName = attributeTypeName.Substring(0, node.Name.Length - attributeTypeNameSufix.Length);
+
+            _writer.Write($"[{attributeTypeName}");
 
             var needParentheses = fullList.Any();
 

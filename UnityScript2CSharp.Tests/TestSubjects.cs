@@ -53,6 +53,10 @@ namespace UnityScript2CSharp.Tests
         public bool Prop { get; set; }
     }
 
+    public class NonCompliant : Attribute
+    {
+    }
+
     public class SystemTypeAsParameter
     {
         public static object M(Type t) { return null; }
