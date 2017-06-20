@@ -50,7 +50,8 @@ namespace UnityScript2CSharp.Steps
             if (isDeclarationStatement)
             {
                 var localDeclaration = (InternalLocal)node.Left.Entity;
-                localDeclaration.OriginalDeclaration.Accept(this);
+                if (localDeclaration.OriginalDeclaration  != null)
+                    localDeclaration.OriginalDeclaration.Accept(this);
             }
 
             base.OnBinaryExpression(node);

@@ -31,13 +31,24 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
-        [TestCase("int", "0")]
-        [TestCase("float", "0.0f")]
-        [TestCase("System.Object", "null", "object")]
-        public void If_Conditional_Bool_Convertion(string type, string comparedConstant, string csharpTypeName = null)
+        [TestCase("boolean", "var b = !p;", "bool b = !p;", "bool")]
+
+        [TestCase("float", "var b = !p;", "bool b = p == 0f;")]
+        [TestCase("float", "if (p) {}", "if (p != 0f) { }")]
+
+        [TestCase("int", "var b = !p;", "bool b = p == 0;")]
+        [TestCase("int", "if (p) {}", "if (p != 0) { }")]
+        [TestCase("int", "while(p) {}", "while (p != 0) { }")]
+        [TestCase("int", "for(; p ; p--) {}", "while (p != 0) { --p; }")]
+        [TestCase("int", "var b:boolean = !p && true;", "bool b = p == 0 && true;")]
+        [TestCase("int", "return !p;", "return p == 0;")]
+
+        [TestCase("System.Object", "while(p) {}", "while (p != null) { }", "object")]
+        [TestCase("System.Object", "return !p;", "return p == null;", "object")]
+        public void Automatic_Bool_Convertion(string type, string usSnippet, string csSnippet, string csharpTypeName = null)
         {
-            var sourceFiles = SingleSourceFor("if_conditional.js", $"function F(p:{type}) {{ if (p) {{ }} }}");
-            var expectedConvertedContents = SingleSourceFor("if_conditional.cs", DefaultGeneratedClass + $"if_conditional : MonoBehaviour {{ public virtual void F({csharpTypeName ?? type} p) {{ if (p != {comparedConstant}) {{ }} }} }}");
+            var sourceFiles = SingleSourceFor("if_conditional.js", $"function F(p:{type}) : boolean {{ {usSnippet} }}");
+            var expectedConvertedContents = SingleSourceFor("if_conditional.cs", DefaultGeneratedClass + $"if_conditional : MonoBehaviour {{ public virtual bool F({csharpTypeName ?? type} p) {{ {csSnippet} }} }}");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }

@@ -433,7 +433,7 @@ namespace UnityScript2CSharp
         public override void OnIfStatement(IfStatement node)
         {
             _builderAppendIdented("if (");
-            ProcessBooleanExpression(node.Condition);
+            node.Condition.Accept(this);
             _builderAppend(")");
 
             node.TrueBlock.Accept(this);
@@ -880,17 +880,6 @@ namespace UnityScript2CSharp
         {
             NotSupported(node);
             base.OnStatementTypeMember(node);
-        }
-
-        private void ProcessBooleanExpression(Expression condition)
-        {
-            condition.Accept(this);
-            //if (!condition.Entity.IsBoolean())
-            //TODO: Crash when condition = "go.gameObject.GetComponent.<ParticleEmitter>()"
-            if (condition.Entity != null && !condition.Entity.IsBoolean())
-            {
-                _builderAppend($" != {condition.Entity.DefaultValue()}");
-            }
         }
 
         private bool TryHandleYieldBreak(ReturnStatement node)

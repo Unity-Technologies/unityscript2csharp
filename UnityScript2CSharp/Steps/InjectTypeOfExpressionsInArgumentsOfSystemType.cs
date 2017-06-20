@@ -24,15 +24,10 @@ namespace UnityScript2CSharp.Steps
 
         public override void OnReferenceExpression(ReferenceExpression node)
         {
-            if (_currentArgument == null)
+            if (!HasImplictTypeOfExpression(node))
                 return;
 
-            if (_currentArgument.ExpressionType.ElementType == TypeSystemServices.TypeType && (node.ParentNode.NodeType == NodeType.MethodInvocationExpression || node.ParentNode.NodeType == NodeType.ArrayLiteralExpression))
-            {
-                //TODO: check for parent expecing Type
-                //TODO: test: var t:Type = int; ???
-                node.ParentNode.Replace(node, CodeBuilder.CreateTypeofExpression((IType)node.Entity));
-            }
+            node.ParentNode.Replace(node, CodeBuilder.CreateTypeofExpression((IType)node.Entity));
         }
 
         public override void OnArrayLiteralExpression(ArrayLiteralExpression node)
@@ -44,6 +39,15 @@ namespace UnityScript2CSharp.Steps
             }
 
             base.OnArrayLiteralExpression(node);
+        }
+
+        private bool HasImplictTypeOfExpression(ReferenceExpression node)
+        {
+            if (_currentArgument != null)
+                return _currentArgument.ExpressionType.ElementType == TypeSystemServices.TypeType && (node.ParentNode.NodeType == NodeType.MethodInvocationExpression || node.ParentNode.NodeType == NodeType.ArrayLiteralExpression);
+
+
+            return node.Entity != null && node.Entity.EntityType == EntityType.Type && node.ExpressionType == TypeSystemServices.TypeType;
         }
     }
 }

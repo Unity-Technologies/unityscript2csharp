@@ -111,6 +111,7 @@
     <Compile Include="EntityExtensions.cs" />
     <Compile Include="Extensions\ASTNodeExtensions.cs" />
     <Compile Include="Steps\InferredMethodReturnTypeFix.cs" />
+    <Compile Include="Steps\PromoteImplicitBooleanConversionsToExplicitComparisons.cs" />
     <Compile Include="Steps\InjectTypeOfExpressionsInArgumentsOfSystemType.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

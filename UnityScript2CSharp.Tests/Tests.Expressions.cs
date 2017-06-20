@@ -198,11 +198,22 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
-        [Test]
-        public void Method_Taking_System_Type()
+        [TestCase("SystemTypeAsParameter.SimpleMethod(int)", "SystemTypeAsParameter.SimpleMethod(typeof(int))")]
+        [TestCase("var o = new SystemTypeAsParameter(int)", "SystemTypeAsParameter o = new SystemTypeAsParameter(typeof(int))")]
+        [TestCase("var t:System.Type = int", "System.Type t = typeof(int)")]
+        public void Implicit_TypeOf_Expressions(string usSnippet, string csSnippet)
         {
-            var sourceFiles = SingleSourceFor("system_type_as_parameter.js", "import UnityScript2CSharp.Tests; class C { function F() { SystemTypeAsParameter.SimpleMethod(int); var o = new SystemTypeAsParameter(int); } }");
-            var expectedConvertedContents = SingleSourceFor("system_type_as_parameter.cs", "using UnityScript2CSharp.Tests; " + DefaultUsings + @" public class C : object { public virtual void F() { SystemTypeAsParameter.SimpleMethod(typeof(int)); SystemTypeAsParameter o = new SystemTypeAsParameter(typeof(int)); } }");
+            var sourceFiles = SingleSourceFor("implicit_typeof_expressions.js", $"import UnityScript2CSharp.Tests; class C {{ function F() {{ {usSnippet}; }} }}");
+            var expectedConvertedContents = SingleSourceFor("implicit_typeof_expressions.cs", "using UnityScript2CSharp.Tests; " + DefaultUsings + $" public class C : object {{ public virtual void F() {{ {csSnippet}; }} }}");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
+        public void Implicit_TypeOf_Expressions_On_Attribute()
+        {
+            var sourceFiles = SingleSourceFor("implicit_typeof_expressions_on_attribute.js", "import UnityScript2CSharp.Tests; @Attr(int) class C { }");
+            var expectedConvertedContents = SingleSourceFor("implicit_typeof_expressions_on_attribute.cs", "using UnityScript2CSharp.Tests; " + DefaultUsings + " [UnityScript2CSharp.Tests.Attr(typeof(int))] public class C : object { }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
