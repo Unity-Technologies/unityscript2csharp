@@ -41,16 +41,18 @@ namespace UnityScript2CSharp
         {
             if (result.Errors.Count > 0)
             {
+                CompilerErrors = result.Errors.Select(error => error.ToString());
+
                 if (!_ignoreErrors)
                     throw new Exception(result.Errors.Aggregate("\t", (acc, curr) => acc + Environment.NewLine + "\t" + curr + Environment.NewLine + "\t" + curr.InnerException));
-
-                CompilerErrors = result.Errors.Select(error => error.ToString());
             }
 
             if (result.Warnings.Count > 0)
             {
                 // throw new Exception(result.Warnings.Aggregate("", (acc, curr) => acc + Environment.NewLine + curr.ToString()));
             }
+
+            CompilerErrors = CompilerErrors ?? new List<string>();
         }
 
         internal UnityScriptCompiler CreatAndInitializeCompiler(IEnumerable<SourceFile> inputs, IEnumerable<string> definedSymbols, IEnumerable<string> referencedAssemblies)
@@ -108,7 +110,6 @@ namespace UnityScript2CSharp
             pipeline.Remove(typeof(ConstantFolding));
             pipeline.Remove(typeof(ExpandPropertiesAndEvents));
             pipeline.Remove(typeof(CheckNeverUsedMembers));
-            pipeline.Remove(typeof(ExpandVarArgsMethodInvocations));
             pipeline.Remove(typeof(InjectCallableConversions));
             pipeline.Remove(typeof(StricterErrorChecking));
             pipeline.Remove(typeof(RemoveDeadCode));
@@ -123,6 +124,7 @@ namespace UnityScript2CSharp
             adjustedPipeline.Add(new InferredMethodReturnTypeFix());
 
             adjustedPipeline.Add(new RenameArrayDeclaration());
+            adjustedPipeline.Add(new ReplaceUnityScriptArrayWithObjectArray());
             adjustedPipeline.Add(new InjectTypeOfExpressionsInArgumentsOfSystemType());
             adjustedPipeline.Add(new ReplaceArrayMemberReferenceWithCamelCaseVersion());
 

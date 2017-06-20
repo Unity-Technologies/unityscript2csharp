@@ -40,13 +40,17 @@ namespace UnityScript2CSharp.Tests
         }
     }
 
-    public class AttrAttribute : System.Attribute
+    public class AttrAttribute : Attribute
     {
         public AttrAttribute()
         {
         }
 
         public AttrAttribute(int i)
+        {
+        }
+
+        public AttrAttribute(Type t)
         {
         }
 
@@ -59,7 +63,11 @@ namespace UnityScript2CSharp.Tests
 
     public class SystemTypeAsParameter
     {
-        public static object M(Type t) { return null; }
+        public SystemTypeAsParameter(Type t) {}
+
+        public static void SimpleMethod(Type t) {}
+
+        public void InParamsArray(params Type[] t) {}
     }
 
     public class Methods

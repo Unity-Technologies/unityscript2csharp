@@ -7,6 +7,7 @@ using Boo.Lang.Compiler.Ast.Visitors;
 using Boo.Lang.Compiler.TypeSystem;
 using Boo.Lang.Compiler.TypeSystem.Internal;
 using Boo.Lang.Compiler.TypeSystem.Reflection;
+using UnityScript2CSharp.Extensions;
 using Attribute = Boo.Lang.Compiler.Ast.Attribute;
 using Module = Boo.Lang.Compiler.Ast.Module;
 
@@ -68,7 +69,7 @@ namespace UnityScript2CSharp
                 }
             }
 
-            _builderAppend(typeName ?? node.Name);
+            _writer.Write(typeName ?? node.Name);
         }
 
         private void _builderAppendIdented(string str)
@@ -562,7 +563,11 @@ namespace UnityScript2CSharp
             {
                 refOutWriter = (arg, index) =>
                     {
-                        var param = externalMethod.MethodInfo.GetParameters()[index];
+                        var parameters = externalMethod.MethodInfo.GetParameters();
+                        if (parameters.Length <= index)
+                            return; // This may happen with "params" parameters
+
+                        var param = parameters[index];
                         if (param.ParameterType.IsByRef && !param.IsOut)
                             _writer.Write("ref ");
                         else if (param.IsOut)
@@ -577,10 +582,7 @@ namespace UnityScript2CSharp
 
         private void HandleNewExpression(MethodInvocationExpression node)
         {
-            if (node.Target.Entity == null)
-                return;
-
-            if (node.Target.Entity.EntityType != EntityType.Constructor)
+            if (!node.IsConstructorInvocation())
                 return;
 
             _writer.Write("new ");
@@ -641,7 +643,7 @@ namespace UnityScript2CSharp
 
         public override void OnGenericReferenceExpression(GenericReferenceExpression node)
         {
-            if (IsArrayInstantiation(node))
+            if (node.IsArrayInstantiation())
             {
                 _writer.Write("new ");
                 node.GenericArguments[0].Accept(this);
@@ -801,8 +803,11 @@ namespace UnityScript2CSharp
 
         public override void OnArrayLiteralExpression(ArrayLiteralExpression node)
         {
-            NotSupported(node);
-            base.OnArrayLiteralExpression(node);
+            _writer.Write("new ");
+            node.Type.ElementType.Accept(this);
+            _writer.Write("[] {");
+            WriteCommaSeparatedList(node.Items);
+            _writer.Write("}");
         }
 
         public override void OnGeneratorExpression(GeneratorExpression node)
@@ -980,13 +985,6 @@ namespace UnityScript2CSharp
             var usingCollector = new UsingCollector();
             node.Accept(usingCollector);
             return usingCollector.Usings;
-        }
-
-        private static bool IsArrayInstantiation(GenericReferenceExpression node)
-        {
-            // Arrays in UnityScript are represented as a GenericReferenceExpession
-            var target = node.Target as ReferenceExpression;
-            return target != null && target.Name == "array";
         }
 
         private void VisitWrapping(Node node, bool mustWrap, string prefix = null, string posfix = null)

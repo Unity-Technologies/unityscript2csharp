@@ -109,12 +109,14 @@
     <Compile Include="BlockIdentation.cs" />
     <Compile Include="CommandLineArguments.cs" />
     <Compile Include="EntityExtensions.cs" />
+    <Compile Include="Extensions\ASTNodeExtensions.cs" />
     <Compile Include="Steps\InferredMethodReturnTypeFix.cs" />
     <Compile Include="Steps\InjectTypeOfExpressionsInArgumentsOfSystemType.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Steps\ReplaceArrayMemberReferenceWithCamelCaseVersion.cs" />
     <Compile Include="SourceFile.cs" />
+    <Compile Include="Steps\ReplaceUnityScriptArrayWithObjectArray.cs" />
     <Compile Include="Steps\SelectiveUnaryExpressionExpansionProcessUnityScriptMethods.cs" />
     <Compile Include="Steps\RenameArrayDeclaration.cs" />
     <Compile Include="Steps\TransformKnownCalls.cs" />

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Win32;
@@ -44,13 +45,14 @@ namespace UnityScript2CSharp.Tests
             }
         }
         
-        private static void AssertConversion(IList<SourceFile> sourceFiles, IList<SourceFile> expectedConverted)
+        private static void AssertConversion(IList<SourceFile> sourceFiles, IList<SourceFile> expectedConverted, bool expectError = false)
         {
             var tempFolder = Path.Combine(Path.GetTempPath(), "UnityScript2CSharpConversionTests", SavePathFrom(TestContext.CurrentContext.Test.Name));
             Console.WriteLine("Converted files saved to: {0}", tempFolder);
 
             var unityWorkspaceRoot = GetUnityWorkspaceRoot();
-            var converter = new UnityScript2CSharpConverter();
+            var converter = new UnityScript2CSharpConverter(true);
+
             converter.Convert(
                 sourceFiles,
                 new[] { "MY_DEFINE" },
@@ -71,6 +73,22 @@ namespace UnityScript2CSharp.Tests
 
                     File.WriteAllText(targetFilePath, content);
                 });
+
+            if (!expectError)
+            {
+                if (converter.CompilerErrors.Any())
+                {
+                    Assert.Fail("Error while compiling UnityScript sources:" + converter.CompilerErrors.Aggregate("\t", (acc, curr) => acc + Environment.NewLine + "\t" + curr + Environment.NewLine + "\t" + curr));
+                }
+            }
+            else
+            {
+                if (!converter.CompilerErrors.Any())
+                    Assert.Fail("Expected error.");
+
+                TestContext.WriteLine(converter.CompilerErrors.Aggregate("\t", (acc, curr) => acc + Environment.NewLine + "\t" + curr + Environment.NewLine + "\t" + curr));
+                return;
+            }
 
             var r = new Regex("\\s{2,}|\\r\\n", RegexOptions.Multiline | RegexOptions.Compiled);
             for (int i = 0; i < sourceFiles.Count; i++)

@@ -14,6 +14,27 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
+        [TestCase("var a = Array(42)", "object[] a = new object[42]")]
+        [TestCase("var a = Array(42, 43)", "object[] a = new object[] {42, 43}")]
+        [TestCase("var a = Array(other)", "Not Used", true)]
+        public void UnityScript_Lang_Array(string usSnippet, string csSnippet, bool expectError = false)
+        {
+            var sourceFiles = SingleSourceFor("unity_script_lang_array.js", $"function F(other:IEnumerable) {{ {usSnippet}; return a.length; }}");
+            var expectedConvertedContents = SingleSourceFor("unity_script_lang_array.cs", DefaultGeneratedClass + $"unity_script_lang_array : MonoBehaviour {{ public virtual int F(IEnumerable other) {{ {csSnippet}; return a.Length; }} }}");
+
+            AssertConversion(sourceFiles, expectedConvertedContents, expectError);
+        }
+
+        [TestCase("var a = [1, 2, 3]", "int[] a = new int[] {1, 2, 3}")]
+        [TestCase("var a = Array(true, false)", "object[] a = new object[] {true, false}")]
+        public void Arrays_With_Initializer(string usSnippet, string csSnippet)
+        {
+            var sourceFiles = SingleSourceFor("arrays_with_initializer.js", $"function F() {{ {usSnippet}; return a.length; }}");
+            var expectedConvertedContents = SingleSourceFor("arrays_with_initializer.cs", DefaultGeneratedClass + $"arrays_with_initializer : MonoBehaviour {{ public virtual int F() {{ {csSnippet}; return a.Length; }} }}");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
         [TestCase("int", "int")]
         [TestCase("String", "string")]
         [TestCase("System.Object", "object")]
@@ -42,7 +63,7 @@ namespace UnityScript2CSharp.Tests
         [TestCase("String", "string")]
         [TestCase("System.Object", "object")]
         [TestCase("boolean", "bool")]
-        public void Multidiminsional_Arrays_Item_Access(string usTypeName, string csTypeName)
+        public void Arrays_MultiDimensional_Item_Access(string usTypeName, string csTypeName)
         {
             var sourceFiles = SingleSourceFor("multidimensiona_array_item_access.js", $"function F(a:{usTypeName}[,]) {{ return a[4,2]; }}");
             var expectedConvertedContents = SingleSourceFor("multidimensiona_array_item_access.cs", DefaultGeneratedClass + $@"multidimensiona_array_item_access : MonoBehaviour {{ public virtual {csTypeName} F({csTypeName}[,] a) {{ return a[4, 2]; }} }}");
@@ -180,8 +201,17 @@ namespace UnityScript2CSharp.Tests
         [Test]
         public void Method_Taking_System_Type()
         {
-            var sourceFiles = SingleSourceFor("system_type_as_parameter.js", "function F() { return System.Type.GetTypeCode(int); }");
-            var expectedConvertedContents = SingleSourceFor("system_type_as_parameter.cs", DefaultGeneratedClass + @"system_type_as_parameter : MonoBehaviour { public virtual System.TypeCode F() { return System.Type.GetTypeCode(typeof(int)); } }");
+            var sourceFiles = SingleSourceFor("system_type_as_parameter.js", "import UnityScript2CSharp.Tests; class C { function F() { SystemTypeAsParameter.SimpleMethod(int); var o = new SystemTypeAsParameter(int); } }");
+            var expectedConvertedContents = SingleSourceFor("system_type_as_parameter.cs", "using UnityScript2CSharp.Tests; " + DefaultUsings + @" public class C : object { public virtual void F() { SystemTypeAsParameter.SimpleMethod(typeof(int)); SystemTypeAsParameter o = new SystemTypeAsParameter(typeof(int)); } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
+        public void Method_Taking_Params_System_Type()
+        {
+            var sourceFiles = SingleSourceFor("system_type_as_params_param.js", "import UnityScript2CSharp.Tests; function F(o:SystemTypeAsParameter) { o.InParamsArray(int, String); }");
+            var expectedConvertedContents = SingleSourceFor("system_type_as_params_param.cs", "using UnityScript2CSharp.Tests; " + DefaultGeneratedClass + "system_type_as_params_param : MonoBehaviour { public virtual void F(SystemTypeAsParameter o) { o.InParamsArray(new System.Type[] {typeof(int), typeof(string)}); } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
