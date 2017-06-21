@@ -363,6 +363,25 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
+        [TestCase("10")]
+        [TestCase("(1 + 1)")]
+        [TestCase("System.String.Format(\"\", 1).Length")]
+        [TestCase("System.Environment.ProcessorCount")]
+        public void Assignment_To_Members_Of_ValueTypes_Through_Properties(string rhs)
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "value_type_assignment.js", Contents = $"import UnityScript2CSharp.Tests; function F(o:NonGeneric) {{ o.Struct.value = {rhs}; }}" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "value_type_assignment.cs", Contents = "using UnityScript2CSharp.Tests; " + DefaultGeneratedClass + $"value_type_assignment : MonoBehaviour {{ public virtual void F(NonGeneric o) {{ {{ int _1 = {rhs}; Struct _2 = o.Struct; _2.value = _1; o.Struct = _2; }} }} }}" } };
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
+        public void Deep_Assignment_To_Members_Of_ValueTypes_Through_Properties()
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "deep_value_type_assignment.js", Contents = "import UnityScript2CSharp.Tests; function F(o:NonGeneric) { o.Struct.other.value = (o != null) ? \"1\" : \"0\"; }" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "deep_value_type_assignment.cs", Contents = "using UnityScript2CSharp.Tests; " + DefaultGeneratedClass + "deep_value_type_assignment : MonoBehaviour { public virtual void F(NonGeneric o) { { string _1 = !(o == null) ? \"1\" : \"0\"; Struct _2 = o.Struct; _2.other.value = _1; o.Struct = _2; } } }" } };
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
         [Test]
         public void Test_Formatting()
         {

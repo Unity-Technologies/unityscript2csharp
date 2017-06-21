@@ -2,12 +2,25 @@ using System;
 
 namespace UnityScript2CSharp.Tests
 {
+    public struct Other
+    {
+        public string value;
+    }
+
+    public struct Struct
+    {
+        public int value;
+        public Other other;
+    }
+
     public class NonGeneric
     {
         public string ToName<T>(int n)
         {
             return typeof(T).FullName;
         }
+
+        public Struct Struct { get; set; }
     }
 
     public class Operators
