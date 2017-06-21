@@ -68,6 +68,15 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
+        [Test]
+        public void Implicit_Bool_Conversion_For_Array()
+        {
+            var sourceFiles = SingleSourceFor("bool_conversion_array.js", "function F(a: int[]) { return !a; }");
+            var expectedConvertedContents = SingleSourceFor("bool_conversion_array.cs", DefaultGeneratedClass + @"bool_conversion_array : MonoBehaviour { public virtual bool F(int[] a) { return a == null; } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
         [TestCase("int", "int")]
         [TestCase("String", "string")]
         [TestCase("System.Object", "object")]

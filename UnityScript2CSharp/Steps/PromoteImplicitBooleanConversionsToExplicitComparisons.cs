@@ -52,7 +52,7 @@ namespace UnityScript2CSharp.Steps
             if (sourceExpressionType == TypeSystemServices.SingleType)
                 return new DoubleLiteralExpression(0.0f);
 
-            if (sourceExpressionType.IsClass)
+            if (sourceExpressionType.IsClass || sourceExpressionType.IsArray)
                 return CodeBuilder.CreateNullLiteral();
 
             return null;
