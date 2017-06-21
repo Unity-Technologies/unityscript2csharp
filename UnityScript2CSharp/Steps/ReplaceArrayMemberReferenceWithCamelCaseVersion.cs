@@ -10,14 +10,16 @@ namespace UnityScript2CSharp.Steps
     {
         public override void OnMemberReferenceExpression(MemberReferenceExpression node)
         {
-            if (!IsArray(node))
+            if (!IsArray(node) || Char.IsUpper(node.Name[0]))
                 return;
 
             var name = new StringBuilder();
             name.Append(Char.ToUpper(node.Name[0]));
             name.Append(node.Name.Substring(1));
 
-            node.ParentNode.Replace(node, new MemberReferenceExpression(node.Target, name.ToString()));
+            var newExpression = new MemberReferenceExpression(node.Target, name.ToString());
+            newExpression.ExpressionType = node.ExpressionType;
+            node.ParentNode.Replace(node, newExpression);
         }
 
         private static bool IsArray(MemberReferenceExpression node)

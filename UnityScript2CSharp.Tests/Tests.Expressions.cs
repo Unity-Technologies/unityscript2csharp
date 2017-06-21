@@ -59,6 +59,15 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
+        [Test]
+        public void Implicit_Bool_Conversion_For_Array_Member_Access()
+        {
+            var sourceFiles = SingleSourceFor("bool_conversion_array_member.js", "function F(a: int[]) { return !a.length || (a.Length > 0); }");
+            var expectedConvertedContents = SingleSourceFor("bool_conversion_array_member.cs", DefaultGeneratedClass + @"bool_conversion_array_member : MonoBehaviour { public virtual bool F(int[] a) { return (a.Length == 0) || a.Length > 0; } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
         [TestCase("int", "int")]
         [TestCase("String", "string")]
         [TestCase("System.Object", "object")]
@@ -110,11 +119,11 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedFiles);
         }
 
-        [TestCase("(i > 10)", "true : false", "bool")]
-        [TestCase("(i == 10)", "0 : 42", "int")]
-        [TestCase("(i == 10)", "1.1f : 42.1f", "float")]
-        [TestCase("((i > 0) && i < 42)", "null : this", "ternary_operator")]
-        [TestCase("(i > 0) ? ((i < 42)", "1 : 2) : 3", "int")]
+        [TestCase("i > 10", "true : false", "bool")]
+        [TestCase("i == 10", "0 : 42", "int")]
+        [TestCase("i == 10", "1.1f : 42.1f", "float")]
+        [TestCase("(i > 0) && i < 42", "null : this", "ternary_operator")]
+        [TestCase("i > 0 ? (i < 42", "1 : 2) : 3", "int")]
         //[TestCase("i > 10", "'A' : 'V'", "char")] // char -> string ?
         public void Ternary_Operator(string condition, string values, string inferredReturnTypeName)
         {
@@ -162,7 +171,7 @@ namespace UnityScript2CSharp.Tests
 
         [TestCase("var j = i++; return j", "int j = i++; return j")]
         [TestCase("return i++", "return i++")]
-        [TestCase("return i++ > 10 ? 1 : 0", "return (i++ > 10) ? 1 : 0")]
+        [TestCase("return i++ > 10 ? 1 : 0", "return i++ > 10 ? 1 : 0")]
         public void Post_Increment(string usExpression, string csExpression)
         {
             var sourceFiles = SingleSourceFor("post_increment.js", $"function F(i:int) {{ {usExpression}; }}");

@@ -605,32 +605,37 @@ namespace UnityScript2CSharp
 
         public override void OnBinaryExpression(BinaryExpression node)
         {
-            if (NeedParensAround(node))
-                _writer.Write("(");
-
-            var isDeclarationStatement = node.Operator == BinaryOperatorType.Assign && node.Left.NodeType == NodeType.ReferenceExpression && node.IsSynthetic;
-            if (isDeclarationStatement)
+            WrapWith(NeedParensAround(node), "(", ")", delegate()
             {
-                var localDeclaration = (InternalLocal)node.Left.Entity;
-                localDeclaration.OriginalDeclaration.Type.Accept(this);
-                _writer.Write(" ");
-            }
+                var isDeclarationStatement = node.Operator == BinaryOperatorType.Assign &&
+                                             node.Left.NodeType == NodeType.ReferenceExpression && node.IsSynthetic;
 
-            node.Left.Accept(this);
-            _writer.Write($" {CSharpOperatorFor(node.Operator)} ");
-            node.Right.Accept(this);
+                if (isDeclarationStatement)
+                {
+                    var localDeclaration = (InternalLocal) node.Left.Entity;
+                    localDeclaration.OriginalDeclaration.Type.Accept(this);
+                    _writer.Write(" ");
+                }
 
-            if (NeedParensAround(node))
-                _writer.Write(")");
+                node.Left.Accept(this);
+                _writer.Write($" {CSharpOperatorFor(node.Operator)} ");
+                node.Right.Accept(this);
+            });
         }
 
         public override void OnConditionalExpression(ConditionalExpression node)
         {
-            node.Condition.Accept(this);
-            _writer.Write(" ? ");
-            VisitWrapping(node.TrueValue, node.TrueValue.NodeType == NodeType.ConditionalExpression, "(", ")");
-            _writer.Write(" : ");
-            VisitWrapping(node.FalseValue, node.FalseValue.NodeType == NodeType.ConditionalExpression, "(", ")");
+            var parent = node.ParentNode as BinaryExpression;
+            var needsParens = parent != null && (parent.Right != node || parent.Operator != BinaryOperatorType.Assign);
+
+            WrapWith(needsParens , "(", ")", delegate
+            {
+                node.Condition.Accept(this);
+                _writer.Write(" ? ");
+                VisitWrapping(node.TrueValue, node.TrueValue.NodeType == NodeType.ConditionalExpression, "(", ")");
+                _writer.Write(" : ");
+                VisitWrapping(node.FalseValue, node.FalseValue.NodeType == NodeType.ConditionalExpression, "(", ")");
+            });
         }
 
         public override void OnReferenceExpression(ReferenceExpression node)
@@ -1075,8 +1080,10 @@ namespace UnityScript2CSharp
 
         bool NeedParensAround(Expression e)
         {
-            if (e.ParentNode == null) return false;
-            switch (e.ParentNode.NodeType)
+            var nodeParent = e.ParentNode;
+            if (nodeParent == null) return false;
+
+            switch (nodeParent.NodeType)
             {
                 case NodeType.ExpressionStatement:
                 case NodeType.MacroStatement:
@@ -1086,15 +1093,29 @@ namespace UnityScript2CSharp
                     return false;
 
                 case NodeType.MethodInvocationExpression:
-                    return ((MethodInvocationExpression) e.ParentNode).Arguments.Any(a => a == e);
+                    return ((MethodInvocationExpression) nodeParent).Arguments.Any(a => a == e);
 
                 case NodeType.BinaryExpression:
-                    return ((BinaryExpression) e.ParentNode).Right != e;
+                    return ((BinaryExpression) nodeParent).Right != e;
 
                 case NodeType.ReturnStatement:
-                    return ((ReturnStatement) e.ParentNode).Expression != e;
+                    return ((ReturnStatement) nodeParent).Expression != e;
+
+                case NodeType.ConditionalExpression:
+                    return nodeParent.ParentNode.NodeType == NodeType.BinaryExpression && ((BinaryExpression)nodeParent.ParentNode).Operator != BinaryOperatorType.Assign;
             }
             return true;
+        }
+
+        private void WrapWith(bool needParensAround, string prefix, string sufix, Action action)
+        {
+            if (needParensAround)
+                _writer.Write(prefix);
+
+            action();
+
+            if (needParensAround)
+                _writer.Write(sufix);
         }
 
         private void NotSupported(Node node)
