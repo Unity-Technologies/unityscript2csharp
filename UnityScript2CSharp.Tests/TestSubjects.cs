@@ -2,6 +2,13 @@ using System;
 
 namespace UnityScript2CSharp.Tests
 {
+    public class C
+    {
+        public static int staticField;
+        public static int staticMethod() { return 1; }
+        public int instanceMethod() { return 1; }
+    }
+
     public struct Other
     {
         public string value;

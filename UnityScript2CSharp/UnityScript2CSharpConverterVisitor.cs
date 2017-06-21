@@ -606,21 +606,21 @@ namespace UnityScript2CSharp
         public override void OnBinaryExpression(BinaryExpression node)
         {
             WrapWith(NeedParensAround(node), "(", ")", delegate()
-            {
-                var isDeclarationStatement = node.Operator == BinaryOperatorType.Assign &&
-                                             node.Left.NodeType == NodeType.ReferenceExpression && node.IsSynthetic;
-
-                if (isDeclarationStatement)
                 {
-                    var localDeclaration = (InternalLocal) node.Left.Entity;
-                    localDeclaration.OriginalDeclaration.Type.Accept(this);
-                    _writer.Write(" ");
-                }
+                    var isDeclarationStatement = node.Operator == BinaryOperatorType.Assign &&
+                        node.Left.NodeType == NodeType.ReferenceExpression && node.IsSynthetic;
 
-                node.Left.Accept(this);
-                _writer.Write($" {CSharpOperatorFor(node.Operator)} ");
-                node.Right.Accept(this);
-            });
+                    if (isDeclarationStatement)
+                    {
+                        var localDeclaration = (InternalLocal)node.Left.Entity;
+                        localDeclaration.OriginalDeclaration.Type.Accept(this);
+                        _writer.Write(" ");
+                    }
+
+                    node.Left.Accept(this);
+                    _writer.Write($" {CSharpOperatorFor(node.Operator)} ");
+                    node.Right.Accept(this);
+                });
         }
 
         public override void OnConditionalExpression(ConditionalExpression node)
@@ -629,13 +629,13 @@ namespace UnityScript2CSharp
             var needsParens = parent != null && (parent.Right != node || parent.Operator != BinaryOperatorType.Assign);
 
             WrapWith(needsParens , "(", ")", delegate
-            {
-                node.Condition.Accept(this);
-                _writer.Write(" ? ");
-                VisitWrapping(node.TrueValue, node.TrueValue.NodeType == NodeType.ConditionalExpression, "(", ")");
-                _writer.Write(" : ");
-                VisitWrapping(node.FalseValue, node.FalseValue.NodeType == NodeType.ConditionalExpression, "(", ")");
-            });
+                {
+                    node.Condition.Accept(this);
+                    _writer.Write(" ? ");
+                    VisitWrapping(node.TrueValue, node.TrueValue.NodeType == NodeType.ConditionalExpression, "(", ")");
+                    _writer.Write(" : ");
+                    VisitWrapping(node.FalseValue, node.FalseValue.NodeType == NodeType.ConditionalExpression, "(", ")");
+                });
         }
 
         public override void OnReferenceExpression(ReferenceExpression node)
@@ -843,7 +843,6 @@ namespace UnityScript2CSharp
 
         public override void OnTryCastExpression(TryCastExpression node)
         {
-            var mre = node.ParentNode as MemberReferenceExpression;
             var isTargetOfMemberReferenceExpression = NeedParensAround(node);
 
             VisitWrapping(node.Target, isTargetOfMemberReferenceExpression, "(");
@@ -853,19 +852,13 @@ namespace UnityScript2CSharp
 
         public override void OnCastExpression(CastExpression node)
         {
-            var mre = node.ParentNode as TryCastExpression;
-            var isTargetOfExpression = mre != null && mre.Target == node;
-
-            if (isTargetOfExpression)
-                _writer.Write("(");
-
-            _writer.Write("(");
-            node.Type.Accept(this);
-            _writer.Write(") ");
-            node.Target.Accept(this);
-
-            if (isTargetOfExpression)
-                _writer.Write(")");
+            WrapWith(NeedParensAround(node), "(", ")", delegate
+                {
+                    _writer.Write("(");
+                    node.Type.Accept(this);
+                    _writer.Write(") ");
+                    node.Target.Accept(this);
+                });
         }
 
         public override void OnTypeofExpression(TypeofExpression node)
@@ -1085,25 +1078,28 @@ namespace UnityScript2CSharp
 
             switch (nodeParent.NodeType)
             {
-                case NodeType.ExpressionStatement:
-                case NodeType.MacroStatement:
                 case NodeType.IfStatement:
                 case NodeType.WhileStatement:
                 case NodeType.UnlessStatement:
+                    return ((ConditionalStatement)nodeParent).Condition != e;
+
+                case NodeType.ExpressionStatement:
+                case NodeType.MacroStatement:
                     return false;
 
                 case NodeType.MethodInvocationExpression:
-                    return ((MethodInvocationExpression) nodeParent).Arguments.Any(a => a == e);
+                    return !((MethodInvocationExpression)nodeParent).Arguments.Any(a => a == e);
 
                 case NodeType.BinaryExpression:
-                    return ((BinaryExpression) nodeParent).Right != e;
+                    return ((BinaryExpression)nodeParent).Right != e;
 
                 case NodeType.ReturnStatement:
-                    return ((ReturnStatement) nodeParent).Expression != e;
+                    return ((ReturnStatement)nodeParent).Expression != e;
 
                 case NodeType.ConditionalExpression:
                     return nodeParent.ParentNode.NodeType == NodeType.BinaryExpression && ((BinaryExpression)nodeParent.ParentNode).Operator != BinaryOperatorType.Assign;
             }
+
             return true;
         }
 

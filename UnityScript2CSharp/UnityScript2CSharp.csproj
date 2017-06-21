@@ -113,6 +113,7 @@
     <Compile Include="Steps\ApplyEnumToImplicitConversions.cs" />
     <Compile Include="Steps\ExpandAssignmentToValueTypeMembers.cs" />
     <Compile Include="Steps\InferredMethodReturnTypeFix.cs" />
+    <Compile Include="Steps\InstanceToTypeReferencedStaticMemberReference.cs" />
     <Compile Include="Steps\PromoteImplicitBooleanConversionsToExplicitComparisons.cs" />
     <Compile Include="Steps\InjectTypeOfExpressionsInArgumentsOfSystemType.cs" />
     <Compile Include="Program.cs" />

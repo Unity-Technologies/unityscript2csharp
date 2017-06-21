@@ -65,6 +65,19 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sources, expectedConverted);
         }
 
+        [TestCase("o.staticField = 1;", "C.staticField = 1;")]
+        [TestCase("var i = o.staticField + 1;", "int i = C.staticField + 1;")]
+        [TestCase("var i = o.staticField + o.staticMethod();", "int i = C.staticField + C.staticMethod();")]
+        [TestCase("o.staticMethod();", "C.staticMethod();")]
+        [TestCase("C.staticMethod();", "C.staticMethod();")] // Proof that static references through a type ref are not affected
+        public void Static_Members_Through_Instance_Are_Updated(string usSnippet, string csSnippet)
+        {
+            SourceFile[] sources = { new SourceFile("static_member.js", $"import UnityScript2CSharp.Tests; function F(o:C) {{ {usSnippet} return 1; }}") };
+            SourceFile[] expectedConverted = { new SourceFile("static_member.cs", "using UnityScript2CSharp.Tests; " + DefaultGeneratedClass + $"static_member : MonoBehaviour {{ public virtual int F(C o) {{ {csSnippet} return 1; }} }}") };
+
+            AssertConversion(sources, expectedConverted);
+        }
+
         [Test]
         public void Additional_Imports()
         {
