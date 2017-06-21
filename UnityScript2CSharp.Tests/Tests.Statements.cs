@@ -40,7 +40,7 @@ namespace UnityScript2CSharp.Tests
         [TestCase("int", "if (p) {}", "if (p != 0) { }")]
         [TestCase("int", "while(p) {}", "while (p != 0) { }")]
         [TestCase("int", "for(; p ; p--) {}", "while (p != 0) { --p; }")]
-        [TestCase("int", "var b:boolean = !p && true;", "bool b = p == 0 && true;")]
+        [TestCase("int", "var b:boolean = !p && true;", "bool b = (p == 0) && true;")]
         [TestCase("int", "return !p;", "return p == 0;")]
 
         [TestCase("System.Object", "while(p) {}", "while (p != null) { }", "object")]
@@ -213,7 +213,7 @@ namespace UnityScript2CSharp.Tests
         public void Return_As_Yield_Break()
         {
             var sourceFiles = SingleSourceFor("yield_break.js", "function F(i:int) { while (i < 10) { if (i % 2 == 0) return; yield i++; } }");
-            var expectedConvertedContents = SingleSourceFor("yield_break.cs", DefaultGeneratedClass + "yield_break : MonoBehaviour { public virtual IEnumerator F(int i) { while (i < 10) { if (i % 2 == 0) { yield break; } yield return i++; } } }");
+            var expectedConvertedContents = SingleSourceFor("yield_break.cs", DefaultGeneratedClass + "yield_break : MonoBehaviour { public virtual IEnumerator F(int i) { while (i < 10) { if ((i % 2) == 0) { yield break; } yield return i++; } } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }

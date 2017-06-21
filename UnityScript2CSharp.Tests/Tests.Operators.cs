@@ -22,8 +22,8 @@ namespace UnityScript2CSharp.Tests
         [TestCase("i < 10")]
         [TestCase("i >= 10")]
         [TestCase("i <= 10")]
-        [TestCase("i > 0 || i < 30")]
-        [TestCase("i >= 0 && i <= 30")]
+        [TestCase("(i > 0) || i < 30")]
+        [TestCase("(i >= 0) && i <= 30")]
         public void BoolOperators(string usOperatorUsage, string csOperatorUsage = null)
         {
             var sourceFiles = SingleSourceFor("operators.js", $"function F(o:Object, i:int) {{ return {usOperatorUsage}; }}");

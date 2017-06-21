@@ -605,6 +605,9 @@ namespace UnityScript2CSharp
 
         public override void OnBinaryExpression(BinaryExpression node)
         {
+            if (NeedParensAround(node))
+                _writer.Write("(");
+
             var isDeclarationStatement = node.Operator == BinaryOperatorType.Assign && node.Left.NodeType == NodeType.ReferenceExpression && node.IsSynthetic;
             if (isDeclarationStatement)
             {
@@ -616,6 +619,9 @@ namespace UnityScript2CSharp
             node.Left.Accept(this);
             _writer.Write($" {CSharpOperatorFor(node.Operator)} ");
             node.Right.Accept(this);
+
+            if (NeedParensAround(node))
+                _writer.Write(")");
         }
 
         public override void OnConditionalExpression(ConditionalExpression node)
@@ -833,7 +839,7 @@ namespace UnityScript2CSharp
         public override void OnTryCastExpression(TryCastExpression node)
         {
             var mre = node.ParentNode as MemberReferenceExpression;
-            var isTargetOfMemberReferenceExpression = mre != null && mre.Target == node;
+            var isTargetOfMemberReferenceExpression = NeedParensAround(node);
 
             VisitWrapping(node.Target, isTargetOfMemberReferenceExpression, "(");
             _writer.Write(" as ");
@@ -1065,6 +1071,30 @@ namespace UnityScript2CSharp
             {
                 attribute.Accept(this);
             }
+        }
+
+        bool NeedParensAround(Expression e)
+        {
+            if (e.ParentNode == null) return false;
+            switch (e.ParentNode.NodeType)
+            {
+                case NodeType.ExpressionStatement:
+                case NodeType.MacroStatement:
+                case NodeType.IfStatement:
+                case NodeType.WhileStatement:
+                case NodeType.UnlessStatement:
+                    return false;
+
+                case NodeType.MethodInvocationExpression:
+                    return ((MethodInvocationExpression) e.ParentNode).Arguments.Any(a => a == e);
+
+                case NodeType.BinaryExpression:
+                    return ((BinaryExpression) e.ParentNode).Right != e;
+
+                case NodeType.ReturnStatement:
+                    return ((ReturnStatement) e.ParentNode).Expression != e;
+            }
+            return true;
         }
 
         private void NotSupported(Node node)

@@ -8,7 +8,7 @@ namespace UnityScript2CSharp.Steps
     {
         public override void OnBinaryExpression(BinaryExpression node)
         {
-            if (node.Operator == BinaryOperatorType.Assign)
+            if (node.Operator == BinaryOperatorType.Assign && node.Left.ExpressionType != null && node.Right.ExpressionType != null)
             {
                 if (node.Left.ExpressionType.IsEnum ^ node.Right.ExpressionType.IsEnum)
                     node.Replace(node.Right, CodeBuilder.CreateCast(node.Left.ExpressionType, node.Right));
@@ -21,7 +21,7 @@ namespace UnityScript2CSharp.Steps
         {
             base.OnMethodInvocationExpression(node);
 
-            if (node.Target.Entity.EntityType == EntityType.BuiltinFunction)
+            if (node.Target.Entity == null || node.Target.Entity.EntityType == EntityType.BuiltinFunction)
                 return;
 
             var parameters = ((IMethodBase)node.Target.Entity).GetParameters();

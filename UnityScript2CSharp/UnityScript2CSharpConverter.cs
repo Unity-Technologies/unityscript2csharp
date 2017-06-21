@@ -120,6 +120,9 @@ namespace UnityScript2CSharp
             pipeline.Remove(typeof(ProcessMethodBodies));
 
             var adjustedPipeline = UnityScriptCompiler.Pipelines.AdjustBooPipeline(pipeline);
+            adjustedPipeline.Remove(typeof(BindEnumMembers));
+            adjustedPipeline.Remove(typeof(CheckIdentifiers));
+
             adjustedPipeline.Replace(typeof(ProcessUnityScriptMethods), new SelectiveUnaryExpressionExpansionProcessUnityScriptMethods());
             adjustedPipeline.Add(new ApplyEnumToImplicitConversions());
             adjustedPipeline.Add(new InferredMethodReturnTypeFix());
@@ -129,8 +132,6 @@ namespace UnityScript2CSharp
             adjustedPipeline.Add(new InjectTypeOfExpressionsInArgumentsOfSystemType());
             adjustedPipeline.Add(new ReplaceArrayMemberReferenceWithCamelCaseVersion());
 
-            adjustedPipeline.Remove(typeof(BindEnumMembers));
-            adjustedPipeline.Remove(typeof(CheckIdentifiers));
             adjustedPipeline.Add(new ReplaceGetSetItemMethodsWithOriginalIndexers());
             adjustedPipeline.Add(new PromoteImplicitBooleanConversionsToExplicitComparisons());
 

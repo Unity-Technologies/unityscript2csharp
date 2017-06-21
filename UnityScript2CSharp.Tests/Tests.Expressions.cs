@@ -110,11 +110,11 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedFiles);
         }
 
-        [TestCase("i > 10", "true : false", "bool")]
-        [TestCase("i == 10", "0 : 42", "int")]
-        [TestCase("i == 10", "1.1f : 42.1f", "float")]
-        [TestCase("i > 0 && i < 42", "null : this", "ternary_operator")]
-        [TestCase("i > 0 ? (i < 42", "1 : 2) : 3", "int")]
+        [TestCase("(i > 10)", "true : false", "bool")]
+        [TestCase("(i == 10)", "0 : 42", "int")]
+        [TestCase("(i == 10)", "1.1f : 42.1f", "float")]
+        [TestCase("((i > 0) && i < 42)", "null : this", "ternary_operator")]
+        [TestCase("(i > 0) ? ((i < 42)", "1 : 2) : 3", "int")]
         //[TestCase("i > 10", "'A' : 'V'", "char")] // char -> string ?
         public void Ternary_Operator(string condition, string values, string inferredReturnTypeName)
         {
@@ -162,7 +162,7 @@ namespace UnityScript2CSharp.Tests
 
         [TestCase("var j = i++; return j", "int j = i++; return j")]
         [TestCase("return i++", "return i++")]
-        [TestCase("return i++ > 10 ? 1 : 0", "return i++ > 10 ? 1 : 0")]
+        [TestCase("return i++ > 10 ? 1 : 0", "return (i++ > 10) ? 1 : 0")]
         public void Post_Increment(string usExpression, string csExpression)
         {
             var sourceFiles = SingleSourceFor("post_increment.js", $"function F(i:int) {{ {usExpression}; }}");

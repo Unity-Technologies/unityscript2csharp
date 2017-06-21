@@ -40,6 +40,9 @@ namespace UnityScript2CSharp.Steps
 
         private LiteralExpression LiteralExpressionFor(IType sourceExpressionType)
         {
+            if (sourceExpressionType == null)
+                return null;
+
             if (sourceExpressionType == TypeSystemServices.BoolType)
                 return null;
 
