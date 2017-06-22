@@ -22,8 +22,8 @@ namespace UnityScript2CSharp.Tests
         [TestCase("i < 10")]
         [TestCase("i >= 10")]
         [TestCase("i <= 10")]
-        [TestCase("(i > 0) || i < 30")]
-        [TestCase("(i >= 0) && i <= 30")]
+        [TestCase("(i > 0) || (i < 30)")]
+        [TestCase("(i >= 0) && (i <= 30)")]
         public void BoolOperators(string usOperatorUsage, string csOperatorUsage = null)
         {
             var sourceFiles = SingleSourceFor("operators.js", $"function F(o:Object, i:int) {{ return {usOperatorUsage}; }}");
@@ -86,7 +86,7 @@ namespace UnityScript2CSharp.Tests
         }
 
         [Test]
-        public void X()
+        public void Operators_Are_Handled()
         {
             var sourceFiles = SingleSourceFor("operator_expression_type.js", "import UnityScript2CSharp.Tests; function F(op:Operators) { return (op * 1.2f).Message; }");
             var expectedConvertedContents = SingleSourceFor("operator_expression_type.cs", "using UnityScript2CSharp.Tests; " + DefaultGeneratedClass + "operator_expression_type : MonoBehaviour { public virtual string F(Operators op) { return (op * 1.2f).Message; } }");

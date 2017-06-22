@@ -37,10 +37,17 @@ namespace UnityScript2CSharp.Tests
             return false;
         }
 
-        public static Operators operator*(Operators instance, float n)
-        {
-            return instance;
-        }
+        public static Operators operator*(Operators instance, float n) { return instance; }
+
+        public static Operators operator+(Operators instance, float n) { return instance; }
+
+        public static Operators operator-(Operators instance) { return instance; }
+
+        public static Operators operator+(Operators instance) { return instance; }
+
+        public static Operators operator~(Operators instance) { return instance; }
+
+        public static bool operator!(Operators instance) { return instance; }
 
         public string Message = "Foo";
     }

@@ -63,7 +63,7 @@ namespace UnityScript2CSharp.Tests
         public void Implicit_Bool_Conversion_For_Array_Member_Access()
         {
             var sourceFiles = SingleSourceFor("bool_conversion_array_member.js", "function F(a: int[]) { return !a.length || (a.Length > 0); }");
-            var expectedConvertedContents = SingleSourceFor("bool_conversion_array_member.cs", DefaultGeneratedClass + @"bool_conversion_array_member : MonoBehaviour { public virtual bool F(int[] a) { return (a.Length == 0) || a.Length > 0; } }");
+            var expectedConvertedContents = SingleSourceFor("bool_conversion_array_member.cs", DefaultGeneratedClass + @"bool_conversion_array_member : MonoBehaviour { public virtual bool F(int[] a) { return (a.Length == 0) || (a.Length > 0); } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -131,7 +131,7 @@ namespace UnityScript2CSharp.Tests
         [TestCase("i > 10", "true : false", "bool")]
         [TestCase("i == 10", "0 : 42", "int")]
         [TestCase("i == 10", "1.1f : 42.1f", "float")]
-        [TestCase("(i > 0) && i < 42", "null : this", "ternary_operator")]
+        [TestCase("(i > 0) && (i < 42)", "null : this", "ternary_operator")]
         [TestCase("i > 0 ? (i < 42", "1 : 2) : 3", "int")]
         //[TestCase("i > 10", "'A' : 'V'", "char")] // char -> string ?
         public void Ternary_Operator(string condition, string values, string inferredReturnTypeName)

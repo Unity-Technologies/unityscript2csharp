@@ -549,9 +549,6 @@ namespace UnityScript2CSharp
 
             _lastIgnored = false;
 
-            if (HandleOperatorsReplacedWithMethods(node))
-                return;
-
             HandleNewExpression(node);
 
             node.Target.Accept(this);
@@ -605,7 +602,17 @@ namespace UnityScript2CSharp
 
         public override void OnBinaryExpression(BinaryExpression node)
         {
-            WrapWith(NeedParensAround(node), "(", ")", delegate()
+            var needParensAround = node.Operator != BinaryOperatorType.Assign;
+            if (needParensAround)
+            {
+                var be = node.ParentNode as BinaryExpression;
+                var mre = node.ParentNode as MemberReferenceExpression;
+                needParensAround = (be != null && be.Operator != BinaryOperatorType.Assign)
+                    || (mre != null && mre.Target == node)
+                    || node.ParentNode.NodeType == NodeType.UnaryExpression;
+            }
+
+            WrapWith(needParensAround, "(", ")", delegate()
                 {
                     var isDeclarationStatement = node.Operator == BinaryOperatorType.Assign &&
                         node.Left.NodeType == NodeType.ReferenceExpression && node.IsSynthetic;
@@ -895,61 +902,6 @@ namespace UnityScript2CSharp
                 _writer.WriteLine("yield break;");
 
             return isReturningIEnumerable;
-        }
-
-        private bool HandleOperatorsReplacedWithMethods(MethodInvocationExpression node)
-        {
-            var isOperator = node.Target.Entity != null &&
-                (node.Target.Entity.Name.StartsWith("op_") || node.Target.Entity.FullName == "Boo.Lang.Runtime.RuntimeServices.EqualityOperator");
-            if (!isOperator)
-                return false;
-
-            var args = node.Arguments;
-
-            if (args.Count == 1) // Unary operators..
-            {
-                _writer.Write(OperatorSymbolFor(node.Target.Entity.Name, node.LexicalInfo));
-                args[0].Accept(this);
-                return true;
-            }
-
-            // Binary operators...
-            var needParentheses = (node.ParentNode as MemberReferenceExpression)?.Target == node ||
-                (node.ParentNode as UnaryExpression)?.Operand == node;
-            if (needParentheses)
-                _writer.Write("(");
-
-            args[0].Accept(this);
-            _writer.Write($" {OperatorSymbolFor(node.Target.Entity.Name, node.LexicalInfo)} ");
-            args[1].Accept(this);
-
-            if (needParentheses)
-                _writer.Write(")");
-
-            return true;
-        }
-
-        private string OperatorSymbolFor(string ilOperatorName, LexicalInfo debuInfo)
-        {
-            switch (ilOperatorName)
-            {
-                //TODO: Add all operators...
-                case "op_Multiply": return "*";
-                case "op_Division": return "/";
-                case "op_Addition": return "+";
-                case "op_Subtraction": return "-";
-                case "op_Implicit": return string.Empty;
-
-                case "op_Inequality": return "!=";
-
-                case "op_Equality":
-                case "EqualityOperator": return "==";
-
-                case "op_UnaryNegation": return "-";
-
-                default:
-                    throw new Exception("Mapping for operator not implemented yet: " + ilOperatorName + " @ " + debuInfo);
-            }
         }
 
         private string CSharpOperatorFor(BinaryOperatorType op)

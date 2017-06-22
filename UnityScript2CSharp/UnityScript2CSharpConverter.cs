@@ -124,6 +124,7 @@ namespace UnityScript2CSharp
             adjustedPipeline.Remove(typeof(CheckIdentifiers));
 
             adjustedPipeline.Replace(typeof(ProcessUnityScriptMethods), new SelectiveUnaryExpressionExpansionProcessUnityScriptMethods());
+            adjustedPipeline.Add(new OperatorMethodToLanguageOperator());
             adjustedPipeline.Add(new ExpandAssignmentToValueTypeMembers());
             adjustedPipeline.Add(new ApplyEnumToImplicitConversions());
             adjustedPipeline.Add(new InferredMethodReturnTypeFix());

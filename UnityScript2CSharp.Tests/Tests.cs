@@ -29,6 +29,20 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
+        [TestCase("i = 1 + ((2 * (3 - 4)) * 5)")]
+        [TestCase("i = 1 * ((2 - 3) * 4)")]
+        [TestCase("op = op * (4 + 1)")]
+        [TestCase("op = -op")]
+        [TestCase("op = ~op")]
+        [TestCase("var b = !op", "bool b = !op")]
+        public void Parentheses_Enforces_Precedence(string expression, string csExpression = null)
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "parentheses_enforces_precedence.js", Contents = $"import UnityScript2CSharp.Tests; function F(i:int, op:Operators) {{ {expression}; }}" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "parentheses_enforces_precedence.cs", Contents = "using UnityScript2CSharp.Tests; " + DefaultGeneratedClass + $"parentheses_enforces_precedence : MonoBehaviour {{ public virtual void F(int i, Operators op) {{ {csExpression ?? expression}; }} }}" } };
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
         [Test]
         public void Multiple_Scripts()
         {
@@ -257,7 +271,7 @@ namespace UnityScript2CSharp.Tests
         public void Enums_Int_Implicit_Conversions()
         {
             var sourceFiles = SingleSourceFor("enum_int_implicit_conversions.js", "function F(c: System.ConsoleColor, i:int) : int { var l1 = c + 1; var l2:int = c + 1; c = l2; F(i, c); F(0, System.ConsoleColor.Blue); F(i - 1, c); return c; }");
-            var expectedConvertedContents = SingleSourceFor("enum_int_implicit_conversions.cs", DefaultGeneratedClass + "enum_int_implicit_conversions : MonoBehaviour { public virtual int F(System.ConsoleColor c, int i) { System.ConsoleColor l1 = c + 1; int l2 = (int) (c + 1); c = (System.ConsoleColor) l2; this.F((System.ConsoleColor) i, (int) c); this.F((System.ConsoleColor) 0, (int) System.ConsoleColor.Blue); this.F((System.ConsoleColor) (i - 1), (int) c); return (int) c; } }");
+            var expectedConvertedContents = SingleSourceFor("enum_int_implicit_conversions.cs", DefaultGeneratedClass + "enum_int_implicit_conversions : MonoBehaviour { public virtual int F(System.ConsoleColor c, int i) { System.ConsoleColor l1 = c + 1; int l2 = (int) c + 1; c = (System.ConsoleColor) l2; this.F((System.ConsoleColor) i, (int) c); this.F((System.ConsoleColor) 0, (int) System.ConsoleColor.Blue); this.F((System.ConsoleColor) i - 1, (int) c); return (int) c; } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -377,7 +391,7 @@ namespace UnityScript2CSharp.Tests
         }
 
         [TestCase("10")]
-        [TestCase("(1 + 1)")]
+        [TestCase("1 + 1")]
         [TestCase("System.String.Format(\"\", 1).Length")]
         [TestCase("System.Environment.ProcessorCount")]
         public void Assignment_To_Members_Of_ValueTypes_Through_Properties(string rhs)
