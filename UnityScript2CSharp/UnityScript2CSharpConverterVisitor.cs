@@ -278,8 +278,8 @@ namespace UnityScript2CSharp
 
             foreach (var local in parentMedhod.Locals)
             {
-                var internalLocal = local.Entity as InternalLocal;
-                if (!IsSynthetic(internalLocal) && !HasAutoLocalDeclaration(parentMedhod.Body, local))
+                InternalLocal internalLocal;
+                if (!IsSynthetic(local, out internalLocal) && !HasAutoLocalDeclaration(parentMedhod.Body, local))
                     internalLocal.OriginalDeclaration.ParentNode.Accept(this);
             }
 
@@ -1025,8 +1025,12 @@ namespace UnityScript2CSharp
             }
         }
 
-        private static bool IsSynthetic(InternalLocal internalLocal)
+        private static bool IsSynthetic(Local local, out InternalLocal internalLocal)
         {
+            internalLocal = local.Entity as InternalLocal;
+            if (local.IsSynthetic)
+                return true;
+
             return internalLocal == null || internalLocal.OriginalDeclaration == null;
         }
 

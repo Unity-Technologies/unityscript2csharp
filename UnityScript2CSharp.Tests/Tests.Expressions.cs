@@ -190,15 +190,6 @@ namespace UnityScript2CSharp.Tests
         }
 
         [Test]
-        public void Post_Increment_When_Result_Is_Not_Used_Is_Converted_To_Pre_Increment() // This test is here only to document the behavior
-        {
-            var sourceFiles = SingleSourceFor("post_increment1.js", "function F(i:int) { i++; }");
-            var expectedConvertedContents = SingleSourceFor("post_increment1.cs", DefaultGeneratedClass + @"post_increment1 : MonoBehaviour { public virtual void F(int i) { ++i; } }");
-
-            AssertConversion(sourceFiles, expectedConvertedContents);
-        }
-
-        [Test]
         public void New_Expression()
         {
             var sourceFiles = SingleSourceFor("new_expression.js", "import System.Text; function F(o:Object) : StringBuilder { F(new StringBuilder()); return new StringBuilder(); }");

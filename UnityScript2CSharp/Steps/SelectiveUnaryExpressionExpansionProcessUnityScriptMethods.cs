@@ -5,6 +5,12 @@ namespace UnityScript2CSharp.Steps
 {
     class SelectiveUnaryExpressionExpansionProcessUnityScriptMethods : ProcessUnityScriptMethods
     {
+        // if not overriden, some post-increment/decrement are converted to *pre-increment/decrement*
+        public override bool EnterUnaryExpression(UnaryExpression node)
+        {
+            return true;
+        }
+
         public override void LeaveUnaryExpression(UnaryExpression node)
         {
             if (node.Operator == UnaryOperatorType.PostDecrement ||
@@ -13,15 +19,34 @@ namespace UnityScript2CSharp.Steps
                 node.Operator == UnaryOperatorType.Decrement)
             {
                 node.ExpressionType = node.Operand.ExpressionType;
-                return; // do not expand post/pre increment/decrement (the syntax is the same as in C#
+                return; // do not expand post/pre increment/decrement (the syntax is the same as in C#)
             }
 
             base.LeaveUnaryExpression(node);
         }
 
+        //
+        // US compiler will convert *for()* statements to *while* statements (we don't want that)
+        // This version simply calls necessary methods to ensure semantic information (aka Entities in boo/us)
+        // for expression inside the for() body will be calculated correctly, but does not convert
+        // for -> while
+        //
         public override void OnForStatement(ForStatement node)
         {
+            var method = node.GetAncestor<Method>();
+            var localsBeforeVisiting = (LocalCollection)method.Locals.Clone();
+
             Visit(node.Iterator);
+            ProcessIterator(node.Iterator, node.Declarations);
+            VisitForStatementBlock(node);
+
+            // Mark any *local* injected by the above code as *synthetic* in order to
+            // avoid problems with some for() statemets being duplicated in the converted code
+            foreach (var current in method.Locals)
+            {
+                if (!localsBeforeVisiting.Contains(current))
+                    current.IsSynthetic = true;
+            }
         }
     }
 }

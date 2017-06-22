@@ -39,7 +39,7 @@ namespace UnityScript2CSharp.Tests
         [TestCase("int", "var b = !p;", "bool b = p == 0;")]
         [TestCase("int", "if (p) {}", "if (p != 0) { }")]
         [TestCase("int", "while(p) {}", "while (p != 0) { }")]
-        [TestCase("int", "for(; p ; p--) {}", "while (p != 0) { --p; }")]
+        [TestCase("int", "for(; p ; p--) {}", "while (p != 0) { p--; }")]
         [TestCase("int", "var b:boolean = !p && true;", "bool b = (p == 0) && true;")]
         [TestCase("int", "return !p;", "return p == 0;")]
 
@@ -84,7 +84,7 @@ namespace UnityScript2CSharp.Tests
         public void Simple_For()
         {
             var sourceFiles = SingleSourceFor("simple_for.js", "function F() { for(var i = 1; i < 10; i++ ) { } }");
-            var expectedConvertedContents = SingleSourceFor("simple_for.cs", DefaultUsings + @" public partial class simple_for : MonoBehaviour { public virtual void F() { int i = 1; while (i < 10) { ++i; } } }");
+            var expectedConvertedContents = SingleSourceFor("simple_for.cs", DefaultUsings + @" public partial class simple_for : MonoBehaviour { public virtual void F() { int i = 1; while (i < 10) { i++; } } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -93,7 +93,7 @@ namespace UnityScript2CSharp.Tests
         public void Simple_ForEach()
         {
             var sourceFiles = SingleSourceFor("simple_foreach.js", "function F(e:IEnumerable) { for(var i in e) { } }");
-            var expectedConvertedContents = SingleSourceFor("simple_foreach.cs", DefaultGeneratedClass + "simple_foreach : MonoBehaviour { public virtual void F(IEnumerable e) { foreach (var i in e) { } } }");
+            var expectedConvertedContents = SingleSourceFor("simple_foreach.cs", DefaultGeneratedClass + "simple_foreach : MonoBehaviour { public virtual void F(IEnumerable e) { foreach (object i in e) { } } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -102,7 +102,7 @@ namespace UnityScript2CSharp.Tests
         public void Simple_ForEach_No_Block()
         {
             var sourceFiles = SingleSourceFor("foreach_no_block.js", "function F(e:IEnumerable, i:int) { for(var item in e) i++; return i;  }");
-            var expectedConvertedContents = SingleSourceFor("foreach_no_block.cs", DefaultGeneratedClass + "foreach_no_block : MonoBehaviour { public virtual int F(IEnumerable e, int i) { foreach (var item in e) { i++; } return i; } }");
+            var expectedConvertedContents = SingleSourceFor("foreach_no_block.cs", DefaultGeneratedClass + "foreach_no_block : MonoBehaviour { public virtual int F(IEnumerable e, int i) { foreach (object item in e) { i++; } return i; } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -111,7 +111,7 @@ namespace UnityScript2CSharp.Tests
         public void Simple_While()
         {
             var sourceFiles = SingleSourceFor("simple_while.js", "function F(i:int) { while (i < 10) i++; }");
-            var expectedConvertedContents = SingleSourceFor("simple_while.cs", DefaultUsings + @" public partial class simple_while : MonoBehaviour { public virtual void F(int i) { while (i < 10) { ++i; } } }");
+            var expectedConvertedContents = SingleSourceFor("simple_while.cs", DefaultUsings + @" public partial class simple_while : MonoBehaviour { public virtual void F(int i) { while (i < 10) { i++; } } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -204,7 +204,7 @@ namespace UnityScript2CSharp.Tests
         {
             // It looks like when we have a "for" with a block that contains a 'yield' with no value the method return type is not inferred and we assume "void"
             var sourceFiles = SingleSourceFor("yield_without_values.js", "function F(l:int[]) { for (var i in l) { yield; } }");
-            var expectedConvertedContents = SingleSourceFor("yield_without_values.cs", DefaultGeneratedClass + "yield_without_values : MonoBehaviour { public virtual IEnumerator F(int[] l) { foreach (var i in l) { yield return null; } } }");
+            var expectedConvertedContents = SingleSourceFor("yield_without_values.cs", DefaultGeneratedClass + "yield_without_values : MonoBehaviour { public virtual IEnumerator F(int[] l) { foreach (int i in l) { yield return null; } } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
