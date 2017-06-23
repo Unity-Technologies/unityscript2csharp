@@ -35,40 +35,7 @@ namespace UnityScript2CSharp
 
         public override void OnSimpleTypeReference(SimpleTypeReference node)
         {
-            string typeName = null;
-            var externalType = node.Entity as ExternalType;
-            if (externalType != null)
-            {
-                switch (externalType.ActualType.FullName)
-                {
-                    case "System.String":
-                        typeName = "string";
-                        break;
-
-                    case "System.Boolean":
-                        typeName = "bool";
-                        break;
-
-                    case "System.Object":
-                        typeName = "object";
-                        break;
-
-                    case "System.Int32":
-                        typeName = "int";
-                        break;
-
-                    case "System.Int64":
-                        typeName = "long";
-                        break;
-                }
-
-                // UnityEngine.Object always need to be qualified.
-                if (typeName == null && _usings.Contains(externalType.ActualType.Namespace) && externalType.ActualType.FullName != "UnityEngine.Object")
-                {
-                    typeName = externalType.Name;
-                }
-            }
-
+            var typeName = TypeNameFor(node.Entity);
             _writer.Write(typeName ?? node.Name);
         }
 
@@ -650,7 +617,8 @@ namespace UnityScript2CSharp
             if (IsSystemObjectCtor(node))
                 _writer.Write("object");
             else
-                _writer.Write(node.Name);
+                //_writer.Write(node.Name);
+                _writer.Write(TypeNameFor(node.Entity) ?? node.Name);
         }
 
         public override void OnMemberReferenceExpression(MemberReferenceExpression node)
@@ -1074,6 +1042,28 @@ namespace UnityScript2CSharp
 
             if (needParensAround)
                 _writer.Write(sufix);
+        }
+
+        private string TypeNameFor(IEntity entity)
+        {
+            var externalType = entity as ExternalType;
+            if (externalType == null)
+                return null;
+
+            switch (externalType.ActualType.FullName)
+            {
+                case "System.String": return "string";
+                case "System.Boolean": return "bool";
+                case "System.Object": return "object";
+                case "System.Int32": return "int";
+                case "System.Int64": return "long";
+            }
+
+            // UnityEngine.Object always need to be qualified.
+            if (_usings.Contains(externalType.ActualType.Namespace) && externalType.ActualType.FullName != "UnityEngine.Object")
+                return externalType.Name;
+
+            return null;
         }
 
         private void NotSupported(Node node)

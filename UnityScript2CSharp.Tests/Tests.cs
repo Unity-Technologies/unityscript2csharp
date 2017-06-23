@@ -159,6 +159,14 @@ namespace UnityScript2CSharp.Tests
         }
 
         [Test]
+        public void String_Static_Member_Reference()
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "string_member.js", Contents = "function M() { return String.Concat(1); }" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "string_member.cs", Contents = DefaultGeneratedClass + "string_member : MonoBehaviour { public virtual string M() { return string.Concat(1); } }" } };
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
         public void Property_Getter()
         {
             Assert.Fail("Need to test");
