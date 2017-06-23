@@ -137,6 +137,7 @@ namespace UnityScript2CSharp
             adjustedPipeline.Add(new ReplaceGetSetItemMethodsWithOriginalIndexers());
             adjustedPipeline.Add(new PromoteImplicitBooleanConversionsToExplicitComparisons());
             adjustedPipeline.Add(new InstanceToTypeReferencedStaticMemberReference());
+            adjustedPipeline.Add(new TransforwmKnownUnityEngineMethods());
 
             _compiler.Parameters.Pipeline = adjustedPipeline;
         }

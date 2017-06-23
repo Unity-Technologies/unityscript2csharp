@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using NUnit.Framework;
+using NUnit.Framework.Internal;
 
 namespace UnityScript2CSharp.Tests
 {
@@ -426,6 +428,34 @@ namespace UnityScript2CSharp.Tests
         }
 
         [Test]
+        public void Unity_Engine_Known_Methods_In_Assignments([Values("GameObject", "Component")] string typeName, [ValueSource("KnownMethodsTestProvider")] Tuple<string, string> expression)
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "known_methods.js", Contents = $"function F(o:{typeName}) {{ var c : known_methods = {expression.Item1}; }}" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "known_methods.cs", Contents = DefaultGeneratedClass + $"known_methods : MonoBehaviour {{ public virtual void F({typeName} o) {{ known_methods c = {expression.Item2}; }} }}" } };
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
+        public void Unity_Engine_Known_Methods_In_Parameters([Values("GameObject", "Component")] string typeName, [ValueSource("KnownMethodsTestProvider")] Tuple<string, string> expression)
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "known_methods.js", Contents = $"function F(o:{typeName}, requiresCast: known_methods) {{ F(o, {expression.Item1}); }}" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "known_methods.cs", Contents = DefaultGeneratedClass + $"known_methods : MonoBehaviour {{ public virtual void F({typeName} o, known_methods requiresCast) {{ this.F(o, {expression.Item2}); }} }}" } };
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [TestCase("o.GetComponent(\"Foo\")", "o.GetComponent(\"Foo\")")]
+        [TestCase("o.GetComponent.<known_methods>()", "o.GetComponent<known_methods>()")]
+        public void No_Cast_Required_With_Compatible_Unity_Engine_Known_Methods_In_Parameters(string usExpression, string csExpression)
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "known_methods.js", Contents = $"function F(o:Component) {{ F({usExpression}); }}" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "known_methods.cs", Contents = DefaultGeneratedClass + $"known_methods : MonoBehaviour {{ public virtual void F(Component o) {{ this.F({csExpression}); }} }}" } };
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
         public void Test_Formatting()
         {
         }
@@ -448,6 +478,18 @@ namespace UnityScript2CSharp.Tests
             yield return @"\tFoo\n";
             yield return @"\""Foo\""";
             yield return @"\""Foo\n\""";
+        }
+
+        private static IEnumerable<Tuple<string, string>> KnownMethodsTestProvider()
+        {
+            //TODO: AddComponent has issues
+            //yield return new Tuple<string, string>("o.AddComponent(typeof(known_methods))", "(known_methods) o.AddComponent(typeof(known_methods))");
+            //yield return new Tuple<string, string>("o.AddComponent.<known_methods>()", "o.AddComponent<known_methods>()");
+
+            yield return new Tuple<string, string>("o.GetComponent(\"Whatever\")", "(known_methods) o.GetComponent(\"Whatever\")");
+            yield return new Tuple<string, string>("o.GetComponent(\"known_methods\")", "(known_methods) o.GetComponent(\"known_methods\")");
+            yield return new Tuple<string, string>("o.GetComponent(typeof(known_methods))", "(known_methods) o.GetComponent(typeof(known_methods))");
+            yield return new Tuple<string, string>("o.GetComponent.<known_methods>()", "o.GetComponent<known_methods>()");
         }
     }
 }

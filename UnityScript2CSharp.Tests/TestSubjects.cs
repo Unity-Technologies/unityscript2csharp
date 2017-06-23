@@ -1,5 +1,21 @@
 using System;
 
+namespace UnityEngine
+{
+    public class Component
+    {
+        public Component GetComponent(string s) { return this; }
+        public Component GetComponent(Type t) { return this; }
+        public Component GetComponent<T>() { return this; }
+    }
+    public class GameObject
+    {
+        public Component GetComponent(string s) { return null; }
+        public Component GetComponent(Type t) { return null; }
+        public Component GetComponent<T>() { return null; }
+    }
+}
+
 namespace UnityScript2CSharp.Tests
 {
     public class Base
