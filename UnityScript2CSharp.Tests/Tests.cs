@@ -151,6 +151,14 @@ namespace UnityScript2CSharp.Tests
         }
 
         [Test]
+        public void Method_Overriding()
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "method_overriding.js", Contents = "import UnityScript2CSharp.Tests; class Foo extends Base { function M() {} }" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "method_overriding.cs", Contents = "using UnityScript2CSharp.Tests; " + DefaultUsings + " public class Foo : Base { public override void M() { } }" } };
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
         public void Property_Getter()
         {
             Assert.Fail("Need to test");

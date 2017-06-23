@@ -916,6 +916,12 @@ namespace UnityScript2CSharp
 
         private static string ModifiersToString(TypeMemberModifiers modifiers)
         {
+            var isOverride = (modifiers & TypeMemberModifiers.Override) != 0;
+            var isVirtual = (modifiers & TypeMemberModifiers.Virtual) != 0;
+
+            if (isVirtual && isOverride)
+                modifiers &= ~TypeMemberModifiers.Virtual;
+
             return modifiers.ToString().ToLower().Replace(",", "");
         }
 

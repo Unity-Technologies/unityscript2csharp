@@ -2,6 +2,11 @@ using System;
 
 namespace UnityScript2CSharp.Tests
 {
+    public class Base
+    {
+        public virtual void M() {}
+    }
+
     public class C
     {
         public static int staticField;
