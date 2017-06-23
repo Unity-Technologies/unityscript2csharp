@@ -103,28 +103,25 @@ namespace UnityScript2CSharp
 
         private void WriteDefaultCase(Block node, Expression expectedLocalVarInComparison)
         {
-            if (node.Statements.Count == 0)
-                return;
-
             var statementIndex = FindDefaultCase(node, expectedLocalVarInComparison);
-            if (statementIndex == -1 || statementIndex == node.Statements.Count)
+            if (!statementIndex.Any())
                 return;
 
             _writer.WriteLine("default:");
             using (new BlockIdentation(_writer))
             {
-                while (statementIndex < node.Statements.Count)
+                foreach (var stmt in statementIndex)
                 {
-                    var current = node.Statements[statementIndex++];
-                    if (current.NodeType == NodeType.LabelStatement)
+                    if (stmt.NodeType == NodeType.LabelStatement)
                         continue;
 
-                    current.Accept(_us2CsVisitor);
+                    stmt.Accept(_us2CsVisitor);
                 }
+                _writer.WriteLine("break;");
             }
         }
 
-        private static int FindDefaultCase(Block node, Expression expectedLocalVarInComparison)
+        private static IEnumerable<Statement> FindDefaultCase(Block node, Expression expectedLocalVarInComparison)
         {
             var index = -1;
             for (int i = node.Statements.Count - 1; i > 0; i--)
@@ -139,7 +136,7 @@ namespace UnityScript2CSharp
                     index = i;
             }
 
-            return index;
+            return index != -1 ? node.Statements.Skip(index) : Enumerable.Empty<Statement>();
         }
 
         private void WriteSwitchCase(BinaryExpression equalityCheck, Block caseBlock)

@@ -131,7 +131,7 @@ namespace UnityScript2CSharp.Tests
         public void Switch(string condition)
         {
             var sourceFiles = SingleSourceFor("switch_statement.js", $"function F(i:int) {{ switch({condition}) {{ case 1: return 1; case 2: return 2; default: return 3; }} }}");
-            var expectedConvertedContents = SingleSourceFor("switch_statement.cs", DefaultGeneratedClass + $"switch_statement : MonoBehaviour {{ public virtual int F(int i) {{ switch ({condition}) {{ case 1: return 1; break; case 2: return 2; break; default: return 3; }} }} }}");
+            var expectedConvertedContents = SingleSourceFor("switch_statement.cs", DefaultGeneratedClass + $"switch_statement : MonoBehaviour {{ public virtual int F(int i) {{ switch ({condition}) {{ case 1: return 1; break; case 2: return 2; break; default: return 3; break; }} }} }}");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -166,8 +166,8 @@ namespace UnityScript2CSharp.Tests
         [Test]
         public void Switch_Fall_Through()
         {
-            var sourceFiles = SingleSourceFor("switch_fall_through.js", "function F(i:int) { switch(i) { case 1: case 2: return 0; break; default: return 1; } }");
-            var expectedConvertedContents = SingleSourceFor("switch_fall_through.cs", DefaultGeneratedClass + "switch_fall_through : MonoBehaviour { public virtual int F(int i) { switch (i) { case 1: case 2: return 0; break; default: return 1; } } }");
+            var sourceFiles = SingleSourceFor("switch_fall_through.js", "function F(i:int) { switch(i) { case 1: case 2: return 0; break; default: i = 10; break; } }");
+            var expectedConvertedContents = SingleSourceFor("switch_fall_through.cs", DefaultGeneratedClass + "switch_fall_through : MonoBehaviour { public virtual int F(int i) { switch (i) { case 1: case 2: return 0; break; default: i = 10; break; } } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -176,7 +176,7 @@ namespace UnityScript2CSharp.Tests
         public void Switch_With_If_Statement_In_Default_Case()
         {
             var sourceFiles = SingleSourceFor("switch_default_if.js", "function F(i:int) { switch(i) { case 1: return 1; break; default: if (i > 10) return 1; else i = 8; } }");
-            var expectedConvertedContents = SingleSourceFor("switch_default_if.cs", DefaultGeneratedClass + "switch_default_if : MonoBehaviour { public virtual int F(int i) { switch (i) { case 1: return 1; break; default: if (i > 10) { return 1; } else { i = 8; } } } }");
+            var expectedConvertedContents = SingleSourceFor("switch_default_if.cs", DefaultGeneratedClass + "switch_default_if : MonoBehaviour { public virtual int F(int i) { switch (i) { case 1: return 1; break; default: if (i > 10) { return 1; } else { i = 8; } break; } } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }

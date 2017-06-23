@@ -617,7 +617,6 @@ namespace UnityScript2CSharp
             if (IsSystemObjectCtor(node))
                 _writer.Write("object");
             else
-                //_writer.Write(node.Name);
                 _writer.Write(TypeNameFor(node.Entity) ?? node.Name);
         }
 
