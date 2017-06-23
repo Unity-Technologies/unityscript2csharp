@@ -198,6 +198,16 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
+        [TestCase("Decimal", TestName = "Value Types")]
+        [TestCase("Exception", TestName = "Reference Types")]
+        public void Implicit_New_Expression(string typeName)
+        {
+            var sourceFiles = SingleSourceFor("implicit_new_expression.js", $"import System; function F(o:Object) : {typeName} {{ F({typeName}()); var f : {typeName} = {typeName}(); return {typeName}(); }}");
+            var expectedConvertedContents = SingleSourceFor("implicit_new_expression.cs", "using System; " + DefaultGeneratedClass + $"implicit_new_expression : MonoBehaviour {{ public virtual {typeName} F(object o) {{ this.F(new {typeName}()); {typeName} f = new {typeName}(); return new {typeName}(); }} }}");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
         [Test]
         public void Method_Invocation()
         {

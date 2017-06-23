@@ -1,4 +1,5 @@
 using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -141,7 +142,6 @@ namespace UnityScript2CSharp
         public override void OnStructDefinition(StructDefinition node)
         {
             NotSupported(node);
-            base.OnStructDefinition(node);
         }
 
         public override void OnInterfaceDefinition(InterfaceDefinition node)
@@ -215,7 +215,7 @@ namespace UnityScript2CSharp
 
         public override void OnBlockExpression(BlockExpression node)
         {
-            NotSupported(node);
+            NotSupported(node); // lambdas ?
             base.OnBlockExpression(node);
         }
 
@@ -776,7 +776,7 @@ namespace UnityScript2CSharp
 
         public override void OnListLiteralExpression(ListLiteralExpression node)
         {
-            NotSupported(node);
+            NotSupported(node); // "(1, 2) ?
             base.OnListLiteralExpression(node);
         }
 
@@ -1046,10 +1046,24 @@ namespace UnityScript2CSharp
         private string TypeNameFor(IEntity entity)
         {
             var externalType = entity as ExternalType;
-            if (externalType == null)
-                return null;
+            string fullName;
+            string typeNamespace;
 
-            switch (externalType.ActualType.FullName)
+            if (externalType != null)
+            {
+                typeNamespace = externalType.ActualType.Namespace;
+                fullName = externalType.ActualType.FullName;
+            }
+            else
+            {
+                var ctor = entity as IConstructor;
+                if (ctor == null)
+                    return null;
+
+                return TypeNameFor(ctor.DeclaringType);
+            }
+
+            switch (fullName)
             {
                 case "System.String": return "string";
                 case "System.Boolean": return "bool";
@@ -1059,7 +1073,7 @@ namespace UnityScript2CSharp
             }
 
             // UnityEngine.Object always need to be qualified.
-            if (_usings.Contains(externalType.ActualType.Namespace) && externalType.ActualType.FullName != "UnityEngine.Object")
+            if (_usings.Contains(typeNamespace) && fullName != "UnityEngine.Object")
                 return externalType.Name;
 
             return null;
