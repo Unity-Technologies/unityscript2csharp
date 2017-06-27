@@ -27,10 +27,11 @@ namespace UnityScript2CSharp.Tests
 
         [TestCase("var a = [1, 2, 3]", "int[] a = new int[] {1, 2, 3}")]
         [TestCase("var a = Array(true, false)", "object[] a = new object[] {true, false}")]
+        [TestCase("var a = Array(1, 2)", "object[] a = new object[] {1, 2}")]
         public void Arrays_With_Initializer(string usSnippet, string csSnippet)
         {
-            var sourceFiles = SingleSourceFor("arrays_with_initializer.js", $"function F() {{ {usSnippet}; return a.length; }}");
-            var expectedConvertedContents = SingleSourceFor("arrays_with_initializer.cs", DefaultGeneratedClass + $"arrays_with_initializer : MonoBehaviour {{ public virtual int F() {{ {csSnippet}; return a.Length; }} }}");
+            var sourceFiles = SingleSourceFor("arrays_with_initializer.js", $"function F() : Object {{ {usSnippet}; return a.length > 0 ? a[0] : a[1]; }}");
+            var expectedConvertedContents = SingleSourceFor("arrays_with_initializer.cs", DefaultGeneratedClass + $"arrays_with_initializer : MonoBehaviour {{ public virtual object F() {{ {csSnippet}; return a.Length > 0 ? a[0] : a[1]; }} }}");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -206,7 +207,7 @@ namespace UnityScript2CSharp.Tests
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
-        
+
         [Test]
         public void Implicit_New_Expression_On_Value_Type_With_No_Ctors()
         {

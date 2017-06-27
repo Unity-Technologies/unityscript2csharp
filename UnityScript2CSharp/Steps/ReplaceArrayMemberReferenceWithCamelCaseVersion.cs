@@ -2,6 +2,7 @@ using System;
 using System.Text;
 using Boo.Lang.Compiler.Ast;
 using Boo.Lang.Compiler.Steps;
+using Boo.Lang.Compiler.TypeSystem;
 using Boo.Lang.Compiler.TypeSystem.Reflection;
 
 namespace UnityScript2CSharp.Steps
@@ -11,6 +12,9 @@ namespace UnityScript2CSharp.Steps
         public override void OnMemberReferenceExpression(MemberReferenceExpression node)
         {
             if (!IsArray(node) || Char.IsUpper(node.Name[0]))
+                return;
+
+            if (node.Name == "get_Item" || node.Name == "set_Item")
                 return;
 
             var name = new StringBuilder();
