@@ -28,6 +28,9 @@ namespace UnityScript2CSharp.Tests
         public static int staticField;
         public static int staticMethod() { return 1; }
         public int instanceMethod() { return 1; }
+
+        public C(int i) {}
+        public C() {}
     }
 
     public struct Other
@@ -37,6 +40,12 @@ namespace UnityScript2CSharp.Tests
 
     public struct Struct
     {
+        public Struct(int i)
+        {
+            value = i;
+            other = default(Other);
+        }
+
         public int value;
         public Other other;
     }

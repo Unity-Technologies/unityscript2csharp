@@ -1,5 +1,4 @@
 using System;
-using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -523,7 +522,7 @@ namespace UnityScript2CSharp
             var externalMethod = node.Target.Entity as ExternalMethod;
             Action<Node, int> refOutWriter = delegate {};
 
-            if (externalMethod != null)
+            if (externalMethod != null) // UnityScript does not supports defining methods expecting out/ref params, so only external ones need ever to be checked.
             {
                 refOutWriter = (arg, index) =>
                     {
@@ -614,6 +613,14 @@ namespace UnityScript2CSharp
 
         public override void OnReferenceExpression(ReferenceExpression node)
         {
+            if (node.ContainsAnnotation("VALUE_TYPE_INITIALIZATON_MARKER"))
+            {
+                _writer.Write("default(");
+                _writer.Write(TypeNameFor(node.Entity) ?? node.Name);
+                _writer.Write(")");
+                return;
+            }
+
             if (IsSystemObjectCtor(node))
                 _writer.Write("object");
             else
@@ -776,7 +783,7 @@ namespace UnityScript2CSharp
 
         public override void OnListLiteralExpression(ListLiteralExpression node)
         {
-            NotSupported(node); // "(1, 2) ?
+            NotSupported(node);
             base.OnListLiteralExpression(node);
         }
 
@@ -1056,8 +1063,10 @@ namespace UnityScript2CSharp
             }
             else
             {
+                // this is a very specific case for Value type instantiation,
+                // Internal entities are types/members defined in US; in this case simply the entity name (no try to use unqualified name)
                 var ctor = entity as IConstructor;
-                if (ctor == null)
+                if (ctor == null || (ctor as IInternalEntity) != null)
                     return null;
 
                 return TypeNameFor(ctor.DeclaringType);

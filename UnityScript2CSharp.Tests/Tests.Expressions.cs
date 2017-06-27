@@ -198,12 +198,29 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
-        [TestCase("Decimal", TestName = "Value Types")]
-        [TestCase("Exception", TestName = "Reference Types")]
-        public void Implicit_New_Expression(string typeName)
+        [Test]
+        public void Implicit_New_Expression([Values("Struct", "C")] string typeName, [Values("42", "")] string paramValue)
         {
-            var sourceFiles = SingleSourceFor("implicit_new_expression.js", $"import System; function F(o:Object) : {typeName} {{ F({typeName}()); var f : {typeName} = {typeName}(); return {typeName}(); }}");
-            var expectedConvertedContents = SingleSourceFor("implicit_new_expression.cs", "using System; " + DefaultGeneratedClass + $"implicit_new_expression : MonoBehaviour {{ public virtual {typeName} F(object o) {{ this.F(new {typeName}()); {typeName} f = new {typeName}(); return new {typeName}(); }} }}");
+            var sourceFiles = SingleSourceFor("implicit_new_expression.js", $"import UnityScript2CSharp.Tests; function F(o:Object) : {typeName} {{ F({typeName}({paramValue})); var f : {typeName} = {typeName}({paramValue}); return {typeName}({paramValue}); }}");
+            var expectedConvertedContents = SingleSourceFor("implicit_new_expression.cs", "using UnityScript2CSharp.Tests; " + DefaultGeneratedClass + $"implicit_new_expression : MonoBehaviour {{ public virtual {typeName} F(object o) {{ this.F(new {typeName}({paramValue})); {typeName} f = new {typeName}({paramValue}); return new {typeName}({paramValue}); }} }}");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+        
+        [Test]
+        public void Implicit_New_Expression_On_Value_Type_With_No_Ctors()
+        {
+            var sourceFiles = SingleSourceFor("implicit_new_expression_no_params.js", "import UnityScript2CSharp.Tests; function F(o:Object) : Other { F(Other()); var f : Other = Other(); return Other(); }");
+            var expectedConvertedContents = SingleSourceFor("implicit_new_expression_no_params.cs", "using UnityScript2CSharp.Tests; " + DefaultGeneratedClass + "implicit_new_expression_no_params : MonoBehaviour { public virtual Other F(object o) { this.F(default(Other)); Other f = default(Other); return default(Other); } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
+        public void Implicit_Enum_To_Int_As_ValueType_Ctor_Parameter()
+        {
+            var sourceFiles = SingleSourceFor("implicit_enum_to_int_valuetype_param.js", "import UnityScript2CSharp.Tests; function F(s:Struct) : void {{ F(Struct(System.ConsoleColor.Black)); s = Struct(System.ConsoleColor.Black); }}");
+            var expectedConvertedContents = SingleSourceFor("implicit_enum_to_int_valuetype_param.cs", "using UnityScript2CSharp.Tests; " + DefaultGeneratedClass + "implicit_enum_to_int_valuetype_param : MonoBehaviour { public virtual void F(Struct s) { this.F(new Struct((int) System.ConsoleColor.Black)); s = new Struct((int) System.ConsoleColor.Black); } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
