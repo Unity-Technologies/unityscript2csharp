@@ -108,6 +108,15 @@ namespace UnityScript2CSharp.Tests
         }
 
         [Test]
+        public void ForEach_Reusing_Local_Variable()
+        {
+            var sourceFiles = SingleSourceFor("foreach_local_variable.js", "function F(e:IEnumerable) { var o:Object; for(o in e) { } }");
+            var expectedConvertedContents = SingleSourceFor("foreach_local_variable.cs", DefaultGeneratedClass + "foreach_local_variable : MonoBehaviour { public virtual void F(IEnumerable e) { object o = null; foreach (object o_1 in e) { o = o_1; } } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
         public void Simple_While()
         {
             var sourceFiles = SingleSourceFor("simple_while.js", "function F(i:int) { while (i < 10) i++; }");

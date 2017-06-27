@@ -9,6 +9,7 @@ using Boo.Lang.Compiler.TypeSystem.Internal;
 using Boo.Lang.Compiler.TypeSystem.Reflection;
 using UnityScript2CSharp.Extensions;
 using Attribute = Boo.Lang.Compiler.Ast.Attribute;
+using ExceptionHandler = Boo.Lang.Compiler.Ast.ExceptionHandler;
 using Module = Boo.Lang.Compiler.Ast.Module;
 
 namespace UnityScript2CSharp
@@ -373,7 +374,10 @@ namespace UnityScript2CSharp
             _writer.WriteLine("{");
 
             using (new BlockIdentation(_writer))
+            {
+                AssignInjectedForEachLoopToClashingLocalVar();
                 base.OnBlock(node);
+            }
 
             _writer.WriteLine("}");
         }
@@ -419,10 +423,12 @@ namespace UnityScript2CSharp
         public override void OnForStatement(ForStatement node)
         {
             _writer.Write("foreach (");
-            node.Declarations[0].Accept(this);
+            VisitPossibleClashingDeclaration(node.Declarations[0]);
+
             _writer.Write(" in ");
             node.Iterator.Accept(this);
             _writer.Write(")");
+
             node.Block.Accept(this);
         }
 
@@ -1088,6 +1094,32 @@ namespace UnityScript2CSharp
             return null;
         }
 
+        private void AssignInjectedForEachLoopToClashingLocalVar()
+        {
+            _localClashingAssignment();
+            _localClashingAssignment = delegate {};
+        }
+
+        private void VisitPossibleClashingDeclaration(Declaration declaration)
+        {
+            var parentMethod = declaration.GetAncestor<Method>();
+            var clashingLocal = parentMethod.Locals.SingleOrDefault(local => !local.PrivateScope && local.Name == declaration.Name);
+            if (clashingLocal != null)
+            {
+                var loopVar = declaration.Name + "_" + declaration.LexicalInfo.Line;
+                var originalVar = declaration.Name;
+
+                declaration = new Declaration(loopVar, declaration.Type) { Entity = declaration.Entity };
+                // This "action" will run when we visit the next block (presumably the body of the "for")
+                _localClashingAssignment = delegate
+                    {
+                        _writer.WriteLine($"{originalVar} = {loopVar};");
+                    };
+            }
+
+            declaration.Accept(this);
+        }
+
         private void NotSupported(Node node)
         {
             Console.WriteLine("Node type not supported yet : {0}\n\t{1} ({3})\n\t{2}", node.GetType().Name, node, node.ParentNode, node.LexicalInfo);
@@ -1099,6 +1131,7 @@ namespace UnityScript2CSharp
         private static char[] RoundBrackets = {'(', ')'};
         private static char[] SquareBrackets = {'[', ']'};
         private bool _lastIgnored;
+        private Action _localClashingAssignment = delegate {};
     }
 
     internal class AutoVarDeclarationFinder : FastDepthFirstVisitor
