@@ -43,12 +43,28 @@ namespace UnityScript2CSharp.Tests
         [TestCase("int", "var b:boolean = !p && true;", "bool b = (p == 0) && true;")]
         [TestCase("int", "return !p;", "return p == 0;")]
 
+        [TestCase("int", "return !p ? true : false;", "return p == 0 ? true : false;")]
+
+        [TestCase("String", "return !p;", "return !!string.IsNullOrEmpty(p);", "string", TestName = "String in negated Ternary Operator")]
+
+        [TestCase("System.ConsoleColor", "if (p) {} ;", "if (p != System.ConsoleColor.Black) { }", TestName = "Extern Enums")]
+
         [TestCase("System.Object", "while(p) {}", "while (p != null) { }", "object")]
         [TestCase("System.Object", "return !p;", "return p == null;", "object")]
         public void Automatic_Bool_Convertion(string type, string usSnippet, string csSnippet, string csharpTypeName = null)
         {
-            var sourceFiles = SingleSourceFor("if_conditional.js", $"function F(p:{type}) : boolean {{ {usSnippet} }}");
-            var expectedConvertedContents = SingleSourceFor("if_conditional.cs", DefaultGeneratedClass + $"if_conditional : MonoBehaviour {{ public virtual bool F({csharpTypeName ?? type} p) {{ {csSnippet} }} }}");
+            var sourceFiles = SingleSourceFor("auto_bool_conversion.js", $"function F(p:{type}) : boolean {{ {usSnippet} }}");
+            var expectedConvertedContents = SingleSourceFor("auto_bool_conversion.cs", DefaultGeneratedClass + $"auto_bool_conversion : MonoBehaviour {{ public virtual bool F({csharpTypeName ?? type} p) {{ {csSnippet} }} }}");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [TestCase("0", "MyEnum.Second", TestName = "Enum with member == 0")]
+        [TestCase("1", "(MyEnum) 0", TestName = "Enum with no member == 0")]
+        public void Automatic_Bool_Convertion_Internal_Enums(string secondEnumMemberValue, string expectedComparisonValue)
+        {
+            var sourceFiles = SingleSourceFor("internal_enum_auto_bool_conversion.js", $"enum MyEnum {{ First = 1, Second = {secondEnumMemberValue}, Third = 2 }} function F(e:MyEnum) {{ if (e) {{ }} }}");
+            var expectedConvertedContents = SingleSourceFor("internal_enum_auto_bool_conversion.cs", DefaultUsings + $" public enum MyEnum {{ First = 1, Second = {secondEnumMemberValue}, Third = 2 }} public partial class internal_enum_auto_bool_conversion : MonoBehaviour {{ public virtual void F(MyEnum e) {{ if (e != {expectedComparisonValue}) {{ }} }} }}");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }

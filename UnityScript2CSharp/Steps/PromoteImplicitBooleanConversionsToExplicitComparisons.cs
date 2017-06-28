@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using Boo.Lang.Compiler.Ast;
 using Boo.Lang.Compiler.Steps;
 using Boo.Lang.Compiler.TypeSystem;
@@ -38,7 +40,7 @@ namespace UnityScript2CSharp.Steps
                 node.Replace(node.Condition, new BinaryExpression(BinaryOperatorType.Inequality, node.Condition, literalExpression));
         }
 
-        private LiteralExpression LiteralExpressionFor(IType sourceExpressionType)
+        private Expression LiteralExpressionFor(IType sourceExpressionType)
         {
             if (sourceExpressionType == null)
                 return null;
@@ -54,6 +56,19 @@ namespace UnityScript2CSharp.Steps
 
             if (sourceExpressionType.IsClass || sourceExpressionType.IsArray)
                 return CodeBuilder.CreateNullLiteral();
+
+            if (sourceExpressionType.IsEnum)
+            {
+                var enumMember = sourceExpressionType
+                    .GetMembers()
+                    .OfType<IField>()
+                    .FirstOrDefault(member => member.IsStatic && Convert.ToInt64(member.StaticValue) == 0);
+
+                if (enumMember != null)
+                    return CodeBuilder.CreateMemberReference(enumMember);
+
+                return CodeBuilder.CreateCast(sourceExpressionType, CodeBuilder.CreateIntegerLiteral(0));
+            }
 
             return null;
         }
