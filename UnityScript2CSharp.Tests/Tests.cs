@@ -288,7 +288,7 @@ namespace UnityScript2CSharp.Tests
         public void Enums_Int_Implicit_Conversions()
         {
             var sourceFiles = SingleSourceFor("enum_int_implicit_conversions.js", "function F(c: System.ConsoleColor, i:int) : int { var l1 = c + 1; var l2:int = c + 1; c = l2; F(i, c); F(0, System.ConsoleColor.Blue); F(i - 1, c); return c; }");
-            var expectedConvertedContents = SingleSourceFor("enum_int_implicit_conversions.cs", DefaultGeneratedClass + "enum_int_implicit_conversions : MonoBehaviour { public virtual int F(System.ConsoleColor c, int i) { System.ConsoleColor l1 = c + 1; int l2 = (int) c + 1; c = (System.ConsoleColor) l2; this.F((System.ConsoleColor) i, (int) c); this.F((System.ConsoleColor) 0, (int) System.ConsoleColor.Blue); this.F((System.ConsoleColor) i - 1, (int) c); return (int) c; } }");
+            var expectedConvertedContents = SingleSourceFor("enum_int_implicit_conversions.cs", DefaultGeneratedClass + "enum_int_implicit_conversions : MonoBehaviour { public virtual int F(System.ConsoleColor c, int i) { System.ConsoleColor l1 = c + 1; int l2 = (int) (c + 1); c = (System.ConsoleColor) l2; this.F((System.ConsoleColor) i, (int) c); this.F((System.ConsoleColor) 0, (int) System.ConsoleColor.Blue); this.F((System.ConsoleColor) (i - 1), (int) c); return (int) c; } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -407,10 +407,10 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
-        [TestCase("10")]
-        [TestCase("1 + 1")]
-        [TestCase("System.String.Format(\"\", 1).Length")]
-        [TestCase("System.Environment.ProcessorCount")]
+        [TestCase("10", TestName = "Literal")]
+        [TestCase("1 + 1", TestName = "Constant expression")]
+        [TestCase("System.String.Format(\"\", 1).Length", TestName = "Method Invocation")]
+        [TestCase("System.Environment.ProcessorCount", TestName = "Static Field")]
         public void Assignment_To_Members_Of_ValueTypes_Through_Properties(string rhs)
         {
             var sourceFiles = new[] { new SourceFile { FileName = "value_type_assignment.js", Contents = $"import UnityScript2CSharp.Tests; function F(o:NonGeneric) {{ o.Struct.value = {rhs}; }}" } };

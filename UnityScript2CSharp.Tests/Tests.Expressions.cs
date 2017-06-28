@@ -25,9 +25,9 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents, expectError);
         }
 
-        [TestCase("var a = [1, 2, 3]", "int[] a = new int[] {1, 2, 3}")]
-        [TestCase("var a = Array(true, false)", "object[] a = new object[] {true, false}")]
-        [TestCase("var a = Array(1, 2)", "object[] a = new object[] {1, 2}")]
+        [TestCase("var a = [1, 2, 3]", "int[] a = new int[] {1, 2, 3}", TestName = "Primitive Arrays")]
+        [TestCase("var a = Array(true, false)", "object[] a = new object[] {true, false}", TestName = "Array class (bools)")]
+        [TestCase("var a = Array(1, 2)", "object[] a = new object[] {1, 2}", TestName = "Array Class (ints)")]
         public void Arrays_With_Initializer(string usSnippet, string csSnippet)
         {
             var sourceFiles = SingleSourceFor("arrays_with_initializer.js", $"function F() : Object {{ {usSnippet}; return a.length > 0 ? a[0] : a[1]; }}");
@@ -278,6 +278,26 @@ namespace UnityScript2CSharp.Tests
         {
             var sourceFiles = SingleSourceFor("indexers.js", "import UnityScript2CSharp.Tests; function F(p:Properties) { p[0] = 1; p[1, \"foo\"] = 2; return p[42]; }");
             var expectedConvertedContents = SingleSourceFor("indexers.cs", "using UnityScript2CSharp.Tests; " + DefaultGeneratedClass + "indexers : MonoBehaviour { public virtual int F(Properties p) { p[0] = 1; p[1, \"foo\"] = 2; return p[42]; } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [TestCase("float", "double")]
+        [TestCase("int", "long")]
+        public void Cast_Is_Injected_When_Assigning_If_Required(string smallType, string bigType)
+        {
+            var sourceFiles = SingleSourceFor("cast_upon_assignment.js", $"function F(s:{smallType}, b:{bigType}) : void {{ var s1:{smallType} = b + 1; s = b + 1; F(b + 1, b); }}");
+            var expectedConvertedContents = SingleSourceFor("cast_upon_assignment.cs", DefaultGeneratedClass + $"cast_upon_assignment : MonoBehaviour {{ public virtual void F({smallType} s, {bigType} b) {{ {smallType} s1 = ({smallType}) (b + 1); s = ({smallType}) (b + 1); this.F(({smallType}) (b + 1), b); }} }}");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [TestCase("double", "float")]
+        [TestCase("long", "int")]
+        public void Cast_Is_Not_Injected_If_Not_Required(string bigType, string smallType)
+        {
+            var sourceFiles = SingleSourceFor("no_cast_upon_assignment.js", $"function F(s:{smallType}, b:{bigType}) : void {{ var b1:{bigType} = b + 1; b = s + 1; F(s, s + 1); }}");
+            var expectedConvertedContents = SingleSourceFor("no_cast_upon_assignment.cs", DefaultGeneratedClass + $"no_cast_upon_assignment : MonoBehaviour {{ public virtual void F({smallType} s, {bigType} b) {{ {bigType} b1 = b + 1; b = s + 1; this.F(s, s + 1); }} }}");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }

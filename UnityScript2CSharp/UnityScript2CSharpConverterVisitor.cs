@@ -844,7 +844,10 @@ namespace UnityScript2CSharp
                     _writer.Write("(");
                     node.Type.Accept(this);
                     _writer.Write(") ");
-                    node.Target.Accept(this);
+                    WrapWith(node.Target.NodeType == NodeType.BinaryExpression, "(", ")", delegate
+                    {
+                        node.Target.Accept(this);
+                    });
                 });
         }
 
