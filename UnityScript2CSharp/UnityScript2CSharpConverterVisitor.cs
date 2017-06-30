@@ -117,6 +117,8 @@ namespace UnityScript2CSharp
 
         public override void OnClassDefinition(ClassDefinition node)
         {
+            _writer.WriteLine("[System.Serializable]"); // Every class in UnityScript is serializable
+
             WriteAttributes(node.Attributes);
 
             _builderAppendIdented($"{ModifiersToString(node.Modifiers)} class {node.Name} : ");
@@ -153,6 +155,7 @@ namespace UnityScript2CSharp
         public override void OnEnumDefinition(EnumDefinition node)
         {
             _writer.IndentNextWrite = true;
+            _writer.WriteLine("[System.Serializable]"); // Every class in UnityScript is serializable
             _writer.WriteLine($"{ModifiersToString(node.Modifiers)} enum {node.Name}");
             _writer.WriteLine("{");
             using (new BlockIdentation(_writer))

@@ -68,7 +68,7 @@ namespace UnityScript2CSharp.Tests
         public void Automatic_Bool_Convertion_Internal_Enums(string secondEnumMemberValue, string expectedComparisonValue)
         {
             var sourceFiles = SingleSourceFor("internal_enum_auto_bool_conversion.js", $"enum MyEnum {{ First = 1, Second = {secondEnumMemberValue}, Third = 2 }} function F(e:MyEnum) {{ if (e) {{ }} }}");
-            var expectedConvertedContents = SingleSourceFor("internal_enum_auto_bool_conversion.cs", DefaultUsings + $" public enum MyEnum {{ First = 1, Second = {secondEnumMemberValue}, Third = 2 }} public partial class internal_enum_auto_bool_conversion : MonoBehaviour {{ public virtual void F(MyEnum e) {{ if (e != {expectedComparisonValue}) {{ }} }} }}");
+            var expectedConvertedContents = SingleSourceFor("internal_enum_auto_bool_conversion.cs", DefaultUsings + $" public enum MyEnum {{ First = 1, Second = {secondEnumMemberValue}, Third = 2 }} [System.Serializable] public partial class internal_enum_auto_bool_conversion : MonoBehaviour {{ public virtual void F(MyEnum e) {{ if (e != {expectedComparisonValue}) {{ }} }} }}");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -187,7 +187,7 @@ namespace UnityScript2CSharp.Tests
         public void Switch_On_Local_Enum()
         {
             var sourceFiles = SingleSourceFor("switch_local_enum.js", "enum E { First, Second } function F(t:E) { switch(t) { case E.First: return 0; case E.Second: return 1; } return 2; }");
-            var expectedConvertedContents = SingleSourceFor("switch_local_enum.cs", DefaultUsings + " public enum E { First, Second } public partial class switch_local_enum : MonoBehaviour { public virtual int F(E t) { switch (t) { case E.First: return 0; break; case E.Second: return 1; break; } return 2; } }");
+            var expectedConvertedContents = SingleSourceFor("switch_local_enum.cs", DefaultUsings + " public enum E { First, Second } [System.Serializable] public partial class switch_local_enum : MonoBehaviour { public virtual int F(E t) { switch (t) { case E.First: return 0; break; case E.Second: return 1; break; } return 2; } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }

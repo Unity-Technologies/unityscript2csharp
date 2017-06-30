@@ -11,7 +11,7 @@ namespace UnityScript2CSharp.Tests
         public void Simplest()
         {
             var sourceFiles = new[] { new SourceFile { FileName = "foo.js", Contents = "class Foo { }" } };
-            var expectedConvertedContents = new[] { new SourceFile { FileName = "foo.cs", Contents = DefaultUsings + @" public class Foo : object { }"} };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "foo.cs", Contents = DefaultUsings + " public class Foo : object { }" } };
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -97,7 +97,7 @@ namespace UnityScript2CSharp.Tests
         public void Additional_Imports()
         {
             SourceFile[] sources = { new SourceFile("additional_imports.js", "import System.Text; var sb: StringBuilder;") };
-            SourceFile[] expectedConverted = { new SourceFile("additional_imports.cs", "using System.Text; " + DefaultUsings + " public partial class additional_imports : MonoBehaviour { public StringBuilder sb; }") };
+            SourceFile[] expectedConverted = { new SourceFile("additional_imports.cs", "using System.Text; " + DefaultGeneratedClass + "additional_imports : MonoBehaviour { public StringBuilder sb; }") };
 
             AssertConversion(sources, expectedConverted);
         }
@@ -368,6 +368,7 @@ namespace UnityScript2CSharp.Tests
 
             var argsIncludingParentheses = args.Length > 0 ? $"({args})" : string.Empty;
             var expectedConvertedContents = new[] { new SourceFile { FileName = "type_attributes.cs", Contents = DefaultUsings + $" [System.Obsolete{argsIncludingParentheses}] public class C : object {{ }}" } };
+
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
