@@ -454,6 +454,17 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
+        [TestCase("", TestName = "No Start Method")]
+        [TestCase(" System.Console.WriteLine(\"Within Start\");", TestName = "With Start Method")]
+        public void Glocal_Statements_Are_Injected_In_Begin_Of_Start(string startBody)
+        {
+            var start = startBody.Length != 0 ? $"function Start() {{ {startBody} }}" : "";
+            var sourceFiles = new[] { new SourceFile { FileName = "global_statements.js", Contents = $"System.Console.WriteLine(\"Foo\"); {start}" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "global_statements.cs", Contents = DefaultGeneratedClass + $"global_statements : MonoBehaviour {{ public virtual void Start() {{ System.Console.WriteLine(\"Foo\");{startBody} }} }}" } };
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
         [Test]
         public void Test_Formatting()
         {

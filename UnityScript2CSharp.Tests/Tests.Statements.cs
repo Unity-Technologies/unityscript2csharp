@@ -45,10 +45,14 @@ namespace UnityScript2CSharp.Tests
 
         [TestCase("int", "return !p ? true : false;", "return p == 0 ? true : false;")]
 
+        [TestCase("System.IAsyncResult", "return p && p.IsCompleted;", "return (p != null) && p.IsCompleted;", "System.IAsyncResult", TestName = "Check for null and Member reference (non string)")]
+
+        [TestCase("String", "return p && p.Length > 3;", "return !string.IsNullOrEmpty(p) ? p.Length > 3 : false;", "string", TestName = "Check for null and Member reference 2")]
         [TestCase("String", "return !p;", "return !!string.IsNullOrEmpty(p);", "string", TestName = "String in negated Ternary Operator")]
 
         [TestCase("System.ConsoleColor", "if (p) {} ;", "if (p != System.ConsoleColor.Black) { }", TestName = "Extern Enums")]
 
+        [TestCase("System.Object", "while (p && System.Environment.ProcessorCount > 10) {}", "while ((p != null) && (System.Environment.ProcessorCount > 10)) { }", "object", TestName = "Object as LRS of Binary Expression")]
         [TestCase("System.Object", "while(p) {}", "while (p != null) { }", "object")]
         [TestCase("System.Object", "return !p;", "return p == null;", "object")]
         public void Automatic_Bool_Convertion(string type, string usSnippet, string csSnippet, string csharpTypeName = null)

@@ -115,6 +115,7 @@
     <Compile Include="Steps\ExpandValueTypeObjectInitialization.cs" />
     <Compile Include="Steps\InferredMethodReturnTypeFix.cs" />
     <Compile Include="Steps\InstanceToTypeReferencedStaticMemberReference.cs" />
+    <Compile Include="Steps\MergeMainMethodStatementsIntoStartMethod.cs" />
     <Compile Include="Steps\NumericCastInjector.cs" />
     <Compile Include="Steps\OperatorMethodToLanguageOperator.cs" />
     <Compile Include="Steps\PromoteImplicitBooleanConversionsToExplicitComparisons.cs" />

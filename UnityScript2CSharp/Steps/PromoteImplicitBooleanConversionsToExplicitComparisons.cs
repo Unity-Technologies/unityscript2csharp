@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Boo.Lang.Compiler.Ast;
 using Boo.Lang.Compiler.Steps;
@@ -8,10 +9,10 @@ namespace UnityScript2CSharp.Steps
 {
     class PromoteImplicitBooleanConversionsToExplicitComparisons : AbstractTransformerCompilerStep
     {
-        public override bool EnterIfStatement(IfStatement node)
+        public override void OnIfStatement(IfStatement node)
         {
-            EnsureConditionType(node);
-            return base.EnterIfStatement(node);
+            base.OnIfStatement(node);
+            ConvertExpressionToBooleanIfNecessary(node, node.Condition);
         }
 
         public override bool EnterUnaryExpression(UnaryExpression node)
@@ -22,22 +23,43 @@ namespace UnityScript2CSharp.Steps
                 if (literalExpression != null)
                     node.ParentNode.Replace(node, new BinaryExpression(BinaryOperatorType.Equality, node.Operand, literalExpression));
             }
+
             return base.EnterUnaryExpression(node);
         }
 
-        public override bool EnterWhileStatement(WhileStatement node)
+        public override void OnConditionalExpression(ConditionalExpression node)
         {
-            EnsureConditionType(node);
-            return base.EnterWhileStatement(node);
+            node.Accept(new ConditionalExpressionFixer());
+            base.OnConditionalExpression(node);
         }
 
-        private void EnsureConditionType(ConditionalStatement node)
+        public override bool EnterBinaryExpression(BinaryExpression node)
         {
-            var sourceExpressionType = node.Condition.ExpressionType;
+            if (node.ExpressionType == TypeSystemServices.BoolType || (AstUtil.GetBinaryOperatorKind(node.Operator) != BinaryOperatorKind.Comparison && AstUtil.GetBinaryOperatorKind(node.Operator) != BinaryOperatorKind.Logical))
+                return true;
 
-            var literalExpression = LiteralExpressionFor(sourceExpressionType);
+            ConvertExpressionToBooleanIfNecessary(node, node.Right);
+            ConvertExpressionToBooleanIfNecessary(node, node.Left);
+
+            node.ExpressionType = TypeSystemServices.BoolType;
+
+            return false;
+        }
+
+        public override void OnWhileStatement(WhileStatement node)
+        {
+            base.OnWhileStatement(node);
+            ConvertExpressionToBooleanIfNecessary(node, node.Condition);
+        }
+
+        private void ConvertExpressionToBooleanIfNecessary(Node parent, Expression expression)
+        {
+            if (expression.ExpressionType == TypeSystemServices.BoolType)
+                return;
+
+            var literalExpression = LiteralExpressionFor(expression.ExpressionType);
             if (literalExpression != null)
-                node.Replace(node.Condition, new BinaryExpression(BinaryOperatorType.Inequality, node.Condition, literalExpression));
+                parent.Replace(expression, new BinaryExpression(BinaryOperatorType.Inequality, expression, literalExpression));
         }
 
         private Expression LiteralExpressionFor(IType sourceExpressionType)
@@ -54,7 +76,7 @@ namespace UnityScript2CSharp.Steps
             if (sourceExpressionType == TypeSystemServices.SingleType)
                 return new DoubleLiteralExpression(0.0f);
 
-            if (sourceExpressionType.IsClass || sourceExpressionType.IsArray)
+            if (sourceExpressionType.IsClass || sourceExpressionType.IsArray || sourceExpressionType.IsInterface)
                 return CodeBuilder.CreateNullLiteral();
 
             if (sourceExpressionType.IsEnum)
@@ -72,5 +94,39 @@ namespace UnityScript2CSharp.Steps
 
             return null;
         }
+    }
+
+    // This visitor's reponsability is to take expressions like:
+    //
+    //          var b = s && s.Length > 10;
+    //
+    // and converte them to:
+    //          var b = !string.IsNullOrEmpty(s) ? s.Length > 10 : false;
+    //
+    // (not that US compiler already does part of this conversion; we only need
+    // to clean it up)
+    //
+    internal class ConditionalExpressionFixer : DepthFirstTransformer
+    {
+        public override void OnReferenceExpression(ReferenceExpression node)
+        {
+            if (node.Name[0] == '$' && node.Entity.EntityType == EntityType.Local)
+            {
+                Expression replaceWith;
+                if (AstUtil.IsAssignment(node.ParentNode))
+                {
+                    var parentAssignment = (BinaryExpression)node.ParentNode;
+                    node.ParentNode.ParentNode.Replace(parentAssignment, parentAssignment.Right);
+                    _replacements[node.Name] = parentAssignment.Right;
+                }
+                else if (_replacements.TryGetValue(node.Name, out replaceWith))
+                {
+                    node.ParentNode.Replace(node, new BoolLiteralExpression(false));
+                }
+            }
+            base.OnReferenceExpression(node);
+        }
+
+        private IDictionary<string, Expression> _replacements = new Dictionary<string, Expression>();
     }
 }

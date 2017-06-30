@@ -124,6 +124,8 @@ namespace UnityScript2CSharp
             adjustedPipeline.Remove(typeof(CheckIdentifiers));
 
             adjustedPipeline.Replace(typeof(ProcessUnityScriptMethods), new SelectiveUnaryExpressionExpansionProcessUnityScriptMethods());
+
+            adjustedPipeline.Add(new MergeMainMethodStatementsIntoStartMethod());
             adjustedPipeline.Add(new ExpandValueTypeObjectInitialization());
             adjustedPipeline.Add(new OperatorMethodToLanguageOperator());
             adjustedPipeline.Add(new NumericCastInjector());
