@@ -141,13 +141,23 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
-        [TestCase("i:int, s:String", "int i, string s")]
-        [TestCase("b:boolean", "bool b")]
-        [TestCase("l:long", "long l")]
+        [TestCase("i:int, s:String", "int i, string s", TestName = "Two Parameters")]
+        [TestCase("b:boolean", "bool b", TestName = "boolean")]
+        [TestCase("l:long", "long l", TestName = "long")]
         public void Simple_Method_Params(string paramsUS, string paramsCS)
         {
             var sourceFiles = new[] { new SourceFile { FileName = "smp.js", Contents = $"function F({paramsUS}) {{}}" } };
             var expectedConvertedContents = new[] { new SourceFile { FileName = "smp.cs", Contents = DefaultUsings + $@" public partial class smp : MonoBehaviour {{ public virtual void F({paramsCS}) {{ }} }}" } };
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [TestCase("f:function(int)", "Action<int> f", TestName = "Void_Int Delegate")]
+        [TestCase("f:function() : int", "Func<int> f", TestName = "Int_Void Delegate")]
+        [TestCase("f:function(int) : int", "Func<int, int> f", TestName = "Int_Int Delegate")]
+        public void Delegates_As_Method_Parameters(string paramsUS, string paramsCS)
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "smp.js", Contents = $"function F({paramsUS}) {{}}" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "smp.cs", Contents = "using System; " + DefaultUsings + $@" public partial class smp : MonoBehaviour {{ public virtual void F({paramsCS}) {{ }} }}" } };
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 

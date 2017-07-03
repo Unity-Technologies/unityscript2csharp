@@ -16,7 +16,7 @@ namespace UnityScript2CSharp
 {
     internal class UnityScript2CSharpConverterVisitor : DepthFirstVisitor
     {
-        private IList<string> _usings;
+        private ISet<string> _usings;
 
         private Writer _writer;
 
@@ -24,12 +24,14 @@ namespace UnityScript2CSharp
 
         public override void OnTypeMemberStatement(TypeMemberStatement node)
         {
+            // Looks like no boo/us construct creates this node
             NotSupported(node);
             base.OnTypeMemberStatement(node);
         }
 
         public override void OnExplicitMemberInfo(ExplicitMemberInfo node)
         {
+            // Only used for explicit interface implementation in BOO
             NotSupported(node);
             base.OnExplicitMemberInfo(node);
         }
@@ -74,8 +76,23 @@ namespace UnityScript2CSharp
 
         public override void OnCallableTypeReference(CallableTypeReference node)
         {
-            NotSupported(node);
-            base.OnCallableTypeReference(node);
+            var types = new List<TypeReference>(node.Parameters.Select(p => p.Type));
+            if (node.ReturnType == null)
+            {
+                _writer.Write("Action");
+            }
+            else
+            {
+                _writer.Write("Func");
+                types.Add(node.ReturnType);
+            }
+
+            if (types.Count > 0)
+            {
+                _writer.Write("<");
+                WriteCommaSeparatedList(types);
+                _writer.Write(">");
+            }
         }
 
         public override void OnGenericTypeReference(GenericTypeReference node)
@@ -93,14 +110,13 @@ namespace UnityScript2CSharp
 
         public override void OnCallableDefinition(CallableDefinition node)
         {
-            NotSupported(node);
-            base.OnCallableDefinition(node);
+            // Only boo compiler can emmit this node.
         }
 
         public override void OnNamespaceDeclaration(NamespaceDeclaration node)
         {
-            // UnityScript does not support namespaces..
-            NotSupported(node);
+            // UnityScript does not support namespaces.
+            // The only namespace declaration we can ever hit is a "CompilerGenerated" one, which we'll simply ignore.
         }
 
         public override void OnModule(Module node)
@@ -917,7 +933,7 @@ namespace UnityScript2CSharp
             return generatedUsings + Writer.NewLine;
         }
 
-        private IList<string> GetImportedNamespaces(Module node)
+        private ISet<string> GetImportedNamespaces(Module node)
         {
             var usingCollector = new UsingCollector();
             node.Accept(usingCollector);
@@ -1091,6 +1107,7 @@ namespace UnityScript2CSharp
                 case "System.Object": return "object";
                 case "System.Int32": return "int";
                 case "System.Int64": return "long";
+                case "System.Void": return "void";
             }
 
             // UnityEngine.Object always need to be qualified.

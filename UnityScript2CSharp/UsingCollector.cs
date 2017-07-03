@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Boo.Lang.Compiler.Ast;
 
@@ -7,7 +8,7 @@ namespace UnityScript2CSharp
     {
         public UsingCollector()
         {
-            Usings = new List<string>();
+            Usings = new HashSet<string>();
         }
 
         public override void OnImport(Import node)
@@ -15,6 +16,11 @@ namespace UnityScript2CSharp
             Usings.Add(node.Namespace);
         }
 
-        public IList<string> Usings { get; private set; }
+        public override void OnCallableTypeReference(CallableTypeReference node)
+        {
+            Usings.Add(typeof(Func<>).Namespace);
+        }
+
+        public ISet<string> Usings { get; private set; }
     }
 }
