@@ -21,7 +21,7 @@ namespace UnityScript2CSharp.Steps
         {
             base.OnMethodInvocationExpression(node);
 
-            if (node.Target.Entity == null || (node.Target.Entity.EntityType == EntityType.BuiltinFunction || node.Target.Entity.EntityType == EntityType.Ambiguous))
+            if (node.Target.Entity == null || (node.Target.Entity.EntityType != EntityType.Method && node.Target.Entity.EntityType != EntityType.Constructor && node.Target.Entity.EntityType != EntityType.Property))
                 return;
 
             var parameters = ((IMethodBase)node.Target.Entity).GetParameters();

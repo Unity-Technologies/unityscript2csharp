@@ -48,5 +48,17 @@ namespace UnityScript2CSharp.Steps
                     current.IsSynthetic = true;
             }
         }
+
+        public override void OnMethodInvocationExpression(MethodInvocationExpression node)
+        {
+            var original = node.Target;
+            base.OnMethodInvocationExpression(node);
+            if (node.Target.ToCodeString().Contains("Invoke"))
+            {
+                // Convert explicit delegate Invoke() method invocation to method invocation syntax
+                // i.e: d.Invoke(p1, p2) => d(p1, p2);
+                node.Replace(node.Target, original);
+            }
+        }
     }
 }

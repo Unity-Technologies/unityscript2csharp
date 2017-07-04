@@ -241,7 +241,7 @@ namespace UnityScript2CSharp.Tests
         public void Implicit_TypeOf_Expressions(string usSnippet, string csSnippet)
         {
             var sourceFiles = SingleSourceFor("implicit_typeof_expressions.js", $"import UnityScript2CSharp.Tests; class C {{ function F() {{ {usSnippet}; }} }}");
-            var expectedConvertedContents = SingleSourceFor("implicit_typeof_expressions.cs", "using UnityScript2CSharp.Tests; " + DefaultUsings + $" public class C : object {{ public virtual void F() {{ {csSnippet}; }} }}");
+            var expectedConvertedContents = SingleSourceFor("implicit_typeof_expressions.cs", "using UnityScript2CSharp.Tests; " + DefaultUsingsForClasses + $" public class C : object {{ public virtual void F() {{ {csSnippet}; }} }}");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -250,7 +250,7 @@ namespace UnityScript2CSharp.Tests
         public void Implicit_TypeOf_Expressions_On_Attribute()
         {
             var sourceFiles = SingleSourceFor("implicit_typeof_expressions_on_attribute.js", "import UnityScript2CSharp.Tests; @Attr(int) class C { }");
-            var expectedConvertedContents = SingleSourceFor("implicit_typeof_expressions_on_attribute.cs", "using UnityScript2CSharp.Tests; " + DefaultUsings + " [UnityScript2CSharp.Tests.Attr(typeof(int))] public class C : object { }");
+            var expectedConvertedContents = SingleSourceFor("implicit_typeof_expressions_on_attribute.cs", "using UnityScript2CSharp.Tests; " + DefaultUsingsForClasses + " [UnityScript2CSharp.Tests.Attr(typeof(int))] public class C : object { }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }

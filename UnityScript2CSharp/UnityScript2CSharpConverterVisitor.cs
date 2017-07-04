@@ -133,6 +133,9 @@ namespace UnityScript2CSharp
 
         public override void OnClassDefinition(ClassDefinition node)
         {
+            if (IsSyntheticDelegateUsedByCallable(node))
+                return;
+
             _writer.WriteLine("[System.Serializable]"); // Every class in UnityScript is serializable
 
             WriteAttributes(node.Attributes);
@@ -234,13 +237,14 @@ namespace UnityScript2CSharp
 
         public override void OnBlockExpression(BlockExpression node)
         {
-            NotSupported(node); // lambdas ?
-            base.OnBlockExpression(node);
+            WriteParameterList(node.Parameters);
+            _writer.Write(" => ");
+            node.Body.Accept(this);
         }
 
         public override void OnMethod(Method node)
         {
-            if (node.Name == "Main")
+            if (node.Name == "Main" || node.IsSynthetic)
                 return;
 
             WriteAttributes(node.Attributes);
@@ -1084,16 +1088,22 @@ namespace UnityScript2CSharp
             string fullName;
             string typeNamespace;
 
+            var callable = entity as ICallableType;
+            var ctor = entity as IConstructor;
+
             if (externalType != null)
             {
                 typeNamespace = externalType.ActualType.Namespace;
                 fullName = externalType.ActualType.FullName;
             }
+            else if (callable != null)
+            {
+                return TypeNameForCallable(callable);
+            }
             else
             {
                 // this is a very specific case for Value type instantiation,
                 // Internal entities are types/members defined in US; in this case simply the entity name (no try to use unqualified name)
-                var ctor = entity as IConstructor;
                 if (ctor == null || (ctor as IInternalEntity) != null)
                     return null;
 
@@ -1115,6 +1125,32 @@ namespace UnityScript2CSharp
                 return externalType.Name;
 
             return null;
+        }
+
+        private string TypeNameForCallable(ICallableType callable)
+        {
+            var originalSignature = (IMethodBase)callable.Type.GetMembers().FirstOrDefault(m => m.Name == "Invoke" && m.EntityType == EntityType.Method);
+
+            if (originalSignature == null)
+                return "should-not-see-this";
+
+            var genericArgs = new List<IType>(originalSignature.GetParameters().Select(p => p.Type));
+            if (originalSignature.ReturnType != null)
+            {
+                genericArgs.Add(originalSignature.ReturnType);
+            }
+
+            var parameters = new StringBuilder();
+            var last = genericArgs.LastOrDefault();
+            foreach (var type in genericArgs)
+            {
+                parameters.Append(TypeNameFor(type));
+                if (type != last)
+                    parameters.Append(",");
+            }
+
+            var genericTypeName = (originalSignature.ReturnType == null ? "Action" : "Func");
+            return genericTypeName + "<" + parameters + ">";
         }
 
         private void AssignInjectedForEachLoopToClashingLocalVar()
@@ -1141,6 +1177,11 @@ namespace UnityScript2CSharp
             }
 
             declaration.Accept(this);
+        }
+
+        private static bool IsSyntheticDelegateUsedByCallable(ClassDefinition node)
+        {
+            return node.IsSynthetic && node.Name.Contains("$callable");
         }
 
         private void NotSupported(Node node)

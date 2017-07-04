@@ -110,7 +110,6 @@ namespace UnityScript2CSharp
             pipeline.Remove(typeof(ConstantFolding));
             pipeline.Remove(typeof(ExpandPropertiesAndEvents));
             pipeline.Remove(typeof(CheckNeverUsedMembers));
-            pipeline.Remove(typeof(InjectCallableConversions));
             pipeline.Remove(typeof(StricterErrorChecking));
             pipeline.Remove(typeof(RemoveDeadCode));
             pipeline.Remove(typeof(OptimizeIterationStatements));
@@ -120,8 +119,12 @@ namespace UnityScript2CSharp
             pipeline.Remove(typeof(ProcessMethodBodies));
 
             var adjustedPipeline = UnityScriptCompiler.Pipelines.AdjustBooPipeline(pipeline);
+
+            adjustedPipeline.Remove(typeof(InjectCallableConversions));
             adjustedPipeline.Remove(typeof(BindEnumMembers));
             adjustedPipeline.Remove(typeof(CheckIdentifiers));
+            adjustedPipeline.Remove(typeof(ProcessClosures));
+            adjustedPipeline.Remove(typeof(ExpandUnityDuckTypedExpressions));
 
             adjustedPipeline.Replace(typeof(ProcessUnityScriptMethods), new SelectiveUnaryExpressionExpansionProcessUnityScriptMethods());
 

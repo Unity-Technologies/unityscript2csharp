@@ -129,7 +129,8 @@ namespace UnityScript2CSharp.Tests
             return sb.ToString();
         }
 
-        private const string DefaultUsings = "using UnityEngine; using UnityEditor; using System.Collections; [System.Serializable]";
-        private const string DefaultGeneratedClass =  DefaultUsings + " public partial class ";
+        private const string DefaultUsings = "using UnityEngine; using UnityEditor; using System.Collections;";
+        private const string DefaultUsingsForClasses = DefaultUsings + " [System.Serializable]";
+        private const string DefaultGeneratedClass =  DefaultUsingsForClasses + " public partial class ";
     }
 }
