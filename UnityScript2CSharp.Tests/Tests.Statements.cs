@@ -154,6 +154,25 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
+        [Test]
+        public void Conditional_Continue_Inside_For()
+        {
+            var sourceFiles = SingleSourceFor("conditional_continue.js", "function F() { for (var x = 1; x < 10; x++) {  if (x % 2 == 0) continue; x = x; } }");
+            var expectedConvertedContents = SingleSourceFor("conditional_continue.cs", DefaultGeneratedClass + @"conditional_continue : MonoBehaviour { public virtual void F() { int x = 1; while (x < 10) { if ((x % 2) == 0) { goto Label_for_1; } x = x; Label_for_1: x++; } } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        // This test proves that switch handling does not break due to handling of labels/gotos required in some "for" statement constructs
+        [Test]
+        public void Conditional_Continue_Mixed_With_Switch_Inside_For()
+        {
+            var sourceFiles = SingleSourceFor("conditional_continue_with_switch.js", "function F() { for (var x = 1; x < 10; x++) {  switch(x) { case 1: x = x + 1; break; case 2: continue; }; x = x; } }");
+            var expectedConvertedContents = SingleSourceFor("conditional_continue_with_switch.cs", DefaultGeneratedClass + @"conditional_continue_with_switch : MonoBehaviour { public virtual void F() { int x = 1; while (x < 10) { switch (x) { case 1: x = x + 1; break; case 2: goto Label_for_1; break; } x = x; Label_for_1: x++; } } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
         [TestCase("i")]
         [TestCase("i + 1")]
         [TestCase("System.Environment.ProcessorCount")]

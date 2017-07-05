@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using Boo.Lang.Compiler.Ast;
 using Boo.Lang.Compiler.Ast.Visitors;
 using Boo.Lang.Compiler.TypeSystem;
@@ -388,12 +389,19 @@ namespace UnityScript2CSharp
 
         public override void OnGotoStatement(GotoStatement node)
         {
-            NotSupported(node);
+            if (IsForControlFlowRelated(node.Label.Name))
+                _writer.WriteLine($"goto {LabelFor(node.Label.Name)};");
         }
 
         public override void OnLabelStatement(LabelStatement node)
         {
-            ExpectedNotSupported(node);
+            if (IsForControlFlowRelated(node.Name))
+                _writer.WriteLine($"{LabelFor(node.Name)}:");
+        }
+
+        private bool IsForControlFlowRelated(string label)
+        {
+            return Regex.Match(label, @"^\$for\$\d+$").Success;
         }
 
         public override void OnBlock(Block node)
@@ -1195,6 +1203,11 @@ namespace UnityScript2CSharp
                 }
                 _writer.WriteLine();
             }
+        }
+
+        private string LabelFor(string label)
+        {
+            return "Label" + label.Replace("$", "_");
         }
 
         private void ExpectedNotSupported(Node node)

@@ -148,7 +148,7 @@ namespace UnityScript2CSharp
 
             using (new BlockIdentation(_writer))
             {
-                var caseStatements = caseBlock.Statements.Where(stmt => stmt.NodeType != NodeType.LabelStatement).Take(caseBlock.Statements.Count - 1);
+                var caseStatements = caseBlock.Statements.Where(stmt => stmt.NodeType != NodeType.LabelStatement);
                 foreach (var statement in caseStatements)
                 {
                     statement.Accept(_us2CsVisitor);
