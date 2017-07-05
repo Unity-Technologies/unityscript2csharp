@@ -104,12 +104,14 @@ namespace UnityScript2CSharp
 
         public override void OnGenericTypeDefinitionReference(GenericTypeDefinitionReference node)
         {
+            // Only boo compiler can emmit this node.
             NotSupported(node);
             base.OnGenericTypeDefinitionReference(node);
         }
 
         public override void OnCallableDefinition(CallableDefinition node)
         {
+            NotSupported(node);
             // Only boo compiler can emmit this node.
         }
 
@@ -152,6 +154,7 @@ namespace UnityScript2CSharp
 
         public override void OnStructDefinition(StructDefinition node)
         {
+            // Only boo compiler can emmit this node. UnityScript does not support value type definition
             NotSupported(node);
         }
 
