@@ -249,6 +249,15 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
+        [Test, Ignore("For now we are not trying to emulate US scoping rules")]
+        public void Locals_Scope()
+        {
+            var sourceFiles = SingleSourceFor("locals_scope.js", "function F(i:int) { if (i > 10) { var j:int = 42; } j = j + i; }");
+            var expectedConvertedContents = SingleSourceFor("locals_scope.cs", DefaultGeneratedClass + "locals_scope : MonoBehaviour { public virtual void F(int i) { int j; if (i > 10) {  j = 42; } j = j + i;} }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
         [Test]
         public void Locals_As_Child_Of_If_Statement()
         {
@@ -399,6 +408,15 @@ namespace UnityScript2CSharp.Tests
             var sourceFiles = new[] { new SourceFile { FileName = "attribute_named_arguments.js", Contents = $"import UnityScript2CSharp.Tests; @Attr({args}) public var i:int = 10;" } };
             var expectedWithParams = args.Length > 0 ? $"({args})" : string.Empty;
             var expectedConvertedContents = new[] { new SourceFile { FileName = "attribute_named_arguments.cs", Contents = "using UnityScript2CSharp.Tests; " + DefaultGeneratedClass + $"attribute_named_arguments : MonoBehaviour {{ [UnityScript2CSharp.Tests.Attr{expectedWithParams}] public int i; public attribute_named_arguments() {{ this.i = 10; }} }}" } };
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
+        public void Serialized_Attribute_Is_Not_Duplicated()
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "serializable_attribute.js", Contents = "@System.Serializable class C {}" } };
+
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "serializable_attribute.cs", Contents = DefaultUsings + " [System.Serializable] public class C : object { }" } };
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 

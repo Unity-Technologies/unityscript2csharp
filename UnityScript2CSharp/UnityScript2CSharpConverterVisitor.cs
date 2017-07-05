@@ -358,6 +358,9 @@ namespace UnityScript2CSharp
 
         public override void OnAttribute(Attribute node)
         {
+            if (node.Name == "System.SerializableAttribute")
+                return;
+
             var fullList = node.Arguments.Concat<Node>(node.NamedArguments).ToArray();
 
             var attributeTypeName = node.Name;
