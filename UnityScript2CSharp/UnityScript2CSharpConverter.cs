@@ -23,7 +23,7 @@ namespace UnityScript2CSharp
             _ignoreErrors = ignoreErrors;
         }
 
-        public void Convert(IEnumerable<SourceFile> inputs, IEnumerable<string> definedSymbols, IEnumerable<string> referencedAssemblies, Action<string, string> onScriptConverted)
+        public void Convert(IEnumerable<SourceFile> inputs, IEnumerable<string> definedSymbols, IEnumerable<string> referencedAssemblies, Action<string, string, int> onScriptConverted)
         {
             var comp = CreatAndInitializeCompiler(inputs, definedSymbols, referencedAssemblies);
             var result = comp.Run();

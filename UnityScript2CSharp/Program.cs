@@ -46,9 +46,9 @@ namespace UnityScript2CSharp
                 if (!ValidateAssemblyReferences(options))
                     return -1;
 
-                ConvertScripts("runtime", runtimeScripts, converter, references, options.Value.Symbols, options.Value.RemoveOriginalFiles);
-                ConvertScripts("editor", editorScripts, converter, references, options.Value.Symbols, options.Value.RemoveOriginalFiles);
-                ConvertScripts("plugins", pluginScripts, converter, references, options.Value.Symbols, options.Value.RemoveOriginalFiles);
+                ConvertScripts("runtime", runtimeScripts, converter, references, options.Value);
+                ConvertScripts("editor", editorScripts, converter, references, options.Value);
+                ConvertScripts("plugins", pluginScripts, converter, references, options.Value);
             }
             catch (Exception ex)
             {
@@ -136,17 +136,17 @@ namespace UnityScript2CSharp
             return ok;
         }
 
-        private static void ConvertScripts(string scriptType, IEnumerable<SourceFile> runtimeScripts, UnityScript2CSharpConverter converter, IEnumerable<string> references, IEnumerable<string> defines, bool removeOriginalFiles)
+        private static void ConvertScripts(string scriptType, IEnumerable<SourceFile> runtimeScripts, UnityScript2CSharpConverter converter, IEnumerable<string> references, CommandLineArguments args)
         {
             Console.WriteLine("Converting '{0}' ", scriptType);
             converter.Convert(
                 runtimeScripts,
-                defines,
+                args.Symbols,
                 references,
-                (scriptPath, context) => HandleConvertedScript(scriptPath, context, removeOriginalFiles));
+                (scriptPath, context, unsupportedCount) => HandleConvertedScript(scriptPath, context, args.RemoveOriginalFiles, args.Verbose, unsupportedCount));
         }
 
-        private static void HandleConvertedScript(string scriptPath, string content, bool removeOriginalFiles)
+        private static void HandleConvertedScript(string scriptPath, string content, bool removeOriginalFiles, bool verbose, int unsupportedCount)
         {
             var csPath = Path.ChangeExtension(scriptPath, ".cs");
             File.WriteAllText(csPath, content);
@@ -164,6 +164,9 @@ namespace UnityScript2CSharp
             {
                 File.Move(scriptPath, scriptPath + ".old");
             }
+
+            if (verbose)
+                Console.WriteLine("Finish processing '{0}' {1}", scriptPath, unsupportedCount > 0 ? $": {unsupportedCount} unsupported constructs found." : "");
         }
 
         private static void DumpScripts(string desc, IEnumerable<SourceFile> scripts)

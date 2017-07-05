@@ -20,19 +20,19 @@ namespace UnityScript2CSharp
 
         private Writer _writer;
 
-        public event Action<string, string> ScriptConverted;
+        public event Action<string, string, int> ScriptConverted;
 
         public override void OnTypeMemberStatement(TypeMemberStatement node)
         {
             // Looks like no boo/us construct creates this node
-            NotSupported(node);
+            ExpectedNotSupported(node);
             base.OnTypeMemberStatement(node);
         }
 
         public override void OnExplicitMemberInfo(ExplicitMemberInfo node)
         {
             // Only used for explicit interface implementation in BOO
-            NotSupported(node);
+            ExpectedNotSupported(node);
             base.OnExplicitMemberInfo(node);
         }
 
@@ -105,13 +105,13 @@ namespace UnityScript2CSharp
         public override void OnGenericTypeDefinitionReference(GenericTypeDefinitionReference node)
         {
             // Only boo compiler can emmit this node.
-            NotSupported(node);
+            ExpectedNotSupported(node);
             base.OnGenericTypeDefinitionReference(node);
         }
 
         public override void OnCallableDefinition(CallableDefinition node)
         {
-            NotSupported(node);
+            ExpectedNotSupported(node);
             // Only boo compiler can emmit this node.
         }
 
@@ -123,14 +123,18 @@ namespace UnityScript2CSharp
 
         public override void OnModule(Module node)
         {
+            _unsupportedCount = 0;
             _usings = GetImportedNamespaces(node);
             _writer  = new Writer(FormatUsingsFrom(_usings));
 
             base.OnModule(node);
 
             var handler = ScriptConverted;
-            if (handler != null)
-                handler(node.LexicalInfo.FullPath, _writer.Text);
+            var generatedSource = _writer.Text.Trim();
+            if (handler != null && generatedSource.Length > 0)
+            {
+                handler(node.LexicalInfo.FullPath, generatedSource, _unsupportedCount);
+            }
         }
 
         public override void OnClassDefinition(ClassDefinition node)
@@ -155,7 +159,7 @@ namespace UnityScript2CSharp
         public override void OnStructDefinition(StructDefinition node)
         {
             // Only boo compiler can emmit this node. UnityScript does not support value type definition
-            NotSupported(node);
+            ExpectedNotSupported(node);
         }
 
         public override void OnInterfaceDefinition(InterfaceDefinition node)
@@ -235,7 +239,7 @@ namespace UnityScript2CSharp
 
         public override void OnLocal(Local node)
         {
-            NotSupported(node);
+            ExpectedNotSupported(node);
             base.OnLocal(node);
         }
 
@@ -313,7 +317,7 @@ namespace UnityScript2CSharp
 
         public override void OnDestructor(Destructor node)
         {
-            NotSupported(node);
+            ExpectedNotSupported(node); // Only boo
             base.OnDestructor(node);
         }
 
@@ -326,7 +330,7 @@ namespace UnityScript2CSharp
 
         public override void OnGenericParameterDeclaration(GenericParameterDeclaration node)
         {
-            NotSupported(node);
+            ExpectedNotSupported(node);
             base.OnGenericParameterDeclaration(node);
         }
 
@@ -378,7 +382,7 @@ namespace UnityScript2CSharp
 
         public override void OnStatementModifier(StatementModifier node)
         {
-            NotSupported(node);
+            ExpectedNotSupported(node);
             base.OnStatementModifier(node);
         }
 
@@ -389,7 +393,7 @@ namespace UnityScript2CSharp
 
         public override void OnLabelStatement(LabelStatement node)
         {
-            NotSupported(node);
+            ExpectedNotSupported(node);
         }
 
         public override void OnBlock(Block node)
@@ -446,7 +450,7 @@ namespace UnityScript2CSharp
 
         public override void OnUnlessStatement(UnlessStatement node)
         {
-            NotSupported(node);
+            ExpectedNotSupported(node);
             base.OnUnlessStatement(node);
         }
 
@@ -515,7 +519,7 @@ namespace UnityScript2CSharp
 
         public override void OnUnpackStatement(UnpackStatement node)
         {
-            NotSupported(node);
+            ExpectedNotSupported(node);
             base.OnUnpackStatement(node);
         }
 
@@ -530,7 +534,7 @@ namespace UnityScript2CSharp
 
         public override void OnOmittedExpression(OmittedExpression node)
         {
-            NotSupported(node);
+            ExpectedNotSupported(node); // .member = value;
             base.OnOmittedExpression(node);
         }
 
@@ -693,7 +697,7 @@ namespace UnityScript2CSharp
 
         public override void OnQuasiquoteExpression(QuasiquoteExpression node)
         {
-            NotSupported(node);
+            ExpectedNotSupported(node); // AST Literals (used in Boo)
             base.OnQuasiquoteExpression(node);
         }
 
@@ -722,13 +726,13 @@ namespace UnityScript2CSharp
 
         public override void OnCharLiteralExpression(CharLiteralExpression node)
         {
-            NotSupported(node);
+            ExpectedNotSupported(node); // TODO: US compiler never emits this node? why?
             base.OnCharLiteralExpression(node);
         }
 
         public override void OnTimeSpanLiteralExpression(TimeSpanLiteralExpression node)
         {
-            NotSupported(node);
+            ExpectedNotSupported(node);
             base.OnTimeSpanLiteralExpression(node);
         }
 
@@ -771,43 +775,43 @@ namespace UnityScript2CSharp
 
         public override void OnSpliceExpression(SpliceExpression node)
         {
-            NotSupported(node);
+            ExpectedNotSupported(node);
             base.OnSpliceExpression(node);
         }
 
         public override void OnSpliceTypeReference(SpliceTypeReference node)
         {
-            NotSupported(node);
+            ExpectedNotSupported(node);
             base.OnSpliceTypeReference(node);
         }
 
         public override void OnSpliceMemberReferenceExpression(SpliceMemberReferenceExpression node)
         {
-            NotSupported(node);
+            ExpectedNotSupported(node);
             base.OnSpliceMemberReferenceExpression(node);
         }
 
         public override void OnSpliceTypeMember(SpliceTypeMember node)
         {
-            NotSupported(node);
+            ExpectedNotSupported(node);
             base.OnSpliceTypeMember(node);
         }
 
         public override void OnSpliceTypeDefinitionBody(SpliceTypeDefinitionBody node)
         {
-            NotSupported(node);
+            ExpectedNotSupported(node);
             base.OnSpliceTypeDefinitionBody(node);
         }
 
         public override void OnSpliceParameterDeclaration(SpliceParameterDeclaration node)
         {
-            NotSupported(node);
+            ExpectedNotSupported(node);
             base.OnSpliceParameterDeclaration(node);
         }
 
         public override void OnExpressionInterpolationExpression(ExpressionInterpolationExpression node)
         {
-            NotSupported(node);
+            ExpectedNotSupported(node);
             base.OnExpressionInterpolationExpression(node);
         }
 
@@ -819,13 +823,13 @@ namespace UnityScript2CSharp
 
         public override void OnListLiteralExpression(ListLiteralExpression node)
         {
-            NotSupported(node);
+            ExpectedNotSupported(node);
             base.OnListLiteralExpression(node);
         }
 
         public override void OnCollectionInitializationExpression(CollectionInitializationExpression node)
         {
-            NotSupported(node);
+            ExpectedNotSupported(node);
             base.OnCollectionInitializationExpression(node);
         }
 
@@ -840,13 +844,13 @@ namespace UnityScript2CSharp
 
         public override void OnGeneratorExpression(GeneratorExpression node)
         {
-            NotSupported(node);
+            ExpectedNotSupported(node); // Handled by boo compiler, transformed into something else during parser.
             base.OnGeneratorExpression(node);
         }
 
         public override void OnExtendedGeneratorExpression(ExtendedGeneratorExpression node)
         {
-            NotSupported(node);
+            ExpectedNotSupported(node); // Handled by boo compiler, transformed into something else during parser.
             base.OnExtendedGeneratorExpression(node);
         }
 
@@ -890,19 +894,19 @@ namespace UnityScript2CSharp
 
         public override void OnCustomStatement(CustomStatement node)
         {
-            NotSupported(node);
+            ExpectedNotSupported(node);
             base.OnCustomStatement(node);
         }
 
         public override void OnCustomExpression(CustomExpression node)
         {
-            NotSupported(node);
+            ExpectedNotSupported(node);
             base.OnCustomExpression(node);
         }
 
         public override void OnStatementTypeMember(StatementTypeMember node)
         {
-            NotSupported(node);
+            ExpectedNotSupported(node);
             base.OnStatementTypeMember(node);
         }
 
@@ -1193,9 +1197,16 @@ namespace UnityScript2CSharp
             }
         }
 
+        private void ExpectedNotSupported(Node node)
+        {
+            Console.WriteLine("Unexpected AST node type : {0}\n\t{1} ({3})\n\t{2}", node.GetType().Name, node, node.ParentNode, node.LexicalInfo);
+            NotSupported(node);
+        }
+
         private void NotSupported(Node node)
         {
-            Console.WriteLine("Node type not supported yet : {0}\n\t{1} ({3})\n\t{2}", node.GetType().Name, node, node.ParentNode, node.LexicalInfo);
+            _writer.Write($"/* Node type not supported yet \n{node.ToCodeString()}\n@{node.LexicalInfo}*/");
+            _unsupportedCount++;
         }
 
         private char[] _currentBrackets = RoundBrackets;
@@ -1205,6 +1216,7 @@ namespace UnityScript2CSharp
         private static char[] SquareBrackets = {'[', ']'};
         private bool _lastIgnored;
         private Action _localClashingAssignment = delegate {};
+        private int _unsupportedCount = 0;
     }
 
     internal class AutoVarDeclarationFinder : FastDepthFirstVisitor

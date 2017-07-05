@@ -64,7 +64,7 @@ namespace UnityScript2CSharp.Tests
 
             },
 
-                (name, content) =>
+                (name, content, unsupportedCount) =>
                 {
                     var targetFilePath = Path.Combine(tempFolder, Path.GetFileNameWithoutExtension(name) + ".cs");
                     var targetFolder = Path.GetDirectoryName(targetFilePath);
