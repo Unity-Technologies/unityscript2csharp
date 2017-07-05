@@ -500,6 +500,37 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
+        [TestCase("function F()", "void F()", TestName = "void - no params")]
+        [TestCase("function F():int", "int F()", TestName = "int - no params")]
+        [TestCase("function F(i:int)", "void F(int i)", TestName = "void  - int param")]
+        [TestCase("function F(i:int):String", "string F(int i)", TestName = "string - int param")]
+        [TestCase("function F(i)", "void F(object i)", TestName = "void - parameter type not specified")]
+        public void Interface_Definition(string usMethod, string csMethod)
+        {
+            var sourceFiles = new[] {new SourceFile { FileName = "interface_definition.js", Contents = $"interface Itf {{ {usMethod}; }}" } };
+            var expectedConvertedContents = new[] {new SourceFile { FileName = "interface_definition.cs", Contents = DefaultUsings + $" public interface Itf {{ {csMethod}; }}" } };
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
+        public void Interface_Inheritance()
+        {
+            var sourceFiles = new[] {new SourceFile { FileName = "interface_inheritance.js", Contents = "interface Itf extends System.IDisposable { function F(); }" } };
+            var expectedConvertedContents = new[] {new SourceFile { FileName = "interface_inheritance.cs", Contents = DefaultUsings + " public interface Itf : System.IDisposable { void F(); }" } };
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
+        public void Interface_Implementation()
+        {
+            var sourceFiles = new[] {new SourceFile { FileName = "interfaces_implementation.js", Contents = "class Foo implements System.IDisposable { function Dispose() {} } " } };
+            var expectedConvertedContents = new[] {new SourceFile { FileName = "interfaces_implementation.cs", Contents = DefaultUsingsForClasses + " public class Foo : object, System.IDisposable { public virtual void Dispose() { } }" } };
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
         [Test]
         public void Test_Formatting()
         {

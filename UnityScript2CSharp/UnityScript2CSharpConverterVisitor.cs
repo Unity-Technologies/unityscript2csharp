@@ -146,17 +146,7 @@ namespace UnityScript2CSharp
 
             _writer.WriteLine();
             _writer.WriteLine("{");
-            using (new BlockIdentation(_writer))
-            {
-                var lastMember = node.Members.LastOrDefault();
-                foreach (var member in node.Members)
-                {
-                    member.Accept(this);
-                    if (member != lastMember)
-                        _writer.WriteLine();
-                }
-                _writer.WriteLine();
-            }
+            WriteMembersOf(node);
             _writer.WriteLine("}");
         }
 
@@ -167,8 +157,19 @@ namespace UnityScript2CSharp
 
         public override void OnInterfaceDefinition(InterfaceDefinition node)
         {
-            NotSupported(node);
-            base.OnInterfaceDefinition(node);
+            WriteAttributes(node.Attributes);
+
+            _builderAppendIdented($"{ModifiersToString(node.Modifiers)} interface {node.Name}");
+
+            if (!node.BaseTypes.IsEmpty)
+                _writer.Write(" : ");
+
+            WriteCommaSeparatedList(node.BaseTypes);
+
+            _writer.WriteLine();
+            _writer.WriteLine("{");
+            WriteMembersOf(node);
+            _writer.WriteLine("}");
         }
 
         public override void OnEnumDefinition(EnumDefinition node)
@@ -249,13 +250,20 @@ namespace UnityScript2CSharp
 
             WriteAttributes(node.Attributes);
 
-            _builderAppendIdented(ModifiersToString(node.Modifiers));
+            var isInterface = node.DeclaringType.NodeType == NodeType.InterfaceDefinition;
+            if (!isInterface)
+                _builderAppendIdented(ModifiersToString(node.Modifiers));
+
             _builderAppend(' ');
             node.ReturnType.Accept(this);
             _builderAppend(' ');
             _builderAppend(node.Name);
             WriteParameterList(node.Parameters);
-            node.Body.Accept(this);
+
+            if (isInterface)
+                _writer.WriteLine(";");
+            else
+                node.Body.Accept(this);
         }
 
         public override bool EnterBlock(Block node)
@@ -297,11 +305,7 @@ namespace UnityScript2CSharp
 
             WriteParameterList(node.Parameters);
 
-            // Only field initializations are added to ctors in UnityScript (all of them marked as synthetic)
-            // When visiting binary expressions we need to know whether to ignore synthetic expressions because local variables (with initializers) have
-            // both the initialization and a binary expression (basically representing the same initialization). So, usually we ignore all synthetic binary
-            // expressions, unless they are inside a ctor.
-            RunRegardlessOfBeingSynthetic(delegate { node.Body.Accept(this); });
+            node.Body.Accept(this);
         }
 
         public override void OnDestructor(Destructor node)
@@ -976,19 +980,6 @@ namespace UnityScript2CSharp
             }
         }
 
-        private void RunRegardlessOfBeingSynthetic(Action action)
-        {
-            _ignoreSyntheticExpressions = false;
-            try
-            {
-                action();
-            }
-            finally
-            {
-                _ignoreSyntheticExpressions = true;
-            }
-        }
-
         private static bool IsSynthetic(Local local, out InternalLocal internalLocal)
         {
             internalLocal = local.Entity as InternalLocal;
@@ -1182,6 +1173,21 @@ namespace UnityScript2CSharp
         private static bool IsSyntheticDelegateUsedByCallable(ClassDefinition node)
         {
             return node.IsSynthetic && node.Name.Contains("$callable");
+        }
+
+        private void WriteMembersOf(TypeDefinition node)
+        {
+            using (new BlockIdentation(_writer))
+            {
+                var lastMember = node.Members.LastOrDefault();
+                foreach (var member in node.Members)
+                {
+                    member.Accept(this);
+                    if (member != lastMember)
+                        _writer.WriteLine();
+                }
+                _writer.WriteLine();
+            }
         }
 
         private void NotSupported(Node node)

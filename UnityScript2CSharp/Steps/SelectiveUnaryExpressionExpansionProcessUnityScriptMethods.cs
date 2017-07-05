@@ -1,4 +1,5 @@
 using Boo.Lang.Compiler.Ast;
+using Boo.Lang.Compiler.TypeSystem;
 using UnityScript.Steps;
 
 namespace UnityScript2CSharp.Steps
@@ -53,7 +54,12 @@ namespace UnityScript2CSharp.Steps
         {
             var original = node.Target;
             base.OnMethodInvocationExpression(node);
-            if (node.Target.ToCodeString().Contains("Invoke"))
+
+            var member = node.Target.Entity as IMember;
+            if (member == null)
+                return;
+
+            if (member.DeclaringType is ICallableType && node.Target.ToCodeString().Contains("Invoke"))
             {
                 // Convert explicit delegate Invoke() method invocation to method invocation syntax
                 // i.e: d.Invoke(p1, p2) => d(p1, p2);
