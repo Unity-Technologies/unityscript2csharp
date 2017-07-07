@@ -1131,7 +1131,19 @@ namespace UnityScript2CSharp
 
             // UnityEngine.Object always need to be qualified.
             if (_usings.Contains(typeNamespace) && fullName != "UnityEngine.Object")
-                return externalType.Name;
+            {
+                var parentTypes = new List<string>();
+                parentTypes.Add(externalType.Name);
+
+                while (externalType.DeclaringType != null)
+                {
+                    externalType = (ExternalType)externalType.DeclaringType;
+                    parentTypes.Add(externalType.Name);
+                }
+                parentTypes.Reverse();
+
+                return string.Join(".", parentTypes);
+            }
 
             return null;
         }

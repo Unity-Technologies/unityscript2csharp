@@ -18,6 +18,14 @@ namespace UnityEngine
 
 namespace UnityScript2CSharp.Tests
 {
+    public class Outer
+    {
+        public class Inner
+        {
+            public class Inner2 {}
+        }
+    }
+
     public class Base
     {
         public virtual void M() {}

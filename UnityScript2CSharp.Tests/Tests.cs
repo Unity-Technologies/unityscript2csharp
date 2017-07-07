@@ -204,6 +204,16 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
+        [TestCase("Outer.Inner")]
+        [TestCase("Outer.Inner.Inner2")]
+        public void Locals_Inner_Type(string typeName)
+        {
+            var sourceFiles = SingleSourceFor("locals_inner.js", $"import UnityScript2CSharp.Tests; function F() {{ var o = new {typeName}(); }}");
+            var expectedConvertedContents = SingleSourceFor("locals_inner.cs", "using UnityScript2CSharp.Tests; " + DefaultGeneratedClass + $"locals_inner : MonoBehaviour {{ public virtual void F() {{ {typeName} o = new {typeName}(); }} }}");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
         [Test]
         public void Locals()
         {
