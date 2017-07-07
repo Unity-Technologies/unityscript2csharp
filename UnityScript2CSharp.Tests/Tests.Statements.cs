@@ -229,6 +229,16 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
+        [TestCase("i")]
+        [TestCase("++i")]
+        public void Switch_With_Only_Default(string condition)
+        {
+            var sourceFiles = SingleSourceFor("switch_only_default.js", $"function F(i:int) {{ switch({condition}) {{ default: if (i != 0) i = 10; }} return i; }}");
+            var expectedConvertedContents = SingleSourceFor("switch_only_default.cs", DefaultGeneratedClass + $"switch_only_default : MonoBehaviour {{ public virtual int F(int i) {{ int _switch_1 = {condition}; {{ if (i != 0) {{ i = 10; }} }} return i; }} }}");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
         [Test]
         public void Yield_Return_Type_Inference()
         {

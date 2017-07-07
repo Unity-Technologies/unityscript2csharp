@@ -24,12 +24,12 @@ namespace UnityScript2CSharp.Steps
 
         public override void OnMethodInvocationExpression(MethodInvocationExpression node)
         {
-            if (node.Target.Entity.EntityType == EntityType.Method)
+            if (node.Target.Entity != null && node.Target.Entity.EntityType == EntityType.Method)
             {
                 var method = (IMethodBase)node.Target.Entity;
                 var parameters = method.GetParameters();
 
-                for (int i = 0; i < parameters.Length; i++)
+                for (int i = 0; i < node.Arguments.Count; i++)
                 {
                     if (parameters[i].IsByRef || !NeedsCastWithPotentialDataLoss(parameters[i].Type, node.Arguments[i].ExpressionType))
                         continue;
@@ -37,6 +37,7 @@ namespace UnityScript2CSharp.Steps
                     node.Arguments[i] = CodeBuilder.CreateCast(parameters[i].Type, node.Arguments[i]);
                 }
             }
+
             base.OnMethodInvocationExpression(node);
         }
 

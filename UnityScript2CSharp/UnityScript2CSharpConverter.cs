@@ -131,6 +131,7 @@ namespace UnityScript2CSharp
 
             adjustedPipeline.Replace(typeof(ProcessUnityScriptMethods), new SelectiveUnaryExpressionExpansionProcessUnityScriptMethods());
 
+            adjustedPipeline.Add(new FixSwitchWithOnlyDefault());
             adjustedPipeline.Add(new MergeMainMethodStatementsIntoStartMethod());
             adjustedPipeline.Add(new ExpandValueTypeObjectInitialization());
             adjustedPipeline.Add(new OperatorMethodToLanguageOperator());
