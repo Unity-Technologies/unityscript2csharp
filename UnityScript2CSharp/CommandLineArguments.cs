@@ -25,7 +25,7 @@ namespace UnityScript2CSharp
 
         [Option('d', HelpText = "Dumps out the list of scripts being processed.")] public bool DumpScripts { get; set; }
 
-        [Option('i',  HelpText = "Ignore compilation errors.")] public bool IgnoreErrors { get; set; }
+        [Option('i',  HelpText = "Ignore compilation errors. This allows the conversion process to continue instead of aborting.")] public bool IgnoreErrors { get; set; }
 
         [Option('v', "verbose", HelpText = "Show verbose messages.")] public bool Verbose { get; set; }
 

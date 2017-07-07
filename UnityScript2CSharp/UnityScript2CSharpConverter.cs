@@ -44,7 +44,10 @@ namespace UnityScript2CSharp
                 CompilerErrors = result.Errors.Select(error => error.ToString());
 
                 if (!_ignoreErrors)
-                    throw new Exception(result.Errors.Aggregate("\t", (acc, curr) => acc + Environment.NewLine + "\t" + curr + Environment.NewLine + "\t" + curr.InnerException));
+                {
+                    var errorsAsString = result.Errors.Aggregate("\t", (acc, curr) => acc + Environment.NewLine + "\t" + curr + Environment.NewLine + "\t" + curr.InnerException);
+                    throw new Exception($"Conversion aborted due to compilation errors:\n{errorsAsString}");
+                }
             }
 
             if (result.Warnings.Count > 0)
