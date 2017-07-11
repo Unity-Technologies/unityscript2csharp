@@ -36,6 +36,7 @@ namespace UnityScript2CSharp
         }
 
         public IEnumerable<string> CompilerErrors { get; private set; }
+        public IEnumerable<string> CompilerWarnings { get; private set; }
 
         private void HandleCompilationResult(CompilerContext result)
         {
@@ -52,10 +53,11 @@ namespace UnityScript2CSharp
 
             if (result.Warnings.Count > 0)
             {
-                // throw new Exception(result.Warnings.Aggregate("", (acc, curr) => acc + Environment.NewLine + curr.ToString()));
+                CompilerWarnings = result.Warnings.Select(warning => warning.ToString());
             }
 
             CompilerErrors = CompilerErrors ?? new List<string>();
+            CompilerWarnings = CompilerWarnings ?? new List<string>();
         }
 
         internal UnityScriptCompiler CreatAndInitializeCompiler(IEnumerable<SourceFile> inputs, IEnumerable<string> definedSymbols, IEnumerable<string> referencedAssemblies)
@@ -81,7 +83,6 @@ namespace UnityScript2CSharp
             foreach (var assembly in LoadAssembliesToReference(assemblyReferences))
             {
                 _compiler.Parameters.References.Add(assembly);
-                //actualAssemblyReferences.Add(assembly);
             }
 
             _compiler.Parameters.AddToEnvironment(

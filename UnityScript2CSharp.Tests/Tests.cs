@@ -461,7 +461,16 @@ namespace UnityScript2CSharp.Tests
         public void Deep_Assignment_To_Members_Of_ValueTypes_Through_Properties()
         {
             var sourceFiles = new[] { new SourceFile { FileName = "deep_value_type_assignment.js", Contents = "import UnityScript2CSharp.Tests; function F(o:NonGeneric) { o.Struct.other.value = (o != null) ? \"1\" : \"0\"; }" } };
-            var expectedConvertedContents = new[] { new SourceFile { FileName = "deep_value_type_assignment.cs", Contents = "using UnityScript2CSharp.Tests; " + DefaultGeneratedClass + "deep_value_type_assignment : MonoBehaviour { public virtual void F(NonGeneric o) { { string _1 = !(o == null) ? \"1\" : \"0\"; Struct _2 = o.Struct; _2.other.value = _1; o.Struct = _2; } } }" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "deep_value_type_assignment.cs", Contents = "using UnityScript2CSharp.Tests; " + DefaultGeneratedClass + "deep_value_type_assignment : MonoBehaviour { public virtual void F(NonGeneric o) { { string _1 = !(o == null) ? \"1\" : \"0\"; Struct _2 = o.Struct; Other _3 = _2.other; _3.value = _1; _2.other = _3; o.Struct = _2; } } }" } };
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [TestCase("Struct")]
+        [TestCase("ReferenceType")]
+        public void Assignment_To_Members_Of_ValueTypes_Through_PropertiesS(string parentTypeName)
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "assignment_to_static_member_of_valuetype.js", Contents = $"#pragma strict\nimport UnityScript2CSharp.Tests; var s:String; function F() {{ {parentTypeName}.staticOther.value = s; }}" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "assignment_to_static_member_of_valuetype.cs", Contents = "using UnityScript2CSharp.Tests; " + DefaultGeneratedClass + $"assignment_to_static_member_of_valuetype : MonoBehaviour {{ public virtual void F() {{ {{ string _1 = \"foo\"; Other _2 = {parentTypeName}.staticOther; _2.value = _1; {parentTypeName}.staticOther = _2; }} }} }}" } };
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 

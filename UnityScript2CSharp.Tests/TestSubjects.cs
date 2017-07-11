@@ -46,6 +46,11 @@ namespace UnityScript2CSharp.Tests
         public string value;
     }
 
+    public sealed class ReferenceType
+    {
+        public static Other staticOther { get; set; }
+    }
+
     public struct Struct
     {
         public Struct(int i)
@@ -54,8 +59,9 @@ namespace UnityScript2CSharp.Tests
             other = default(Other);
         }
 
-        public int value;
-        public Other other;
+        public int value { get; set; }
+        public Other other { get; set; }
+        public static Other staticOther { get; set; }
     }
 
     public class NonGeneric

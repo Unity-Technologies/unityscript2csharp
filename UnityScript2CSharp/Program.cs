@@ -65,7 +65,6 @@ namespace UnityScript2CSharp
 
                     if (!options.Value.IgnoreErrors)
                         Console.WriteLine("Consider running converter with '-i' option.");
-
                 }
             }
             return 0;
@@ -94,7 +93,7 @@ namespace UnityScript2CSharp
 
             if (string.IsNullOrWhiteSpace(options.Value.UnityPath))
                 return references;
-            
+
             string unityAssembliesRootPath;
             if (!TryFindUnityAssembliesRoot(options.Value.UnityPath, options.Value.Verbose, out unityAssembliesRootPath))
             {
@@ -157,6 +156,14 @@ namespace UnityScript2CSharp
                 args.Symbols,
                 references,
                 (scriptPath, context, unsupportedCount) => HandleConvertedScript(scriptPath, context, args.RemoveOriginalFiles, args.Verbose, unsupportedCount));
+
+            using (WithConsoleColors.SetTo(ConsoleColor.Yellow, ConsoleColor.Black))
+            {
+                foreach (var warning in converter.CompilerWarnings)
+                {
+                    Console.WriteLine("\t{0}", warning);
+                }
+            }
         }
 
         private static void HandleConvertedScript(string scriptPath, string content, bool removeOriginalFiles, bool verbose, int unsupportedCount)
