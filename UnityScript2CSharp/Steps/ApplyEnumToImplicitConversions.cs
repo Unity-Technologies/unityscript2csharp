@@ -8,10 +8,29 @@ namespace UnityScript2CSharp.Steps
     {
         public override void OnBinaryExpression(BinaryExpression node)
         {
-            if (node.Operator == BinaryOperatorType.Assign && node.Left.ExpressionType != null && node.Right.ExpressionType != null)
+            if (node.Left.ExpressionType == null || node.Right.ExpressionType == null)
             {
-                if (node.Left.ExpressionType.IsEnum ^ node.Right.ExpressionType.IsEnum)
+                base.OnBinaryExpression(node);
+                return;
+            }
+
+            var oneOperatorIsNotAnEnum = node.Left.ExpressionType.IsEnum ^ node.Right.ExpressionType.IsEnum;
+            if (!oneOperatorIsNotAnEnum)
+            {
+                base.OnBinaryExpression(node);
+                return;
+            }
+
+            if (node.Operator == BinaryOperatorType.Assign)
+            {
+                node.Replace(node.Right, CodeBuilder.CreateCast(node.Left.ExpressionType, node.Right));
+            }
+            else if (node.Operator == BinaryOperatorType.Equality || node.Operator == BinaryOperatorType.Inequality)
+            {
+                if (node.Left.ExpressionType.IsEnum)
                     node.Replace(node.Right, CodeBuilder.CreateCast(node.Left.ExpressionType, node.Right));
+                else
+                    node.Replace(node.Left, CodeBuilder.CreateCast(node.Right.ExpressionType, node.Left));
             }
 
             base.OnBinaryExpression(node);

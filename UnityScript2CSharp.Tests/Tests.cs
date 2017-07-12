@@ -316,8 +316,8 @@ namespace UnityScript2CSharp.Tests
         [Test]
         public void Enums_Int_Implicit_Conversions()
         {
-            var sourceFiles = SingleSourceFor("enum_int_implicit_conversions.js", "function F(c: System.ConsoleColor, i:int) : int { var l1 = c + 1; var l2:int = c + 1; c = l2; F(i, c); F(0, System.ConsoleColor.Blue); F(i - 1, c); return c; }");
-            var expectedConvertedContents = SingleSourceFor("enum_int_implicit_conversions.cs", DefaultGeneratedClass + "enum_int_implicit_conversions : MonoBehaviour { public virtual int F(System.ConsoleColor c, int i) { System.ConsoleColor l1 = c + 1; int l2 = (int) (c + 1); c = (System.ConsoleColor) l2; this.F((System.ConsoleColor) i, (int) c); this.F((System.ConsoleColor) 0, (int) System.ConsoleColor.Blue); this.F((System.ConsoleColor) (i - 1), (int) c); return (int) c; } }");
+            var sourceFiles = SingleSourceFor("enum_int_implicit_conversions.js", "function F(c: System.ConsoleColor, i:int, b: boolean) : int { var l1 = c + 1; var l2:int = c + 1; c = l2; F(i, c, i == c); F(0, System.ConsoleColor.Blue, 0 == System.ConsoleColor.Blue); F(i - 1, c, 0 != System.ConsoleColor.Blue); return c; }");
+            var expectedConvertedContents = SingleSourceFor("enum_int_implicit_conversions.cs", DefaultGeneratedClass + "enum_int_implicit_conversions : MonoBehaviour { public virtual int F(System.ConsoleColor c, int i, bool b) { System.ConsoleColor l1 = c + 1; int l2 = (int) (c + 1); c = (System.ConsoleColor) l2; this.F((System.ConsoleColor) i, (int) c, ((System.ConsoleColor) i) == c); this.F((System.ConsoleColor) 0, (int) System.ConsoleColor.Blue, ((System.ConsoleColor) 0) == System.ConsoleColor.Blue); this.F((System.ConsoleColor) (i - 1), (int) c, ((System.ConsoleColor) 0) != System.ConsoleColor.Blue); return (int) c; } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }

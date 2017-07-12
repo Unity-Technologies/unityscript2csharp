@@ -27,6 +27,8 @@ namespace UnityScript2CSharp
 
         [Option('i',  HelpText = "Ignore compilation errors. This allows the conversion process to continue instead of aborting.")] public bool IgnoreErrors { get; set; }
 
+        [Option('n',  "dry-run", HelpText = "Run the convertion but do not change/create any files at disk.")] public bool DryRun { get; set; }
+
         [Option('v', "verbose", HelpText = "Show verbose messages.")] public bool Verbose { get; set; }
 
         public IEnumerable<string> Symbols {  get { return _symbols;  } }

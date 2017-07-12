@@ -21,22 +21,23 @@ namespace UnityScript2CSharp
             try
             {
                 var editorSubFolder = String.Format("{0}Editor{0}", Path.DirectorySeparatorChar);
+                var pluginsEditorSubFolder = String.Format("{0}Plugins{0}Editor{0}", Path.DirectorySeparatorChar);
                 var pluginSubFolder = String.Format("{0}Plugins{0}", Path.DirectorySeparatorChar);
 
-                Console.WriteLine($"Editor: {editorSubFolder}\r\nPlugin: {pluginSubFolder}");
-
                 var allFiles = Directory.GetFiles(Path.Combine(options.Value.ProjectPath, "Assets"), "*.js", SearchOption.AllDirectories);
-                var filter = new Regex(string.Format(@"{0}{1}{0}|{0}{2}{0}", Path.DirectorySeparatorChar, editorSubFolder, pluginSubFolder), RegexOptions.Compiled);
+                var filter = new Regex(string.Format(@"{0}|{1}|{2}", editorSubFolder, pluginSubFolder, pluginsEditorSubFolder).Replace("\\", "\\\\"), RegexOptions.Compiled);
 
                 var runtimeScripts = allFiles.Where(scriptPath => !filter.IsMatch(scriptPath)).Select(scriptPath => new SourceFile { FileName = scriptPath, Contents = File.ReadAllText(scriptPath)}).ToArray();
-                var editorScripts = allFiles.Where(scriptPath => scriptPath.Contains(editorSubFolder)).Select(scriptPath => new SourceFile { FileName = scriptPath, Contents = File.ReadAllText(scriptPath) }).ToArray();
-                var pluginScripts = allFiles.Where(scriptPath => scriptPath.Contains(pluginSubFolder)).Select(scriptPath => new SourceFile { FileName = scriptPath, Contents = File.ReadAllText(scriptPath) }).ToArray();
+                var editorScripts = allFiles.Where(scriptPath => scriptPath.Contains(editorSubFolder) && !scriptPath.Contains(pluginsEditorSubFolder)).Select(scriptPath => new SourceFile { FileName = scriptPath, Contents = File.ReadAllText(scriptPath) }).ToArray();
+                var pluginScripts = allFiles.Where(scriptPath => scriptPath.Contains(pluginSubFolder) && !scriptPath.Contains(pluginsEditorSubFolder)).Select(scriptPath => new SourceFile { FileName = scriptPath, Contents = File.ReadAllText(scriptPath) }).ToArray();
+                var pluginEditorScritps  = allFiles.Where(scriptPath => scriptPath.Contains(pluginsEditorSubFolder)).Select(scriptPath => new SourceFile { FileName = scriptPath, Contents = File.ReadAllText(scriptPath) }).ToArray();
 
                 if (options.Value.DumpScripts)
                 {
                     DumpScripts("Runtime", runtimeScripts);
                     DumpScripts("Editor", editorScripts);
                     DumpScripts("Plugin", pluginScripts);
+                    DumpScripts("Plugin/Editor", pluginEditorScritps);
                 }
 
                 var converter = new UnityScript2CSharpConverter(options.Value.IgnoreErrors);
@@ -49,6 +50,7 @@ namespace UnityScript2CSharp
                 ConvertScripts("runtime", runtimeScripts, converter, references, options.Value);
                 ConvertScripts("editor", editorScripts, converter, references, options.Value);
                 ConvertScripts("plugins", pluginScripts, converter, references, options.Value);
+                ConvertScripts("editor plugins", pluginEditorScritps, converter, references, options.Value);
 
                 Console.WriteLine("Finished converting {0} scripts.", runtimeScripts.Length + editorScripts.Length + pluginScripts.Length);
             }
@@ -151,11 +153,11 @@ namespace UnityScript2CSharp
         {
             Console.WriteLine("Converting '{0}' ({1} scripts)", scriptType, scripts.Count);
 
-            converter.Convert(
-                scripts,
-                args.Symbols,
-                references,
-                (scriptPath, context, unsupportedCount) => HandleConvertedScript(scriptPath, context, args.RemoveOriginalFiles, args.Verbose, unsupportedCount));
+            Action<string, string, int> handler = (scriptPath, context, unsupportedCount) => HandleConvertedScript(scriptPath, context, args.RemoveOriginalFiles, args.Verbose, unsupportedCount);
+            if (args.DryRun)
+                handler = (_, __, ___) => {};
+
+            converter.Convert(scripts, args.Symbols, references, handler);
 
             using (WithConsoleColors.SetTo(ConsoleColor.Yellow, ConsoleColor.Black))
             {
@@ -207,7 +209,7 @@ namespace UnityScript2CSharp
         private WithConsoleColors(ConsoleColor foreground, ConsoleColor background)
         {
             oldForeground = Console.ForegroundColor;
-            oldBackground = Console.ForegroundColor;
+            oldBackground = Console.BackgroundColor;
 
             Console.ForegroundColor = foreground;
             Console.BackgroundColor = background;
