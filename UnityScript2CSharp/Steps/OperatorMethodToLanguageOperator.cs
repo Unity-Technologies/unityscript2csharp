@@ -57,6 +57,12 @@ namespace UnityScript2CSharp.Steps
                 return true;
             }
 
+            if (!method.Name.StartsWith("op_"))
+            {
+                op = BinaryOperatorType.None;
+                return false;
+            }
+
             return Enum.TryParse(method.Name.Substring("op_".Length), true, out op);
         }
 
