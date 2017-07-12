@@ -23,6 +23,11 @@ namespace UnityScript2CSharp
 
         public event Action<string, string, int> ScriptConverted;
 
+        public UnityScript2CSharpConverterVisitor()
+        {
+            _brackets.Push(RoundBrackets);
+        }
+
         public override void OnTypeMemberStatement(TypeMemberStatement node)
         {
             // Looks like no boo/us construct creates this node
@@ -565,6 +570,8 @@ namespace UnityScript2CSharp
 
             _lastIgnored = false;
 
+            _brackets.Push(RoundBrackets);
+
             HandleNewExpression(node);
 
             node.Target.Accept(this);
@@ -590,7 +597,7 @@ namespace UnityScript2CSharp
 
             WriteParameterList(node.Arguments, refOutWriter);
 
-            _currentBrackets = RoundBrackets;
+            _brackets.Pop();
         }
 
         private void HandleNewExpression(MethodInvocationExpression node)
@@ -689,7 +696,8 @@ namespace UnityScript2CSharp
             {
                 _writer.Write("new ");
                 node.GenericArguments[0].Accept(this);
-                _currentBrackets = SquareBrackets;
+                _brackets.Pop();
+                _brackets.Push(SquareBrackets);
                 return;
             }
 
@@ -978,9 +986,9 @@ namespace UnityScript2CSharp
 
         private void WriteParameterList<T>(IEnumerable<T> parameters, Action<T, int> preWrite = null) where T : Node
         {
-            _writer.Write(_currentBrackets[0]);
+            _writer.Write(_brackets.Peek()[0]);
             WriteCommaSeparatedList(parameters, preWrite);
-            _writer.Write(_currentBrackets[1]);
+            _writer.Write(_brackets.Peek()[1]);
         }
 
         private void WriteCommaSeparatedList<T>(IEnumerable<T> items, Action<T, int> preWrite = null) where T : Node
@@ -1236,7 +1244,7 @@ namespace UnityScript2CSharp
             _unsupportedCount++;
         }
 
-        private char[] _currentBrackets = RoundBrackets;
+        private Stack<char[]> _brackets = new Stack<char[]>();
         private bool _ignoreSyntheticExpressions = true;
 
         private static char[] RoundBrackets = {'(', ')'};

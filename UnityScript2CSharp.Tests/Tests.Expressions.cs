@@ -40,10 +40,12 @@ namespace UnityScript2CSharp.Tests
         [TestCase("String", "string")]
         [TestCase("System.Object", "object")]
         [TestCase("boolean", "bool")]
-        public void Arrays_New(string usTypeName, string csTypeName)
+        [TestCase("int", "int", "System.Math.Min(1, 2)", TestName = "Method invocation as array size")]
+        [TestCase("int", "int", "System.Array.BinarySearch(new int[10], 1)", TestName = "Complex method invocation as array size")]
+        public void Arrays_New(string usTypeName, string csTypeName, string lengthExpression = null)
         {
-            var sourceFiles = SingleSourceFor("arrays_new.js", $"public var a : {usTypeName} []; function F() {{ a = new {usTypeName}[10]; }}");
-            var expectedConvertedContents = SingleSourceFor("arrays_new.cs", DefaultGeneratedClass + $@"arrays_new : MonoBehaviour {{ public {csTypeName}[] a; public virtual void F() {{ this.a = new {csTypeName}[10]; }} }}");
+            var sourceFiles = SingleSourceFor("arrays_new.js", $"public var a : {usTypeName} []; function F() {{ a = new {usTypeName}[{lengthExpression ?? "10"}]; }}");
+            var expectedConvertedContents = SingleSourceFor("arrays_new.cs", DefaultGeneratedClass + $@"arrays_new : MonoBehaviour {{ public {csTypeName}[] a; public virtual void F() {{ this.a = new {csTypeName}[{lengthExpression ?? "10"}]; }} }}");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
