@@ -20,6 +20,7 @@ namespace UnityScript2CSharp.Steps
             }
 
             _currentArgument = null;
+            base.OnMethodInvocationExpression(node);
         }
 
         public override void OnMemberReferenceExpression(MemberReferenceExpression node)
@@ -52,13 +53,22 @@ namespace UnityScript2CSharp.Steps
             base.OnArrayLiteralExpression(node);
         }
 
+        public override void OnBinaryExpression(BinaryExpression node)
+        {
+            if (node.Operator == BinaryOperatorType.Assign && node.Left.ExpressionType == TypeSystemServices.TypeType && node.Right.ExpressionType.EntityType == EntityType.Type)
+            {
+                node.Replace(node.Right, CodeBuilder.CreateTypeofExpression((IType)node.Right.Entity));
+            }
+
+            base.OnBinaryExpression(node);
+        }
+
         private bool HasImplictTypeOfExpression(ReferenceExpression node)
         {
             if (_currentArgument != null)
                 return _currentArgument.ExpressionType.ElementType == TypeSystemServices.TypeType && (node.ParentNode.NodeType == NodeType.MethodInvocationExpression || node.ParentNode.NodeType == NodeType.ArrayLiteralExpression);
 
-
-            return node.Entity != null && node.Entity.EntityType == EntityType.Type && node.ExpressionType == TypeSystemServices.TypeType;
+            return node.ParentNode.NodeType == NodeType.Attribute;
         }
     }
 }

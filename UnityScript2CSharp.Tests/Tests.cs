@@ -512,6 +512,15 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
+        [Test]
+        public void Chainned_Unity_Engine_Known_Methods()
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "chainned_known_methods.js", Contents = "function F(o:GameObject) { o.GetComponent(chainned_known_methods).F(null); }" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "chainned_known_methods.cs", Contents = DefaultGeneratedClass + "chainned_known_methods : MonoBehaviour { public virtual void F(GameObject o) { ((chainned_known_methods) o.GetComponent(typeof(chainned_known_methods))).F(null); } }" } };
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
         [TestCase("", TestName = "No Start Method")]
         [TestCase(" System.Console.WriteLine(\"Within Start\");", TestName = "With Start Method")]
         public void Glocal_Statements_Are_Injected_In_Begin_Of_Start(string startBody)
@@ -612,6 +621,7 @@ namespace UnityScript2CSharp.Tests
             yield return new Tuple<string, string>("o.GetComponent(\"Whatever\")", "(known_methods) o.GetComponent(\"Whatever\")");
             yield return new Tuple<string, string>("o.GetComponent(\"known_methods\")", "(known_methods) o.GetComponent(\"known_methods\")");
             yield return new Tuple<string, string>("o.GetComponent(typeof(known_methods))", "(known_methods) o.GetComponent(typeof(known_methods))");
+            yield return new Tuple<string, string>("o.GetComponent(known_methods)", "(known_methods) o.GetComponent(typeof(known_methods))");
             yield return new Tuple<string, string>("o.GetComponent.<known_methods>()", "o.GetComponent<known_methods>()");
         }
     }
