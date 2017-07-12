@@ -2,7 +2,6 @@ using System;
 using System.Text;
 using Boo.Lang.Compiler.Ast;
 using Boo.Lang.Compiler.Steps;
-using Boo.Lang.Compiler.TypeSystem;
 using Boo.Lang.Compiler.TypeSystem.Reflection;
 
 namespace UnityScript2CSharp.Steps
@@ -31,7 +30,7 @@ namespace UnityScript2CSharp.Steps
             if (node.Target.ExpressionType == null)
                 return false;
 
-            if (node.Target.ExpressionType.IsArray)
+            if (node.Target.ExpressionType.IsArray || node.Target.ExpressionType.FullName == typeof(System.Array).FullName)
                 return true;
 
             var expressionType = node.Target.ExpressionType as ExternalType;

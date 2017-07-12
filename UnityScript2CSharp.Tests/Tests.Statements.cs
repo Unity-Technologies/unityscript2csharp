@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using NUnit.Framework;
 
 namespace UnityScript2CSharp.Tests
@@ -51,14 +52,27 @@ namespace UnityScript2CSharp.Tests
         [TestCase("String", "return !p;", "return !!string.IsNullOrEmpty(p);", "string", TestName = "String in negated Ternary Operator")]
 
         [TestCase("System.ConsoleColor", "if (p) {} ;", "if (p != System.ConsoleColor.Black) { }", TestName = "Extern Enums")]
+        [TestCase("EnumImplicitValues", "if (p) {} ;", "if (p != EnumImplicitValues.First) { }", TestName = "Extern Enums Withtout Values")]
+        [TestCase("EnumExplicitValues", "if (p) {} ;", "if (p != EnumExplicitValues.Fourth) { }", TestName = "Extern Enums With Values")]
 
         [TestCase("System.Object", "while (p && System.Environment.ProcessorCount > 10) {}", "while ((p != null) && (System.Environment.ProcessorCount > 10)) { }", "object", TestName = "Object as LRS of Binary Expression")]
         [TestCase("System.Object", "while(p) {}", "while (p != null) { }", "object")]
         [TestCase("System.Object", "return !p;", "return p == null;", "object")]
         public void Automatic_Bool_Convertion(string type, string usSnippet, string csSnippet, string csharpTypeName = null)
         {
-            var sourceFiles = SingleSourceFor("auto_bool_conversion.js", $"function F(p:{type}) : boolean {{ {usSnippet} }}");
-            var expectedConvertedContents = SingleSourceFor("auto_bool_conversion.cs", DefaultGeneratedClass + $"auto_bool_conversion : MonoBehaviour {{ public virtual bool F({csharpTypeName ?? type} p) {{ {csSnippet} }} }}");
+            var sourceFiles = new[]
+            {
+                new SourceFile("auto_bool_conversion_enum_implicit_values.cs", "enum EnumImplicitValues { First, Second }"),
+                new SourceFile("auto_bool_conversion_enum_explicit_values.cs", "enum EnumExplicitValues { Third = 3, Fourth = 0 }"),
+                new SourceFile("auto_bool_conversion.cs", $"function F(p:{type}) : boolean {{ {usSnippet} }}"),
+            };
+
+            var expectedConvertedContents = new[]
+            {
+                new SourceFile("auto_bool_conversion_enum_implicit_values.cs", "using UnityEngine; using UnityEditor; using System.Collections; public enum EnumImplicitValues { First = 0, Second = 1 }"),
+                new SourceFile("auto_bool_conversion_enum_explicit_values.cs", "using UnityEngine; using UnityEditor; using System.Collections; public enum EnumExplicitValues { Third = 3, Fourth = 0 }"),
+                new SourceFile("auto_bool_conversion.cs", DefaultGeneratedClass + $"auto_bool_conversion : MonoBehaviour {{ public virtual bool F({csharpTypeName ?? type} p) {{ {csSnippet} }} }}"),
+            };
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -68,7 +82,7 @@ namespace UnityScript2CSharp.Tests
         public void Automatic_Bool_Convertion_Internal_Enums(string secondEnumMemberValue, string expectedComparisonValue)
         {
             var sourceFiles = SingleSourceFor("internal_enum_auto_bool_conversion.js", $"enum MyEnum {{ First = 1, Second = {secondEnumMemberValue}, Third = 2 }} function F(e:MyEnum) {{ if (e) {{ }} }}");
-            var expectedConvertedContents = SingleSourceFor("internal_enum_auto_bool_conversion.cs", DefaultUsingsForClasses + $" public enum MyEnum {{ First = 1, Second = {secondEnumMemberValue}, Third = 2 }} [System.Serializable] public partial class internal_enum_auto_bool_conversion : MonoBehaviour {{ public virtual void F(MyEnum e) {{ if (e != {expectedComparisonValue}) {{ }} }} }}");
+            var expectedConvertedContents = SingleSourceFor("internal_enum_auto_bool_conversion.cs", DefaultUsings + $" public enum MyEnum {{ First = 1, Second = {secondEnumMemberValue}, Third = 2 }} [System.Serializable] public partial class internal_enum_auto_bool_conversion : MonoBehaviour {{ public virtual void F(MyEnum e) {{ if (e != {expectedComparisonValue}) {{ }} }} }}");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -206,7 +220,7 @@ namespace UnityScript2CSharp.Tests
         public void Switch_On_Local_Enum()
         {
             var sourceFiles = SingleSourceFor("switch_local_enum.js", "enum E { First, Second } function F(t:E) { switch(t) { case E.First: return 0; case E.Second: return 1; } return 2; }");
-            var expectedConvertedContents = SingleSourceFor("switch_local_enum.cs", DefaultUsingsForClasses + " public enum E { First, Second } [System.Serializable] public partial class switch_local_enum : MonoBehaviour { public virtual int F(E t) { switch (t) { case E.First: return 0; break; case E.Second: return 1; break; } return 2; } }");
+            var expectedConvertedContents = SingleSourceFor("switch_local_enum.cs", DefaultUsings + " public enum E { First = 0, Second = 1 } [System.Serializable] public partial class switch_local_enum : MonoBehaviour { public virtual int F(E t) { switch (t) { case E.First: return 0; break; case E.Second: return 1; break; } return 2; } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }

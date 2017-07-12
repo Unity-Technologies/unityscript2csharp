@@ -10,7 +10,7 @@ namespace UnityScript2CSharp.Steps
         public override void OnMemberReferenceExpression(MemberReferenceExpression node)
         {
             IMember member = node.Entity as IMember;
-            if (member != null && member.IsStatic && node.Target.Entity.EntityType != EntityType.Type)
+            if (member != null && member.IsStatic && node.Target.Entity != null && node.Target.Entity.EntityType != EntityType.Type)
             {
                 var declaringType = node.Target.ExpressionType;
                 var needsQualification = node.NeedsQualificationFor(declaringType.ParentNamespace);

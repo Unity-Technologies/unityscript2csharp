@@ -22,6 +22,17 @@ namespace UnityScript2CSharp.Steps
             _currentArgument = null;
         }
 
+        public override void OnMemberReferenceExpression(MemberReferenceExpression node)
+        {
+            if (HasImplictTypeOfExpression(node))
+            {
+                node.ParentNode.Replace(node, CodeBuilder.CreateTypeofExpression((IType)node.Entity));
+                return;
+            }
+
+            base.OnMemberReferenceExpression(node);
+        }
+
         public override void OnReferenceExpression(ReferenceExpression node)
         {
             if (!HasImplictTypeOfExpression(node))

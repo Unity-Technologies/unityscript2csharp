@@ -24,7 +24,16 @@ namespace UnityScript2CSharp.Steps
             {
                 var invokedMethod = (IMethodBase)node.Target.Entity;
                 var parameters = invokedMethod.GetParameters();
-                if (parameters.Length == 1 && parameters[0].Type == TypeSystemServices.IntType)
+
+                if (parameters.Length == 0)
+                {
+                    //if we have no parameters we are instantiating an "empty" array which probably will be populated by through the "Add" method.
+                    //this will not work (user will get compilation errors in C#), but lets not crash here anyway.
+                    var array = new GenericReferenceExpression { Target = new ReferenceExpression("array"), GenericArguments = TypeReferenceCollection.FromArray(CodeBuilder.CreateTypeReference(TypeSystemServices.ObjectType)) };
+                    node.Replace(node.Target, array);
+                    node.Arguments.Add(CodeBuilder.CreateIntegerLiteral(0));
+                }
+                else if (parameters.Length == 1 && parameters[0].Type == TypeSystemServices.IntType)
                 {
                     //if we have one parameter of type int, we are invoking the ctor with capacity, which is equivalent to instantiate an array with such size
                     var array = new GenericReferenceExpression { Target = new ReferenceExpression("array"), GenericArguments = TypeReferenceCollection.FromArray(CodeBuilder.CreateTypeReference(TypeSystemServices.ObjectType)) };

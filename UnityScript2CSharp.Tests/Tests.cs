@@ -308,7 +308,7 @@ namespace UnityScript2CSharp.Tests
         public void Enums_Simple()
         {
             var sourceFiles = SingleSourceFor("enum_definition.js", "enum  E { EnumMember1, EnumMember2 = 10, EnumMember3 = 42, EnumMember4 }");
-            var expectedConvertedContents = SingleSourceFor("enum_definition.cs", DefaultUsingsForClasses + " public enum E { EnumMember1, EnumMember2 = 10, EnumMember3 = 42, EnumMember4 }");
+            var expectedConvertedContents = SingleSourceFor("enum_definition.cs", DefaultUsings + " public enum E { EnumMember1 = 0, EnumMember2 = 10, EnumMember3 = 42, EnumMember4 = 43 }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -318,6 +318,16 @@ namespace UnityScript2CSharp.Tests
         {
             var sourceFiles = SingleSourceFor("enum_int_implicit_conversions.js", "function F(c: System.ConsoleColor, i:int) : int { var l1 = c + 1; var l2:int = c + 1; c = l2; F(i, c); F(0, System.ConsoleColor.Blue); F(i - 1, c); return c; }");
             var expectedConvertedContents = SingleSourceFor("enum_int_implicit_conversions.cs", DefaultGeneratedClass + "enum_int_implicit_conversions : MonoBehaviour { public virtual int F(System.ConsoleColor c, int i) { System.ConsoleColor l1 = c + 1; int l2 = (int) (c + 1); c = (System.ConsoleColor) l2; this.F((System.ConsoleColor) i, (int) c); this.F((System.ConsoleColor) 0, (int) System.ConsoleColor.Blue); this.F((System.ConsoleColor) (i - 1), (int) c); return (int) c; } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [TestCase("System.ConsoleColor", "ConsoleColor")]
+        [TestCase("ConsoleColor", "ConsoleColor")]
+        public void Concrete_Enum_Type_Reference_Is_Converted_To_Enum(string typeName, string expectedCSTypeName)
+        {
+            var sourceFiles = SingleSourceFor("enum_1.js", $"import System; function F() {{ return {typeName}.GetValues({typeName}).length; }}");
+            var expectedConvertedContents = SingleSourceFor("enum_1.cs", "using System; " + DefaultGeneratedClass + $"enum_1 : MonoBehaviour {{ public virtual int F() {{ return Enum.GetValues(typeof({expectedCSTypeName})).Length; }} }}");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -469,7 +479,7 @@ namespace UnityScript2CSharp.Tests
         [TestCase("ReferenceType")]
         public void Assignment_To_Members_Of_ValueTypes_Through_PropertiesS(string parentTypeName)
         {
-            var sourceFiles = new[] { new SourceFile { FileName = "assignment_to_static_member_of_valuetype.js", Contents = $"#pragma strict\nimport UnityScript2CSharp.Tests; var s:String; function F() {{ {parentTypeName}.staticOther.value = s; }}" } };
+            var sourceFiles = new[] { new SourceFile { FileName = "assignment_to_static_member_of_valuetype.js", Contents = $"#pragma strict\nimport UnityScript2CSharp.Tests; function F() {{ {parentTypeName}.staticOther.value = \"foo\"; }}" } };
             var expectedConvertedContents = new[] { new SourceFile { FileName = "assignment_to_static_member_of_valuetype.cs", Contents = "using UnityScript2CSharp.Tests; " + DefaultGeneratedClass + $"assignment_to_static_member_of_valuetype : MonoBehaviour {{ public virtual void F() {{ {{ string _1 = \"foo\"; Other _2 = {parentTypeName}.staticOther; _2.value = _1; {parentTypeName}.staticOther = _2; }} }} }}" } };
             AssertConversion(sourceFiles, expectedConvertedContents);
         }

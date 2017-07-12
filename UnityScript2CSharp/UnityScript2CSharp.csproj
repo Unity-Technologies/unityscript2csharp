@@ -113,6 +113,7 @@
     <Compile Include="Steps\ApplyEnumToImplicitConversions.cs" />
     <Compile Include="Steps\ExpandAssignmentToValueTypeMembers.cs" />
     <Compile Include="Steps\ExpandValueTypeObjectInitialization.cs" />
+    <Compile Include="Steps\FixEnumReferences.cs" />
     <Compile Include="Steps\FixSwitchWithOnlyDefault.cs" />
     <Compile Include="Steps\InferredMethodReturnTypeFix.cs" />
     <Compile Include="Steps\InstanceToTypeReferencedStaticMemberReference.cs" />

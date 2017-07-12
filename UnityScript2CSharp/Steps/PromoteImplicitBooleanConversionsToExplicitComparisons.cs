@@ -81,11 +81,9 @@ namespace UnityScript2CSharp.Steps
 
             if (sourceExpressionType.IsEnum)
             {
-                var enumMember = sourceExpressionType
-                    .GetMembers()
-                    .OfType<IField>()
-                    .FirstOrDefault(member => member.IsStatic && Convert.ToInt64(member.StaticValue) == 0);
+                var candidateMembers = sourceExpressionType.GetMembers().OfType<IField>();
 
+                var enumMember = candidateMembers.FirstOrDefault(member => member.IsStatic && member.StaticValue != null && Convert.ToInt64(member.StaticValue) == 0);
                 if (enumMember != null)
                     return CodeBuilder.CreateMemberReference(enumMember);
 

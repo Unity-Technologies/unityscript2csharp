@@ -125,13 +125,13 @@ namespace UnityScript2CSharp
             var adjustedPipeline = UnityScriptCompiler.Pipelines.AdjustBooPipeline(pipeline);
 
             adjustedPipeline.Remove(typeof(InjectCallableConversions));
-            adjustedPipeline.Remove(typeof(BindEnumMembers));
             adjustedPipeline.Remove(typeof(CheckIdentifiers));
             adjustedPipeline.Remove(typeof(ProcessClosures));
             adjustedPipeline.Remove(typeof(ExpandUnityDuckTypedExpressions));
 
             adjustedPipeline.Replace(typeof(ProcessUnityScriptMethods), new SelectiveUnaryExpressionExpansionProcessUnityScriptMethods());
 
+            adjustedPipeline.Add(new FixEnumReferences());
             adjustedPipeline.Add(new FixSwitchWithOnlyDefault());
             adjustedPipeline.Add(new MergeMainMethodStatementsIntoStartMethod());
             adjustedPipeline.Add(new ExpandValueTypeObjectInitialization());

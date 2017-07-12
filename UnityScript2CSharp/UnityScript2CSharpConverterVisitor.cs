@@ -183,7 +183,6 @@ namespace UnityScript2CSharp
         public override void OnEnumDefinition(EnumDefinition node)
         {
             _writer.IndentNextWrite = true;
-            _writer.WriteLine("[System.Serializable]"); // Every class in UnityScript is serializable
             _writer.WriteLine($"{ModifiersToString(node.Modifiers)} enum {node.Name}");
             _writer.WriteLine("{");
             using (new BlockIdentation(_writer))
@@ -924,7 +923,7 @@ namespace UnityScript2CSharp
         private bool TryHandleYieldBreak(ReturnStatement node)
         {
             var declaringMethod = node.GetAncestor<Method>();
-            var isReturningIEnumerable = declaringMethod.ReturnType.Entity.FullName == typeof(System.Collections.IEnumerator).FullName;
+            var isReturningIEnumerable = declaringMethod.ReturnType.Matches(new SimpleTypeReference(typeof(System.Collections.IEnumerator).FullName));
 
             if (isReturningIEnumerable)
                 _writer.WriteLine("yield break;");
