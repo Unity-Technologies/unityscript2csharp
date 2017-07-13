@@ -22,6 +22,7 @@ namespace UnityScript2CSharp.Steps
 
             var newExpression = new MemberReferenceExpression(node.Target, name.ToString());
             newExpression.ExpressionType = node.ExpressionType;
+            newExpression.Entity = node.Entity;
             node.ParentNode.Replace(node, newExpression);
         }
 
