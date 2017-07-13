@@ -19,11 +19,7 @@ namespace UnityScript2CSharp.Steps
             var name = new StringBuilder();
             name.Append(Char.ToUpper(node.Name[0]));
             name.Append(node.Name.Substring(1));
-
-            var newExpression = new MemberReferenceExpression(node.Target, name.ToString());
-            newExpression.ExpressionType = node.ExpressionType;
-            newExpression.Entity = node.Entity;
-            node.ParentNode.Replace(node, newExpression);
+            node.Name = name.ToString();
         }
 
         private static bool IsArray(MemberReferenceExpression node)

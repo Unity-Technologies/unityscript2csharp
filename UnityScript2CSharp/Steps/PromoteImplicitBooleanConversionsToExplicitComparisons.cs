@@ -11,8 +11,17 @@ namespace UnityScript2CSharp.Steps
     {
         public override void OnIfStatement(IfStatement node)
         {
-            base.OnIfStatement(node);
             ConvertExpressionToBooleanIfNecessary(node, node.Condition);
+
+            node.TrueBlock.Accept(this);
+            if (node.FalseBlock != null)
+                node.FalseBlock.Accept(this);
+        }
+
+        public override void OnWhileStatement(WhileStatement node)
+        {
+            ConvertExpressionToBooleanIfNecessary(node, node.Condition);
+            node.Block.Accept(this);
         }
 
         public override bool EnterUnaryExpression(UnaryExpression node)
@@ -46,16 +55,23 @@ namespace UnityScript2CSharp.Steps
             return false;
         }
 
-        public override void OnWhileStatement(WhileStatement node)
-        {
-            base.OnWhileStatement(node);
-            ConvertExpressionToBooleanIfNecessary(node, node.Condition);
-        }
-
         private void ConvertExpressionToBooleanIfNecessary(Node parent, Expression expression)
         {
+            var unaryExpression = expression as UnaryExpression;
+            if (unaryExpression != null && unaryExpression.Operator == UnaryOperatorType.LogicalNot)
+            {
+                expression.Accept(this);
+                return;
+            }
+
             if (expression.ExpressionType == TypeSystemServices.BoolType)
                 return;
+
+            if (expression.NodeType == NodeType.BinaryExpression)
+            {
+                expression.Accept(this);
+                return;
+            }
 
             var literalExpression = LiteralExpressionFor(expression.ExpressionType);
             if (literalExpression != null)
