@@ -37,6 +37,9 @@ namespace UnityScript2CSharp.Tests
         [TestCase("float", "var b = !p;", "bool b = p == 0f;")]
         [TestCase("float", "if (p) {}", "if (p != 0f) { }")]
 
+        [TestCase("int", "if (p & p) {}", "if ((p & p) != 0) { }", TestName = "Bitwise Operators")]
+        [TestCase("int", "if (p + 2) {}", "if ((p + 2) != 0) { }", TestName = "Arithmetic Operators")]
+
         [TestCase("int", "var b = !p;", "bool b = p == 0;")]
         [TestCase("int", "if (p) {}", "if (p != 0) { }")]
         [TestCase("int", "while(p) {}", "while (p != 0) { }")]
@@ -60,7 +63,7 @@ namespace UnityScript2CSharp.Tests
         [TestCase("System.IComparable", "if(p && (p.CompareTo(1) || !p)) {} ", "if ((p != null) && ((p.CompareTo(1) != 0) || (p == null))) { }", TestName = "Method in multiple binary expressions")]
         [TestCase("System.IComparable", "if(p.CompareTo(1)) {} ", "if (p.CompareTo(1) != 0) { }", TestName = "Simple Method")]
         [TestCase("System.IComparable", "var ba = System.Collections.BitArray(10); ba.SetAll(p && p.CompareTo(1));", "BitArray ba = new System.Collections.BitArray(10); ba.SetAll((bool) ((p != null) && (p.CompareTo(1) != 0)));", TestName = "As method parameter")]
-        
+
         [TestCase("System.Object", "while (p && System.Environment.ProcessorCount > 10) {}", "while ((p != null) && (System.Environment.ProcessorCount > 10)) { }", "object", TestName = "Object as LRS of Binary Expression")]
         [TestCase("System.Object", "while(p) {}", "while (p != null) { }", "object")]
         [TestCase("System.Object", "return !p;", "return p == null;", "object")]

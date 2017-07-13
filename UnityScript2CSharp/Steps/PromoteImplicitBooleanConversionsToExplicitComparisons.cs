@@ -67,7 +67,8 @@ namespace UnityScript2CSharp.Steps
             if (expression.ExpressionType == TypeSystemServices.BoolType)
                 return;
 
-            if (expression.NodeType == NodeType.BinaryExpression)
+            var binaryExpression = expression as BinaryExpression;
+            if (binaryExpression != null && (AstUtil.GetBinaryOperatorKind(binaryExpression) == BinaryOperatorKind.Logical || AstUtil.GetBinaryOperatorKind(binaryExpression) == BinaryOperatorKind.Comparison))
             {
                 expression.Accept(this);
                 return;
