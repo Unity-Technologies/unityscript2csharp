@@ -1,6 +1,8 @@
+using System.Threading;
 using Boo.Lang.Compiler.Ast;
 using Boo.Lang.Compiler.Steps;
 using Boo.Lang.Compiler.TypeSystem;
+using Mono.Cecil;
 
 namespace UnityScript2CSharp.Steps
 {
@@ -25,7 +27,7 @@ namespace UnityScript2CSharp.Steps
             {
                 node.Replace(node.Right, CodeBuilder.CreateCast(node.Left.ExpressionType, node.Right));
             }
-            else if (node.Operator == BinaryOperatorType.Equality || node.Operator == BinaryOperatorType.Inequality)
+            else if (AstUtil.GetBinaryOperatorKind(node.Operator) == BinaryOperatorKind.Comparison)
             {
                 if (node.Left.ExpressionType.IsEnum)
                     node.Replace(node.Right, CodeBuilder.CreateCast(node.Left.ExpressionType, node.Right));

@@ -333,11 +333,15 @@ namespace UnityScript2CSharp.Tests
         [TestCase("var i1:int = e + 1", "int i1 = (int) (e + 1)", TestName = "explicit int local = enum + int")]
         [TestCase("e = i", "e = (System.ConsoleColor) i", TestName = "Assign int to enum")]
         [TestCase("i = e", "i = (int) e", TestName = "Assign enum to int")]
+        [TestCase("var b = e > 2", "bool b = e > (System.ConsoleColor) 2", TestName = "greater than")]
+        [TestCase("var b = e < 2", "bool b = e < (System.ConsoleColor) 2", TestName = "smaller than")]
+        [TestCase("var b = e >= 2", "bool b = e >= (System.ConsoleColor) 2", TestName = "greater than or equal")]
+        [TestCase("var b = e <= 2", "bool b = e <= (System.ConsoleColor) 2", TestName = "smaller than or equal")]
         [TestCase("var b:boolean = e == 1", "bool b = e == (System.ConsoleColor) 1", TestName = "Equality enum / int")]
         [TestCase("var b:boolean = e != 1", "bool b = e != (System.ConsoleColor) 1", TestName = "Inequality enum / int")]
         [TestCase("F(i, e)", "this.F((System.ConsoleColor) i, (int) e)")]
         [TestCase("F(0, System.ConsoleColor.Blue)", "this.F((System.ConsoleColor) 0, (int) System.ConsoleColor.Blue)")]
-        [TestCase("return e", "return (int) e")]
+        [TestCase("return e", "return (int) e", TestName = "Return enum from int method")]
         public void Enums_Int_Implicit_Conversions(string usSnippet, string csSnippet)
         {
             var sourceFiles = SingleSourceFor("enum_int_implicit_conversions.js", $"function F(e: System.ConsoleColor, i:int) : int {{ {usSnippet}; return i; }}");
