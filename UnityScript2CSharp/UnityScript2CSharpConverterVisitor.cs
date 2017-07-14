@@ -1137,6 +1137,7 @@ namespace UnityScript2CSharp
                 case "System.Int32": return "int";
                 case "System.Int64": return "long";
                 case "System.Void": return "void";
+                case "System.DateTime": return fullName;
             }
 
             // UnityEngine.Object always need to be qualified.
