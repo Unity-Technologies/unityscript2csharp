@@ -211,7 +211,7 @@ namespace UnityScript2CSharp.Tests
         public void Switch_Multiple_Statements()
         {
             var sourceFiles = SingleSourceFor("switch_multiple_statements.js", "function F(i:int) { var l:int; switch(i) { case 1: l = i; i = i + 1; break; case 2: i = 0; break; } return l + i; }");
-            var expectedConvertedContents = SingleSourceFor("switch_multiple_statements.cs", DefaultGeneratedClass + "switch_multiple_statements : MonoBehaviour { public virtual int F(int i) { int l; switch (i) { case 1: l = i; i = i + 1; break; case 2: i = 0; break; } return l + i; } }");
+            var expectedConvertedContents = SingleSourceFor("switch_multiple_statements.cs", DefaultGeneratedClass + "switch_multiple_statements : MonoBehaviour { public virtual int F(int i) { int l = 0; switch (i) { case 1: l = i; i = i + 1; break; case 2: i = 0; break; } return l + i; } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }

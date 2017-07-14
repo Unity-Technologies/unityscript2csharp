@@ -218,7 +218,7 @@ namespace UnityScript2CSharp.Tests
         public void Locals()
         {
             var sourceFiles = SingleSourceFor("locals.js", "function F() { var i:int; }");
-            var expectedConvertedContents = SingleSourceFor("locals.cs", DefaultGeneratedClass + "locals : MonoBehaviour { public virtual void F() { int i; } }");
+            var expectedConvertedContents = SingleSourceFor("locals.cs", DefaultGeneratedClass + "locals : MonoBehaviour { public virtual void F() { int i = 0; } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -236,7 +236,7 @@ namespace UnityScript2CSharp.Tests
         public void Locals3()
         {
             var sourceFiles = SingleSourceFor("locals3.js", "function F() { var i:int; var j:boolean; }");
-            var expectedConvertedContents = SingleSourceFor("locals3.cs", DefaultGeneratedClass + "locals3 : MonoBehaviour { public virtual void F() { int i; bool j; } }");
+            var expectedConvertedContents = SingleSourceFor("locals3.cs", DefaultGeneratedClass + "locals3 : MonoBehaviour { public virtual void F() { int i = 0; bool j = false; } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -245,7 +245,7 @@ namespace UnityScript2CSharp.Tests
         public void Locals4()
         {
             var sourceFiles = SingleSourceFor("locals4.js", "function F() { var i:int = 1; var j:boolean; }");
-            var expectedConvertedContents = SingleSourceFor("locals4.cs", DefaultGeneratedClass + "locals4 : MonoBehaviour { public virtual void F() { bool j; int i = 1; } }");
+            var expectedConvertedContents = SingleSourceFor("locals4.cs", DefaultGeneratedClass + "locals4 : MonoBehaviour { public virtual void F() { bool j = false; int i = 1; } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -291,6 +291,22 @@ namespace UnityScript2CSharp.Tests
         {
             var sourceFiles = SingleSourceFor("locals_custom.js", "class C { function F() { var c:C; } }");
             var expectedConvertedContents = SingleSourceFor("locals_custom.cs", DefaultUsingsForClasses + " public class C : object { public virtual void F() { C c = null; } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [TestCase("boolean", "bool", "false")]
+        [TestCase("String", "string", "null")]
+        [TestCase("int", "int", "0")]
+        [TestCase("float", "float", "0.0f")]
+        [TestCase("double", "double", "0.0f")]
+        [TestCase("char", "char", "'\0'")]
+        [TestCase("System.ConsoleColor", "System.ConsoleColor", "default(ConsoleColor)")]
+        [TestCase("System.DateTime", "System.DateTime", "default(DateTime)")]
+        public void Defaults(string usType, string csType, string value)
+        {
+            var sourceFiles = SingleSourceFor("defaults.js", $"function F() {{ var l:{usType}; }}");
+            var expectedConvertedContents = SingleSourceFor("defaults.cs", DefaultGeneratedClass + $"defaults : MonoBehaviour {{ public virtual void F() {{ {csType} l = {value}; }} }}");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }

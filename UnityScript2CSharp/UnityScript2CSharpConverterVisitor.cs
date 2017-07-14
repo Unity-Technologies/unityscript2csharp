@@ -342,11 +342,14 @@ namespace UnityScript2CSharp
         public override void OnDeclarationStatement(DeclarationStatement node)
         {
             node.Declaration.Accept(this);
+            _writer.Write(" = ");
             if (node.Initializer != null)
             {
-                _writer.Write(" = ");
                 node.Initializer.Accept(this);
             }
+            else
+                _writer.Write($"{node.Declaration.Type.Entity.DefaultValue()}");
+
             _writer.WriteLine(";");
         }
 

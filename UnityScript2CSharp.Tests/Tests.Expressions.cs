@@ -114,7 +114,7 @@ namespace UnityScript2CSharp.Tests
         public void Out_Ref_Parameters()
         {
             var sourceFiles = SingleSourceFor("out_ref_parameters.js", "import UnityScript2CSharp.Tests; function F() { var i:int; var j:int; j = 42; Methods.OutRef(i, j); }");
-            var expectedConvertedFiles = SingleSourceFor("out_ref_parameters.cs", "using UnityScript2CSharp.Tests; " + DefaultGeneratedClass + "out_ref_parameters : MonoBehaviour { public virtual void F() { int i; int j; j = 42; Methods.OutRef(out i, ref j); } }");
+            var expectedConvertedFiles = SingleSourceFor("out_ref_parameters.cs", "using UnityScript2CSharp.Tests; " + DefaultGeneratedClass + "out_ref_parameters : MonoBehaviour { public virtual void F() { int i = 0; int j = 0; j = 42; Methods.OutRef(out i, ref j); } }");
 
             AssertConversion(sourceFiles, expectedConvertedFiles);
         }

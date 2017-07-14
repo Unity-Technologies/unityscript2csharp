@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Boo.Lang.Compiler.TypeSystem;
@@ -24,10 +23,20 @@ namespace UnityScript2CSharp
             if (TypeSystemServices.IsReferenceType(typedEntity.Type))
                 return "null";
 
-            if (typedEntity.Type.FullName == "float")
-                return "0.0f";
+            switch (typedEntity.Type.FullName)
+            {
+                case "double":
+                case "float": return "0.0f";
 
-            return "0";
+                case "int":
+                case "long":
+                case "byte": return "0";
+
+                case "char": return "'\0'";
+                case "boolean": return "false";
+            }
+
+            return $"default({typedEntity.Type.Name})";
         }
 
         public static string TypeName(this IEntity entity, IList<string> usings)
