@@ -1195,7 +1195,7 @@ namespace UnityScript2CSharp
         {
             var parentMethod = declaration.GetAncestor<Method>();
             var clashingLocal = parentMethod.Locals.SingleOrDefault(local => !local.PrivateScope && local.Name == declaration.Name);
-            if (clashingLocal != null)
+            if (clashingLocal != null && clashingLocal.Entity == declaration.Entity)
             {
                 var loopVar = declaration.Name + "_" + declaration.LexicalInfo.Line;
                 var originalVar = declaration.Name;
