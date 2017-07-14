@@ -329,11 +329,19 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
-        [Test]
-        public void Enums_Int_Implicit_Conversions()
+        [TestCase("var e1 = e + 1", "System.ConsoleColor e1 = e + 1", TestName = "inferred local = enum + int")]
+        [TestCase("var i1:int = e + 1", "int i1 = (int) (e + 1)", TestName = "explicit int local = enum + int")]
+        [TestCase("e = i", "e = (System.ConsoleColor) i", TestName = "Assign int to enum")]
+        [TestCase("i = e", "i = (int) e", TestName = "Assign enum to int")]
+        [TestCase("var b:boolean = e == 1", "bool b = e == (System.ConsoleColor) 1", TestName = "Equality enum / int")]
+        [TestCase("var b:boolean = e != 1", "bool b = e != (System.ConsoleColor) 1", TestName = "Inequality enum / int")]
+        [TestCase("F(i, e)", "this.F((System.ConsoleColor) i, (int) e)")]
+        [TestCase("F(0, System.ConsoleColor.Blue)", "this.F((System.ConsoleColor) 0, (int) System.ConsoleColor.Blue)")]
+        [TestCase("return e", "return (int) e")]
+        public void Enums_Int_Implicit_Conversions(string usSnippet, string csSnippet)
         {
-            var sourceFiles = SingleSourceFor("enum_int_implicit_conversions.js", "function F(c: System.ConsoleColor, i:int, b: boolean) : int { var l1 = c + 1; var l2:int = c + 1; c = l2; F(i, c, i == c); F(0, System.ConsoleColor.Blue, 0 == System.ConsoleColor.Blue); F(i - 1, c, 0 != System.ConsoleColor.Blue); return c; }");
-            var expectedConvertedContents = SingleSourceFor("enum_int_implicit_conversions.cs", DefaultGeneratedClass + "enum_int_implicit_conversions : MonoBehaviour { public virtual int F(System.ConsoleColor c, int i, bool b) { System.ConsoleColor l1 = c + 1; int l2 = (int) (c + 1); c = (System.ConsoleColor) l2; this.F((System.ConsoleColor) i, (int) c, ((System.ConsoleColor) i) == c); this.F((System.ConsoleColor) 0, (int) System.ConsoleColor.Blue, ((System.ConsoleColor) 0) == System.ConsoleColor.Blue); this.F((System.ConsoleColor) (i - 1), (int) c, ((System.ConsoleColor) 0) != System.ConsoleColor.Blue); return (int) c; } }");
+            var sourceFiles = SingleSourceFor("enum_int_implicit_conversions.js", $"function F(e: System.ConsoleColor, i:int) : int {{ {usSnippet}; return i; }}");
+            var expectedConvertedContents = SingleSourceFor("enum_int_implicit_conversions.cs", DefaultGeneratedClass + $"enum_int_implicit_conversions : MonoBehaviour {{ public virtual int F(System.ConsoleColor e, int i) {{ {csSnippet}; return i; }} }}");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
