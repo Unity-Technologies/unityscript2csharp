@@ -45,7 +45,7 @@ namespace UnityScript2CSharp.Steps
                 case NodeType.ReferenceExpression:
                     var declaration = new Declaration(VariableNameFor((ReferenceExpression)node.Left), CodeBuilder.CreateTypeReference(node.ExpressionType));
                     _statements.Add(new DeclarationStatement(declaration, node.Right));
-
+                    node.Right.Accept(ReferenceNameFix.Instance);
                     break;
 
                 case NodeType.MemberReferenceExpression:
