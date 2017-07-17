@@ -146,6 +146,15 @@ namespace UnityScript2CSharp.Tests
         }
 
         [Test]
+        public void Ternary_Operator_Casts()
+        {
+            var sourceFiles = SingleSourceFor("ternary_operator_cast.js", "function F(i:int, b: boolean, f: float): void { F(b ? i : f, b, i); }");
+            var expectedConvertedFiles = SingleSourceFor("ternary_operator_cast.cs", DefaultGeneratedClass + "ternary_operator_cast : MonoBehaviour { public virtual void F(int i, bool b, float f) { this.F((int) (b ? i : f), b, i); } }");
+
+            AssertConversion(sourceFiles, expectedConvertedFiles);
+        }
+
+        [Test]
         public void Cast()
         {
             var sourceFiles = SingleSourceFor("cast.js", "function F(o:Object) { return o cast int; }");

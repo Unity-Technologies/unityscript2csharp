@@ -899,7 +899,8 @@ namespace UnityScript2CSharp
                     _writer.Write("(");
                     node.Type.Accept(this);
                     _writer.Write(") ");
-                    WrapWith(node.Target.NodeType == NodeType.BinaryExpression, "(", ")", delegate
+                    var needParentheses = node.Target.NodeType == NodeType.BinaryExpression || node.Target.NodeType == NodeType.ConditionalExpression;
+                    WrapWith(needParentheses, "(", ")", delegate
                     {
                         node.Target.Accept(this);
                     });

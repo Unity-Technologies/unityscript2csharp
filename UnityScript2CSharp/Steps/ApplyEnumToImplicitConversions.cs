@@ -1,8 +1,6 @@
-using System.Threading;
 using Boo.Lang.Compiler.Ast;
 using Boo.Lang.Compiler.Steps;
 using Boo.Lang.Compiler.TypeSystem;
-using Mono.Cecil;
 
 namespace UnityScript2CSharp.Steps
 {
