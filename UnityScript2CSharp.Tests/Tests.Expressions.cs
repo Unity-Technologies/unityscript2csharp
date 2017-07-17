@@ -295,10 +295,13 @@ namespace UnityScript2CSharp.Tests
 
         [TestCase("float", "double")]
         [TestCase("int", "long")]
-        public void Cast_Is_Injected_When_Assigning_If_Required(string smallType, string bigType)
+        [TestCase("int", "float")]
+        [TestCase("int", "double")]
+        [TestCase("long", "double")]
+        public void Cast_Is_Injected_In_Assignments_And_Arguments_If_Required(string smallType, string bigType)
         {
-            var sourceFiles = SingleSourceFor("cast_upon_assignment.js", $"function F(s:{smallType}, b:{bigType}) : void {{ var s1:{smallType} = b + 1; s = b + 1; F(b + 1, b); }}");
-            var expectedConvertedContents = SingleSourceFor("cast_upon_assignment.cs", DefaultGeneratedClass + $"cast_upon_assignment : MonoBehaviour {{ public virtual void F({smallType} s, {bigType} b) {{ {smallType} s1 = ({smallType}) (b + 1); s = ({smallType}) (b + 1); this.F(({smallType}) (b + 1), b); }} }}");
+            var sourceFiles = SingleSourceFor("cast_upon_assignment.js", $"function F(s:{smallType}, b:{bigType}) : {smallType} {{ var s1:{smallType} = b + 1; s = b + 1; var r = F(b + 1, b); return s; }}");
+            var expectedConvertedContents = SingleSourceFor("cast_upon_assignment.cs", DefaultGeneratedClass + $"cast_upon_assignment : MonoBehaviour {{ public virtual {smallType} F({smallType} s, {bigType} b) {{ {smallType} s1 = ({smallType}) (b + 1); s = ({smallType}) (b + 1); {smallType} r = this.F(({smallType}) (b + 1), b); return s; }} }}");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
