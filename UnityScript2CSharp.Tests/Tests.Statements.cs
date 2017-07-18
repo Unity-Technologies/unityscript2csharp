@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using NUnit.Framework;
 
 namespace UnityScript2CSharp.Tests
@@ -262,6 +261,26 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
+        [Test]
+        public void Switch_With_Only_Default_Simplest()
+        {
+            var sourceFiles = SingleSourceFor("switch_only_default_simplest.js", "function F(i:int) { switch(i) { default: i++; } }");
+            var expectedConvertedContents = SingleSourceFor("switch_only_default_simplest.cs", DefaultGeneratedClass + "switch_only_default_simplest : MonoBehaviour { public virtual void F(int i) { int _switch_1 = i; { i++; } } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [TestCase("s")]
+        [TestCase("System.Console.Title")]
+        [TestCase("System.Console.ReadLine()")]
+        public void Switch_Over_String(string condition)
+        {
+            var sourceFiles = SingleSourceFor("switch_over_string.js", $"function F(s:String) {{ switch({condition}) {{ case \"foo\": return 1; case \"bar\": return 2; }} }}");
+            var expectedConvertedContents = SingleSourceFor("switch_over_string.cs", DefaultGeneratedClass + $"switch_over_string : MonoBehaviour {{ public virtual int F(string s) {{ switch ({condition}) {{ case \"foo\": return 1; break; case \"bar\": return 2; break; }} }} }}");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+     
         [Test]
         public void Yield_Return_Type_Inference()
         {

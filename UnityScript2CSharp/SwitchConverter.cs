@@ -176,7 +176,7 @@ namespace UnityScript2CSharp
 
             public override void OnStringLiteralExpression(StringLiteralExpression node)
             {
-                _literals.Add(node.Value);
+                _literals.Add($"\"{node.Value}\"");
             }
 
             public override void OnBoolLiteralExpression(BoolLiteralExpression node)

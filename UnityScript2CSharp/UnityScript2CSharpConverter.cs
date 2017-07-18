@@ -131,13 +131,12 @@ namespace UnityScript2CSharp
 
             adjustedPipeline.Replace(typeof(ProcessUnityScriptMethods), new SelectiveUnaryExpressionExpansionProcessUnityScriptMethods());
 
-
             adjustedPipeline.Add(new RemoveUnnecessaryCastInArrayInstantiation());
             adjustedPipeline.Add(new FixEnumReferences());
+            adjustedPipeline.Add(new OperatorMethodToLanguageOperator());
             adjustedPipeline.Add(new FixSwitchWithOnlyDefault());
             adjustedPipeline.Add(new MergeMainMethodStatementsIntoStartMethod());
             adjustedPipeline.Add(new ExpandValueTypeObjectInitialization());
-            adjustedPipeline.Add(new OperatorMethodToLanguageOperator());
             adjustedPipeline.Add(new NumericCastInjector());
             adjustedPipeline.Add(new ExpandAssignmentToValueTypeMembers());
             adjustedPipeline.Add(new ApplyEnumToImplicitConversions());
