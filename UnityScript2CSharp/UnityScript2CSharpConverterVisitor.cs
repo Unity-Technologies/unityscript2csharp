@@ -838,8 +838,16 @@ namespace UnityScript2CSharp
 
         public override void OnHashLiteralExpression(HashLiteralExpression node)
         {
-            NotSupported(node);
-            base.OnHashLiteralExpression(node);
+            _writer.Write("new Hashtable() {");
+            foreach (var item in node.Items)
+            {
+                _writer.Write(" {");
+                item.First.Accept(this);
+                _writer.Write(", ");
+                item.Second.Accept(this);
+                _writer.Write(" }, ");
+            }
+            _writer.Write("}");
         }
 
         public override void OnListLiteralExpression(ListLiteralExpression node)
@@ -1138,6 +1146,7 @@ namespace UnityScript2CSharp
                 case "System.Int32": return "int";
                 case "System.Int64": return "long";
                 case "System.Void": return "void";
+                case "Boo.Lang.Hash": return "Hashtable";
                 case "System.DateTime": return fullName;
             }
 

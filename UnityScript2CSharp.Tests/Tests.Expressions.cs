@@ -131,6 +131,15 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedFiles);
         }
 
+        [Test]
+        public void Literal_Hashtable()
+        {
+            var sourceFiles = SingleSourceFor("literal_hash.js", "function F() { return {\"Id\": 42, \"Enabled\": false }; }");
+            var expectedConvertedFiles = SingleSourceFor("literal_hash.cs", DefaultGeneratedClass + "literal_hash : MonoBehaviour { public virtual Hashtable F() { return new Hashtable() { {\"Id\", 42 }, {\"Enabled\", false }, }; } }");
+
+            AssertConversion(sourceFiles, expectedConvertedFiles);
+        }
+
         [TestCase("i > 10", "true : false", "bool")]
         [TestCase("i == 10", "0 : 42", "int")]
         [TestCase("i == 10", "1.1f : 42.1f", "float")]
