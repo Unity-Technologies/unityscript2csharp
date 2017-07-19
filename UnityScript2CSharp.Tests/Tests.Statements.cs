@@ -280,7 +280,7 @@ namespace UnityScript2CSharp.Tests
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
-     
+
         [Test]
         public void Yield_Return_Type_Inference()
         {
@@ -323,6 +323,15 @@ namespace UnityScript2CSharp.Tests
         {
             var sourceFiles = SingleSourceFor("break_statement.js", "function F(i:int) { while (true) { if (i++ == 0) break; return i; } }");
             var expectedConvertedContents = SingleSourceFor("break_statement.cs", DefaultGeneratedClass + "break_statement : MonoBehaviour { public virtual int F(int i) { while (true) { if (i++ == 0) { break; } return i; } } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
+        public void Super()
+        {
+            var sourceFiles = SingleSourceFor("super_statement.js", "function GetHashCode() { return super.GetHashCode(); }");
+            var expectedConvertedContents = SingleSourceFor("super_statement.cs", DefaultGeneratedClass + "super_statement : MonoBehaviour { public override int GetHashCode() { return base.GetHashCode(); } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }

@@ -781,8 +781,7 @@ namespace UnityScript2CSharp
 
         public override void OnSuperLiteralExpression(SuperLiteralExpression node)
         {
-            NotSupported(node);
-            base.OnSuperLiteralExpression(node);
+            _writer.Write("base");
         }
 
         public override void OnBoolLiteralExpression(BoolLiteralExpression node)
@@ -1084,7 +1083,7 @@ namespace UnityScript2CSharp
             var candidateStatements = node.Body.Statements.OfType<ExpressionStatement>().Where(candidate => candidate.Expression.NodeType == NodeType.MethodInvocationExpression);
             foreach (var stmt in candidateStatements)
             {
-                var chainnedCtorInvocation = (MethodInvocationExpression) stmt.Expression;
+                var chainnedCtorInvocation = (MethodInvocationExpression)stmt.Expression;
                 var referencedType = chainnedCtorInvocation.Target as ReferenceExpression;
                 if (referencedType == null || referencedType.Name != node.DeclaringType.Name)
                     continue;
