@@ -10,7 +10,7 @@ namespace UnityScript2CSharp.Steps
     {
         public override void OnBinaryExpression(BinaryExpression node)
         {
-            if (node.Operator == BinaryOperatorType.Assign && node.Left.ExpressionType != node.Right.ExpressionType)
+            if (node.Operator == BinaryOperatorType.Assign && node.Left.ExpressionType != node.Right.ExpressionType && node.Right.ExpressionType != null)
             {
                 if (NeedsCastWithPotentialDataLoss(node.Left.ExpressionType.Type, node.Right.ExpressionType.Type))
                 {

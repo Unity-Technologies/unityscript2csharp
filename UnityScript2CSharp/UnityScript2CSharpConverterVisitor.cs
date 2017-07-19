@@ -317,6 +317,8 @@ namespace UnityScript2CSharp
 
             WriteParameterList(node.Parameters);
 
+            WriteCtorChainningFor(node);
+
             node.Body.Accept(this);
         }
 
@@ -1065,6 +1067,32 @@ namespace UnityScript2CSharp
             {
                 attribute.Accept(this);
             }
+        }
+
+        private void WriteCtorChainningFor(Constructor node)
+        {
+            var chainnedCtorInvocation = FindChainnedCtorInvocationFor(node);
+            if (chainnedCtorInvocation != null)
+            {
+                _writer.Write(" : this");
+                WriteParameterList(chainnedCtorInvocation.Arguments);
+            }
+        }
+
+        private MethodInvocationExpression FindChainnedCtorInvocationFor(Constructor node)
+        {
+            var candidateStatements = node.Body.Statements.OfType<ExpressionStatement>().Where(candidate => candidate.Expression.NodeType == NodeType.MethodInvocationExpression);
+            foreach (var stmt in candidateStatements)
+            {
+                var chainnedCtorInvocation = (MethodInvocationExpression) stmt.Expression;
+                var referencedType = chainnedCtorInvocation.Target as ReferenceExpression;
+                if (referencedType == null || referencedType.Name != node.DeclaringType.Name)
+                    continue;
+
+                node.Body.Statements.Remove(stmt);
+                return chainnedCtorInvocation;
+            }
+            return null;
         }
 
         bool NeedParensAround(Expression e)

@@ -131,6 +131,7 @@ namespace UnityScript2CSharp
 
             adjustedPipeline.Replace(typeof(ProcessUnityScriptMethods), new SelectiveUnaryExpressionExpansionProcessUnityScriptMethods());
 
+            adjustedPipeline.Add(new CtorFieldInitializationFix());
             adjustedPipeline.Add(new RemoveUnnecessaryCastInArrayInstantiation());
             adjustedPipeline.Add(new FixEnumReferences());
             adjustedPipeline.Add(new OperatorMethodToLanguageOperator());

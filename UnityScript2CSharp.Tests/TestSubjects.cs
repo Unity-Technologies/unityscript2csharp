@@ -33,9 +33,12 @@ namespace UnityScript2CSharp.Tests
 
     public class C
     {
+        public static C instance;
+        public C myself;
+
         public static int staticField;
         public static int staticMethod() { return 1; }
-        public int instanceMethod() { return 1; }
+        public C instanceMethod() { return null; }
 
         public C(int i) {}
         public C() {}

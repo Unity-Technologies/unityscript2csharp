@@ -1,3 +1,4 @@
+using System.Linq;
 using Boo.Lang.Compiler.Ast;
 using Boo.Lang.Compiler.TypeSystem;
 using UnityScript.Steps;
@@ -45,7 +46,7 @@ namespace UnityScript2CSharp.Steps
             // avoid problems with some for() statemets being duplicated in the converted code
             foreach (var current in method.Locals)
             {
-                if (!localsBeforeVisiting.Contains(current))
+                if (!localsBeforeVisiting.Any(candidate => candidate.Matches(current)))
                     current.IsSynthetic = true;
             }
         }

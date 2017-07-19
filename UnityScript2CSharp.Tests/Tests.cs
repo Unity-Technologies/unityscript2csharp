@@ -80,9 +80,20 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sources, expectedConverted);
         }
 
+        [Test]
+        public void Complex_Field_With_Ctor_Chainning()
+        {
+            SourceFile[] sources = { new SourceFile("complex_fields_with_ctor.js", "class C { var i1:C = new C(1); var i2:C = new C(2); function C(v:int) { var i = v; } function C() { C(42); } function C(s:String) {} }") };
+            SourceFile[] expectedConverted = { new SourceFile("complex_fields_with_ctor.cs", DefaultUsingsForClasses + " public class C : object { public C i1; public C i2; public C(int v) { if (!this.initialized__C) { this.i1 = new C(1); this.i2 = new C(2); this.initialized__C = true; } int i = v; } public C() : this(42) { if (!this.initialized__C) { this.i1 = new C(1); this.i2 = new C(2); this.initialized__C = true; } } public C(string s) { if (!this.initialized__C) { this.i1 = new C(1); this.i2 = new C(2); this.initialized__C = true; } } private bool initialized__C; }") };
+
+            AssertConversion(sources, expectedConverted);
+        }
+
         [TestCase("o.staticField = 1;", "C.staticField = 1;")]
         [TestCase("var i = o.staticField + 1;", "int i = C.staticField + 1;")]
         [TestCase("var i = o.staticField + o.staticMethod();", "int i = C.staticField + C.staticMethod();")]
+        [TestCase("o.instanceMethod().instance.instanceMethod();", "C.instance.instanceMethod();")]
+        [TestCase("o.myself.instance.instanceMethod();", "C.instance.instanceMethod();")]
         [TestCase("o.staticMethod();", "C.staticMethod();")]
         [TestCase("C.staticMethod();", "C.staticMethod();")] // Proof that static references through a type ref are not affected
         public void Static_Members_Through_Instance_Are_Updated(string usSnippet, string csSnippet)
@@ -291,6 +302,15 @@ namespace UnityScript2CSharp.Tests
         {
             var sourceFiles = SingleSourceFor("locals_custom.js", "class C { function F() { var c:C; } }");
             var expectedConvertedContents = SingleSourceFor("locals_custom.cs", DefaultUsingsForClasses + " public class C : object { public virtual void F() { C c = null; } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
+        public void Locals_Are_Not_Ignored_Due_To_Handling_Of_ForEach_Locals()
+        {
+            var sourceFiles = SingleSourceFor("locals_custom.js", "class C { function F(l:int[]) { var i:int; for(var c in l) { } } }");
+            var expectedConvertedContents = SingleSourceFor("locals_custom.cs", DefaultUsingsForClasses + " public class C : object { public virtual void F(int[] l) { int i = 0; foreach (int c in l) { } } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }

@@ -176,6 +176,9 @@ namespace UnityScript2CSharp
             var jsMetaFile = scriptPath + ".meta";
             var csMetaFile = jsMetaFile.Replace(".js.", ".cs.");
 
+            if (File.Exists(csMetaFile))
+                File.Delete(csMetaFile);
+
             File.Move(jsMetaFile, csMetaFile);
 
             if (removeOriginalFiles)
