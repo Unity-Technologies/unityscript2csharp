@@ -93,6 +93,8 @@ namespace UnityScript2CSharp
             var references = new List<string>(options.Value.References);
             references.Add(typeof(object).Assembly.Location);
 
+            AppendGameAssemblies(references, options);
+
             if (string.IsNullOrWhiteSpace(options.Value.UnityPath))
                 return references;
 
@@ -110,6 +112,15 @@ namespace UnityScript2CSharp
             references.Add(Path.Combine(unityAssembliesRootPath, "UnityEditor.dll"));
 
             return references;
+        }
+
+        private static void AppendGameAssemblies(List<string> references, ParserResult<CommandLineArguments> options)
+        {
+            if (!options.Value.ReferenceGameAssemblies)
+                return;
+
+            var assemblies = Directory.GetFiles(Path.Combine(options.Value.ProjectPath, "Library/ScriptAssemblies"), "*-firstpass.dll");
+            references.AddRange(assemblies);
         }
 
         private static bool TryFindUnityAssembliesRoot(string testPath, bool verbose, out string unityAssembliesRootPath)
