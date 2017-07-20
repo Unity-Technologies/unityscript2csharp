@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using NUnit.Framework;
 
@@ -635,6 +636,19 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
+        [Test, TestCaseSource("CSharpNonClashingKeywords")]
+        public void CSharp_Reserved_Keywords_Used_As_Identifiers_Get_At_Symbol_Appended(string keyword, string unityScriptSnippet, string csharpSnippet, bool fullTypeDefinition)
+        {
+            var sourceFiles = new[] {new SourceFile { FileName = "name_clashes.js", Contents = string.Format(unityScriptSnippet, keyword) } };
+
+            var expectedContents = fullTypeDefinition
+                ? DefaultUsings + " " + string.Format(csharpSnippet, keyword)
+                : DefaultGeneratedClass + $"name_clashes : MonoBehaviour {{ {string.Format(csharpSnippet, keyword)} }}";
+
+            var expectedConvertedContents = new[] {new SourceFile { FileName = "name_clashes.cs", Contents = expectedContents } };
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
         [Test]
         public void Test_Formatting()
         {
@@ -648,6 +662,79 @@ namespace UnityScript2CSharp.Tests
         [Test]
         public void Scripts_In_Plugin_Folder_Works()
         {
+        }
+
+        private static IEnumerable CSharpNonClashingKeywords()
+        {
+            var snippetScenarios = new[]
+            {
+                new Tuple<string, string, string>("Field", "var {0} = 1;", "public int @{0}; public name_clashes() {{ this.@{0} = 1; }}"),
+                new Tuple<string, string, string>("Method", "function {0}():void {{ {0}(); }}", "public virtual void @{0}() {{ this.@{0}(); }}"),
+                new Tuple<string, string, string>("Parameter", "function F({0}:int) {{ {0} = 1; }}", "public virtual void F(int @{0}) {{ @{0} = 1; }}"),
+                new Tuple<string, string, string>("Locals", "function F() {{ var {0}:int; }}", "public virtual void F() {{ int @{0} = 0; }}"),
+                new Tuple<string, string, string>("Locals with initialization", "function F() {{ var {0} = 1; }}", "public virtual void F() {{ int @{0} = 1; }}"),
+            };
+
+            var fullClassScenarios = new[]
+            {
+                new Tuple<string, string, string>("Class", "class {0} {{ }}", "[System.Serializable] public class @{0} : object {{ }}"),
+                new Tuple<string, string, string>("Base Class", "class {0} {{}} class C extends {0} {{ }}", "[System.Serializable] public class @{0} : object {{ }} [System.Serializable] public class C : @{0} {{ }}"),
+                new Tuple<string, string, string>("Enum", "enum {0} {{ }}", "public enum @{0} {{ }}"),
+                new Tuple<string, string, string>("EnumMember", "enum E {{ {0} }}", "public enum E {{ @{0} = 0 }}"),
+            };
+
+            var keywords = new[]
+            {
+                "abstract",
+                "alias",
+                "async",
+                "await",
+                "base",
+                "bool",
+                "checked",
+                "const",
+                "decimal",
+                "delegate",
+                "dynamic",
+                "event",
+                "explicit",
+                "extern",
+                "fixed",
+                "foreach",
+                "goto",
+                "implicit",
+                "is",
+                "lock",
+                "nameof",
+                "namespace",
+                "operator",
+                "out",
+                "params",
+                "readonly",
+                "ref",
+                "remove",
+                "sealed",
+                "sizeof",
+                "stackalloc",
+                "struct",
+                "unchecked",
+                "unsafe",
+                "using",
+                "volatile"
+            };
+
+            foreach (var keyword in keywords)
+            {
+                foreach (var scenario in snippetScenarios)
+                {
+                    yield return new TestCaseData(keyword, scenario.Item2, scenario.Item3, false).SetName($"{scenario.Item1 + "-" + keyword}");
+                }
+
+                foreach (var scenario in fullClassScenarios)
+                {
+                    yield return new TestCaseData(keyword, scenario.Item2, scenario.Item3, true).SetName($"{scenario.Item1 + "-" + keyword}");
+                }
+            }
         }
 
         private static IEnumerable<string> StringLiteralTestProvider()
@@ -672,5 +759,27 @@ namespace UnityScript2CSharp.Tests
             yield return new Tuple<string, string>("o.GetComponent(known_methods)", "(known_methods) o.GetComponent(typeof(known_methods))");
             yield return new Tuple<string, string>("o.GetComponent.<known_methods>()", "o.GetComponent<known_methods>()");
         }
+    }
+
+    public struct ReservedKeywordsTestScenarios
+    {
+        private readonly string _name;
+        private string _unityScriptSnippet;
+        private string _csharpSnippet;
+
+        public ReservedKeywordsTestScenarios(string name, string unityScriptSnippet, string csharpSnippet) : this()
+        {
+            _name = name;
+            _unityScriptSnippet = unityScriptSnippet;
+            _csharpSnippet = csharpSnippet;
+        }
+
+        public override string ToString()
+        {
+            return _name;
+        }
+
+        public string UnityScriptSnippet { get { return _unityScriptSnippet; } }
+        public string CSharpSnippet { get { return _csharpSnippet; } }
     }
 }
