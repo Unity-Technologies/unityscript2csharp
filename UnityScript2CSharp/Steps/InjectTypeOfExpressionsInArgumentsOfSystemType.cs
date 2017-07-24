@@ -68,7 +68,7 @@ namespace UnityScript2CSharp.Steps
             if (_currentArgument != null)
                 return _currentArgument.ExpressionType.ElementType == TypeSystemServices.TypeType && (node.ParentNode.NodeType == NodeType.MethodInvocationExpression || node.ParentNode.NodeType == NodeType.ArrayLiteralExpression);
 
-            return node.ParentNode.NodeType == NodeType.Attribute;
+            return node.ParentNode.NodeType == NodeType.Attribute || node.ParentNode.NodeType == NodeType.YieldStatement;
         }
     }
 }
