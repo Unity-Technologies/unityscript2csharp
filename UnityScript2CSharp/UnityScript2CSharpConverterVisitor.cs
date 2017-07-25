@@ -289,8 +289,13 @@ namespace UnityScript2CSharp
             foreach (var local in parentMedhod.Locals)
             {
                 InternalLocal internalLocal;
-                if (!IsSynthetic(local, out internalLocal) && !HasAutoLocalDeclaration(parentMedhod.Body, local))
-                    internalLocal.OriginalDeclaration.ParentNode.Accept(this);
+                if (IsSynthetic(local, out internalLocal))
+                    continue;
+                
+                if (internalLocal.OriginalDeclaration.ParentNode.NodeType != NodeType.DeclarationStatement || HasAutoLocalDeclaration(parentMedhod.Body, local))
+                    continue;
+
+                internalLocal.OriginalDeclaration.ParentNode.Accept(this);
             }
 
             return ret;

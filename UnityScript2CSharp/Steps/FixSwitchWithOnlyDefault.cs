@@ -48,16 +48,15 @@ namespace UnityScript2CSharp.Steps
 
                 var originalLocal = ((InternalLocal)binaryExp.Left.Entity).Local;
                 var varName = originalLocal.Name.Replace("$", "_");
-                var referenceExpression = new ReferenceExpression(varName);
                 var local = new Local(varName, true);
                 var internalLocal = new InternalLocal(local, binaryExp.ExpressionType);
                 local.Entity = internalLocal;
 
                 internalLocal.OriginalDeclaration = new Declaration(varName, new SimpleTypeReference(internalLocal.Type.FullName));
+
+                // we need a DeclarationStatment as the parent of the "OriginalDeclaration"
                 var ds = new DeclarationStatement(internalLocal.OriginalDeclaration, binaryExp.Right);
 
-                referenceExpression.ExpressionType = binaryExp.ExpressionType;
-                referenceExpression.Entity = internalLocal;
                 innerBlock.Statements.RemoveAt(0);
 
                 var parentMethod = node.GetAncestor<Method>();

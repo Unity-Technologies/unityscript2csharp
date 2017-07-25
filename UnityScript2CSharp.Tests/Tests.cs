@@ -281,6 +281,16 @@ namespace UnityScript2CSharp.Tests
         }
 
         [Test]
+        public void Locals_In_Foreach()
+        {
+            var sourceFiles = SingleSourceFor("locals_in_foreach.js", "function F(i:int) { for(var item : int in [1]) { } for(var item : int in [1]) { } }");
+            var expectedConvertedContents = SingleSourceFor("locals_in_foreach.cs", DefaultGeneratedClass + "locals_in_foreach : MonoBehaviour { public virtual void F(int i) { foreach (int item in new int[] {1}) { } foreach (int item in new int[] {1}) { } } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+
+        [Test]
         public void Locals_As_Child_Of_If_Statement()
         {
             var sourceFiles = SingleSourceFor("locals_child.js", "function F(i:int) { if (i == 0) { var j = i + 1; return j; } return i; }");
