@@ -291,7 +291,7 @@ namespace UnityScript2CSharp
                 InternalLocal internalLocal;
                 if (IsSynthetic(local, out internalLocal))
                     continue;
-                
+
                 if (internalLocal.OriginalDeclaration.ParentNode.NodeType != NodeType.DeclarationStatement || HasAutoLocalDeclaration(parentMedhod.Body, local))
                     continue;
 
@@ -733,6 +733,7 @@ namespace UnityScript2CSharp
         {
             var replacements = new Dictionary<string, string>
             {
+                {"\\", "\\\\"},
                 {"\n", "\\n"},
                 {"\r", "\\r"},
                 {"\a", "\\a"},
