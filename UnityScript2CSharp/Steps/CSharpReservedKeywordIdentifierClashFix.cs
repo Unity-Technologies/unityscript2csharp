@@ -69,11 +69,6 @@ namespace UnityScript2CSharp.Steps
             base.OnField(node);
         }
 
-        public override void OnMethodInvocationExpression(MethodInvocationExpression node)
-        {
-            base.OnMethodInvocationExpression(node);
-        }
-
         public override void OnMemberReferenceExpression(MemberReferenceExpression node)
         {
             if (TryFixNameClash(node.Name, out string fixedName))
@@ -143,6 +138,7 @@ namespace UnityScript2CSharp.Steps
             "lock",
             "nameof",
             "namespace",
+            "object",
             "operator",
             "out",
             "params",
