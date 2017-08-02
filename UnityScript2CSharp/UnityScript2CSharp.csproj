@@ -122,6 +122,7 @@
     <Compile Include="Steps\MergeMainMethodStatementsIntoStartMethod.cs" />
     <Compile Include="Steps\NumericCastInjector.cs" />
     <Compile Include="Steps\OperatorMethodToLanguageOperator.cs" />
+    <Compile Include="Steps\PreProcessCollector.cs" />
     <Compile Include="Steps\PromoteImplicitBooleanConversionsToExplicitComparisons.cs" />
     <Compile Include="Steps\InjectTypeOfExpressionsInArgumentsOfSystemType.cs" />
     <Compile Include="Program.cs" />

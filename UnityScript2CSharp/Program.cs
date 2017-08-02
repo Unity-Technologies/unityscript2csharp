@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using CommandLine;
 using CommandLine.Text;
+using UnityScript2CSharp.Steps;
 
 namespace UnityScript2CSharp
 {
@@ -47,12 +48,14 @@ namespace UnityScript2CSharp
                 if (!ValidateAssemblyReferences(options))
                     return -1;
 
-                ConvertScripts("runtime", runtimeScripts, converter, references, options.Value);
-                ConvertScripts("editor", editorScripts, converter, references, options.Value);
-                ConvertScripts("plugins", pluginScripts, converter, references, options.Value);
-                ConvertScripts("editor plugins", pluginEditorScritps, converter, references, options.Value);
+                var referencedSymbols = new List<SymbolInfo>();
 
-                Console.WriteLine("Finished converting {0} scripts.", runtimeScripts.Length + editorScripts.Length + pluginScripts.Length);
+                ConvertScripts("runtime", runtimeScripts, converter, references, options.Value, referencedSymbols);
+                ConvertScripts("editor", editorScripts, converter, references, options.Value, referencedSymbols);
+                ConvertScripts("plugins", pluginScripts, converter, references, options.Value, referencedSymbols);
+                ConvertScripts("editor plugins", pluginEditorScritps, converter, references, options.Value, referencedSymbols);
+
+                ReportConversionFinished(runtimeScripts.Length + editorScripts.Length + pluginScripts.Length, referencedSymbols, options.Value.ProjectPath);
             }
             catch (Exception ex)
             {
@@ -160,7 +163,7 @@ namespace UnityScript2CSharp
             return ok;
         }
 
-        private static void ConvertScripts(string scriptType, IList<SourceFile> scripts, UnityScript2CSharpConverter converter, IEnumerable<string> references, CommandLineArguments args)
+        private static void ConvertScripts(string scriptType, IList<SourceFile> scripts, UnityScript2CSharpConverter converter, IEnumerable<string> references, CommandLineArguments args, List<SymbolInfo> referencedSymbols)
         {
             Console.WriteLine("Converting '{0}' ({1} scripts)", scriptType, scripts.Count);
 
@@ -170,11 +173,32 @@ namespace UnityScript2CSharp
 
             converter.Convert(scripts, args.Symbols, references, handler);
 
+            referencedSymbols.AddRange(converter.ReferencedPreProcessorSymbols);
+
             using (WithConsoleColors.SetTo(ConsoleColor.Yellow, ConsoleColor.Black))
             {
                 foreach (var warning in converter.CompilerWarnings)
                 {
                     Console.WriteLine("\t{0}", warning);
+                }
+            }
+        }
+
+        private static void ReportConversionFinished(int totalScripts, IEnumerable<SymbolInfo> referencedSymbols, string projectPath)
+        {
+            Console.WriteLine("Finished converting {0} scripts.", totalScripts);
+
+            if (!referencedSymbols.Any())
+                return;
+
+            var projectPathLength = projectPath.Length;
+            using (WithConsoleColors.SetTo(ConsoleColor.Cyan, ConsoleColor.Black))
+            {
+                Console.WriteLine("Your project contains scripts that relies on conditional compilation; this may cause parts of those scripts to not be converted.");
+                Console.WriteLine("See below a list of scripts that uses conditional compilation:");
+                foreach (var symbolInfo in referencedSymbols)
+                {
+                    Console.WriteLine($"\t{symbolInfo.Source.Substring(projectPathLength)}({symbolInfo.LineNumber}) : {symbolInfo.PreProcessorExpression}");
                 }
             }
         }

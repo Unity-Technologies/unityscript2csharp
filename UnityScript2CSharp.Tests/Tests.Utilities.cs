@@ -48,32 +48,7 @@ namespace UnityScript2CSharp.Tests
         private static void AssertConversion(IList<SourceFile> sourceFiles, IList<SourceFile> expectedConverted, bool expectError = false)
         {
             var tempFolder = Path.Combine(Path.GetTempPath(), "UnityScript2CSharpConversionTests", SavePathFrom(TestContext.CurrentContext.Test.Name));
-            Console.WriteLine("Converted files saved to: {0}", tempFolder);
-
-            var unityWorkspaceRoot = GetUnityWorkspaceRoot();
-            var converter = new UnityScript2CSharpConverter(true);
-
-            converter.Convert(
-                sourceFiles,
-                new[] { "MY_DEFINE" },
-                new[]
-            {
-                typeof(object).Assembly.Location,
-                $@"{UnityInstallFolder}Data\Managed\UnityEngine.dll",
-                $@"{UnityInstallFolder}Data\Managed\UnityEditor.dll",
-
-            },
-
-                (name, content, unsupportedCount) =>
-                {
-                    var targetFilePath = Path.Combine(tempFolder, Path.GetFileNameWithoutExtension(name) + ".cs");
-                    var targetFolder = Path.GetDirectoryName(targetFilePath);
-                    if (!Directory.Exists(targetFolder))
-                        Directory.CreateDirectory(targetFolder);
-
-                    File.WriteAllText(targetFilePath, content);
-                });
-
+            var converter = ConvertScripts(sourceFiles, tempFolder);
             if (!expectError)
             {
                 if (converter.CompilerErrors.Any())
@@ -101,6 +76,35 @@ namespace UnityScript2CSharp.Tests
 
                 Assert.That(generatedScript.Trim(), Is.EqualTo(expectedConverted[i].Contents), Environment.NewLine + "Converted: " + Environment.NewLine + generatedScript + Environment.NewLine);
             }
+        }
+
+        private static UnityScript2CSharpConverter ConvertScripts(IList<SourceFile> sourceFiles, string saveToFolder)
+        {
+            Console.WriteLine("Converted files saved to: {0}", saveToFolder);
+
+            var unityWorkspaceRoot = GetUnityWorkspaceRoot();
+            var converter = new UnityScript2CSharpConverter(true);
+
+            Action<string, string, int> onScriptConverted = (name, content, unsupportedCount) =>
+                {
+                    var targetFilePath = Path.Combine(saveToFolder, Path.GetFileNameWithoutExtension(name) + ".cs");
+                    var targetFolder = Path.GetDirectoryName(targetFilePath);
+                    if (!Directory.Exists(targetFolder))
+                        Directory.CreateDirectory(targetFolder);
+
+                    File.WriteAllText(targetFilePath, content);
+                };
+
+            var referencedAssemblies = new[]
+            {
+                typeof(object).Assembly.Location,
+                $@"{UnityInstallFolder}Data\Managed\UnityEngine.dll",
+                $@"{UnityInstallFolder}Data\Managed\UnityEditor.dll",
+            };
+
+            converter.Convert(sourceFiles, new[] {"MY_DEFINE"}, referencedAssemblies, onScriptConverted);
+
+            return converter;
         }
 
         private static string GetUnityWorkspaceRoot()

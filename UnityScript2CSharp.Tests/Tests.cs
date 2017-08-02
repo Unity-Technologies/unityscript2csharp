@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using NUnit.Framework;
 
 namespace UnityScript2CSharp.Tests
@@ -8,6 +10,28 @@ namespace UnityScript2CSharp.Tests
     [TestFixture]
     public partial class Tests
     {
+        [TestCase("BAR")]
+        [TestCase("!BAR")]
+        [TestCase("FOO || BAR")]
+        [TestCase("FOO || !BAR")]
+        public void Conditional_Symbols_Are_Reported(string condition)
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "preprocessor.js", Contents = $"function F() {{ \n#if {condition}\nreturn 10;\n#elif FOO\nreturn 1;\n#endif\n#endif\n }}" } };
+
+            var converter = ConvertScripts(sourceFiles, Path.Combine(Path.GetTempPath(), "UnityScript2CSharpConversionTests", SavePathFrom(TestContext.CurrentContext.Test.Name)));
+            Assert.That(converter.ReferencedPreProcessorSymbols, Is.Not.Empty, "Referenced symbols not detected.");
+
+            var referencedSymbol = converter.ReferencedPreProcessorSymbols.ElementAt(0);
+            Assert.That(referencedSymbol.LineNumber, Is.EqualTo(2));
+            Assert.That(referencedSymbol.Source, Is.EqualTo("preprocessor.js"));
+            Assert.That(referencedSymbol.PreProcessorExpression, Is.EqualTo(condition));
+
+            referencedSymbol = converter.ReferencedPreProcessorSymbols.ElementAt(1);
+            Assert.That(referencedSymbol.LineNumber, Is.EqualTo(4));
+            Assert.That(referencedSymbol.Source, Is.EqualTo("preprocessor.js"));
+            Assert.That(referencedSymbol.PreProcessorExpression, Is.EqualTo("FOO"));
+        }
+
         [Test]
         public void Simplest()
         {

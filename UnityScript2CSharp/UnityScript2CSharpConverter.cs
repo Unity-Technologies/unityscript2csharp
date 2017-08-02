@@ -36,7 +36,10 @@ namespace UnityScript2CSharp
         }
 
         public IEnumerable<string> CompilerErrors { get; private set; }
+
         public IEnumerable<string> CompilerWarnings { get; private set; }
+
+        public IEnumerable<SymbolInfo> ReferencedPreProcessorSymbols { get { return _referencedPreProcessorSymbols; } }
 
         private void HandleCompilationResult(CompilerContext result)
         {
@@ -130,6 +133,7 @@ namespace UnityScript2CSharp
             adjustedPipeline.Remove(typeof(ExpandUnityDuckTypedExpressions));
 
             adjustedPipeline.Replace(typeof(ProcessUnityScriptMethods), new SelectiveUnaryExpressionExpansionProcessUnityScriptMethods());
+            adjustedPipeline.Insert(0, new PreProcessCollector(_referencedPreProcessorSymbols));
 
             adjustedPipeline.Add(new CSharpReservedKeywordIdentifierClashFix());
             adjustedPipeline.Add(new CtorFieldInitializationFix());
@@ -195,5 +199,6 @@ namespace UnityScript2CSharp
         }
 
         protected UnityScriptCompiler _compiler;
+        private IList<SymbolInfo> _referencedPreProcessorSymbols = new List<SymbolInfo>();
     }
 }
