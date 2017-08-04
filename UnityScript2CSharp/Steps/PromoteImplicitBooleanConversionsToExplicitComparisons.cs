@@ -118,7 +118,7 @@ namespace UnityScript2CSharp.Steps
     // and converte them to:
     //          var b = !string.IsNullOrEmpty(s) ? s.Length > 10 : false;
     //
-    // (not that US compiler already does part of this conversion; we only need
+    // (note that US compiler already does part of this conversion; we only need
     // to clean it up)
     //
     internal class ConditionalExpressionFixer : DepthFirstTransformer
