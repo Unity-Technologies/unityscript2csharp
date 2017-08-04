@@ -82,7 +82,6 @@ namespace UnityScript2CSharp.Tests
         {
             Console.WriteLine("Converted files saved to: {0}", saveToFolder);
 
-            var unityWorkspaceRoot = GetUnityWorkspaceRoot();
             var converter = new UnityScript2CSharpConverter(true);
 
             Action<string, string, int> onScriptConverted = (name, content, unsupportedCount) =>
@@ -105,22 +104,6 @@ namespace UnityScript2CSharp.Tests
             converter.Convert(sourceFiles, new[] {"MY_DEFINE"}, referencedAssemblies, onScriptConverted);
 
             return converter;
-        }
-
-        private static string GetUnityWorkspaceRoot()
-        {
-            var currentFolder = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            var probeStarttingPoint = currentFolder;
-
-            while (currentFolder.Length > 0)
-            {
-                if (File.Exists(Path.Combine(currentFolder, "build.pl")))
-                    return currentFolder;
-
-                currentFolder = Path.GetDirectoryName(currentFolder);
-            }
-
-            throw  new Exception($"Unable to resolve workspace root from {probeStarttingPoint}");
         }
 
         private static string SavePathFrom(string testName)
