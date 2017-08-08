@@ -3,18 +3,17 @@ Link to blog post.
 
 ### How to use
 
-First, download the tool from [here](https://drive.google.com/open?id=0B7GZ512tQYxkM3RZUnQ0ZlVqWjQ) (you can also check the code in the branch scripting/drop-us-support). (latest version is 1.0.6416.19059)
+First, download the tool from [here](https://github.com/Unity-Technologies/unityscript2csharp/releases).
 
-Before running the conversion tool it is recommend:
+Before running the conversion tool:
+
+1. Backup your project
 
 1. Keep in mind that you'll have best results (i.e, a smoother conversion process) if your UnityScripts have  *#pragma strict* applied to them.
 
-2. Backup your project
-
-3. Launch Unity editor and make sure you allow APIUpdater to run and update any obsolete API usages. This is necessary to avoid compilation errors during the conversion.
+1. Launch Unity editor and make sure you allow APIUpdater to run and update any obsolete API usages. This is necessary to avoid compilation errors during the conversion.
 
 Next step is to run the application (UnityScript2CSharp.exe) passing the path to the project (**-p**) the Unity root installation folder (**-u**) and any additional assembly references (**-r**) used by the UnityScript scripts. Bellow you can find a list of valid command line arguments and their meaning:
-
 
 | Argument | Meaning |
 |----------------|-----------------------------------|
@@ -44,7 +43,7 @@ UnityScript2CSharp.exe **-p** m:\Work\Repo\4-0_AngryBots **-u** M:\Work\Repo\uni
 
 * Formatting is not preserved
 
-* UnityScript.Lang.Array (a.k.a *Array*) methods are not fully supported. We convert such type to  *object[]* (this means that if your scripts relies on such methods we'll need to replace the variable declarations / instantiation with some other type (like *List<T>*, *Stack<T>*, etc) and adapt the code.
+* UnityScript.Lang.Array (a.k.a *Array*) methods are not fully supported. We convert such type to  *object[]* (this means that if your scripts relies on such methods you'll need to replace the variable declarations / instantiation with some other type (like *List<T>*, *Stack<T>*, etc) and fix the code.
 
 * Type inference in *anonymous function declarations* are inaccurate in some scenarios and may infer the wrong parameter / return type.
 
@@ -56,18 +55,17 @@ UnityScript2CSharp.exe **-p** m:\Work\Repo\4-0_AngryBots **-u** M:\Work\Repo\uni
 
 * Automatic conversion from **object** to *int/long/float/bool* etc is not supported (limited support for *int* -> *bool* conversion in conditional expressions is in place though).
 
-* *for( init; condition; increment)* are converted to ***while***
+* *for( init; condition; increment)* is converted to ***while***
 
 * Methods **with same name as the declaring class** (invalid in C#) are converted *as-it-is*
 
-* Invalid operands to **as** operators (which would always yield **null** in US) generates errors in C#
+* Invalid operands to **as** operators (which always yield **null** in US) are considered errors by the C# compiler.
 
 * Equality comparison against *null* used as **statement expressions** generate errors in C# (eg: *foo == null;*) (this code in meaningless, but harmless in US)
 
-* Changing *foreach* loop variable is not supported
+* Code that changes *foreach* loop variable (which is not allowed in C#) are converted *as-is*, which means the resulting code will not compile cleanly.
 
 * Not supported features
-
     * Property / Event definition
     * Macros
     * Literals
@@ -79,34 +77,50 @@ Note that any unsupported language construct (a.k.a, AST node type), will inject
 
 ### How to build
 
+In case you want to build the tool locally, *"all"* you need to do is:
+
+1. Clone the repository
+2. In a console, change directory to the cloned repo folder
+3. Restore **nuget** packages  (you can download nuget [here](https://dist.nuget.org/index.html))
+-- run **nuget.exe restore** 
+4. Build using **msbuild**
+-- msbuild UnityScript2CSharp.sln /target:clean,build
+
 
 ### How to run tests
+
+All tests (in UnityScript2CSharp.Tests.csproj project) can be run with NUnit runner (recommended to use latest version).
+
+####Windows
+If you have Unity installed most likely you don't need any extra step; in case the tests fail to find Unity installation you can follow steps similar to the ones required for OSX/Linux
+
+####OSX / Linux
+The easiest way to get the tests running is by setting the environment variable **UNITY_INSTALL_FOLDER** to point to the Unity installation folder and launch **Unit** rest runner.
 
 
 ### FAQ
 
->#### **Q**: During conversion, the following error is shown in the console: 
+#### **Q**: During conversion, the following error is shown in the console: 
 "*Conversion aborted due to compilation errors:*"
->
-> And then some compiler errors complaining about types not being valid.
 
->#### **A**: You are missing some assembly reference; if the type in question is define in the project scripts it is most likely Assembly-CSharp.dll or Assembly-UnityScript.dll (just run the conversion tool again passing **-r** *path_to_assembly_csharp path_to_assembly_unityscript* as an argument.
+ And then some compiler errors complaining about types not being valid.
+
+#### **A**: You are missing some assembly reference; if the type in question is define in the project scripts it is most likely Assembly-CSharp.dll or Assembly-UnityScript.dll (just run the conversion tool again passing **-r** *path_to_assembly_csharp path_to_assembly_unityscript* as an argument.
 
 ----
->#### **Q**: Some of my UnityScript code is not included in the converted CSharp
+#### **Q**: Some of my UnityScript code is not included in the converted CSharp
 
->#### **A**: Most likely this is code *guarded* by *SYMBOLS*. Look for **#if ** / **#else** directives in the original UnityScript  and run the conversion tool passing the right symbols. Note that in some cases one or more symbols may introduce mutually exclusive source snippets which means that no matter if you specify the symbol or not, necessarily some region of the code will be excluded, as in the example:
->
->**#if !SYMBOL_1**
-> // Snippet 1
->**#endif**
->
-**#if SYMBOL_1**
-// Snippet 2
-**#endif**
+#### **A**: Most likely this is code *guarded* by *SYMBOLS*. Look for **#if ** / **#else** directives in the original UnityScript  and run the conversion tool passing the right symbols. Note that in some cases one or more symbols may introduce mutually exclusive source snippets which means that no matter if you specify the symbol or not, necessarily some region of the code will be excluded, as in the example:
 
->In the example above,  if you run the conversion tool specifying the symbol *SYMBOL_1* , **Snippet 1** will be skipped (because it is guarded by a **!SYMBOL_1**) and **Snippet 2** will be included. If you don't, **Snippet 1** will be included but **Snippet 2** will not (because *SYMBOL_1* is not defined). 
+    #if !SYMBOL_1
+    // Snippet 1
+    #endif
+    
+    #if SYMBOL_1
+    // Snippet 2
+    #endif
+In the example above,  if you run the conversion tool specifying the symbol *SYMBOL_1* , **Snippet 1** will be skipped (because it is guarded by a **!SYMBOL_1**) and **Snippet 2** will be included. If you don't, **Snippet 1** will be included but **Snippet 2** will not (because *SYMBOL_1* is not defined). 
 
->The best way to workaround this limitation is to set-up a local VCS repository (git, mercurial or any other of your option) and run the conversion tool with a set of *symbols* then commit the generated code, revert the changes to the UnityScript scripts (i.e, restore the original scripts), run the conversion tool again with a different set of *Symbols* and merge the new version of the converted scripts.
+The best way to workaround this limitation is to set-up a local VCS repository (git, mercurial or any other of your option) and run the conversion tool with a set of *symbols* then commit the generated code, revert the changes to the UnityScript scripts (i.e, restore the original scripts), run the conversion tool again with a different set of *Symbols* and merge the new version of the converted scripts.
 
 ----
