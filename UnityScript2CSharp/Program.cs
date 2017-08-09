@@ -21,11 +21,14 @@ namespace UnityScript2CSharp
 
             try
             {
+                // We should ignore scripts in assets/WebGLTemplates
+                var ignoredPathsRegex = new Regex(string.Format("assets{0}{0}webgltemplates{0}{0}", Path.DirectorySeparatorChar), RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
                 var editorSubFolder = String.Format("{0}Editor{0}", Path.DirectorySeparatorChar);
                 var pluginsEditorSubFolder = String.Format("{0}Plugins{0}Editor{0}", Path.DirectorySeparatorChar);
                 var pluginSubFolder = String.Format("{0}Plugins{0}", Path.DirectorySeparatorChar);
 
-                var allFiles = Directory.GetFiles(Path.Combine(options.Value.ProjectPath, "Assets"), "*.js", SearchOption.AllDirectories);
+                var allFiles = Directory.GetFiles(Path.Combine(options.Value.ProjectPath, "Assets"), "*.js", SearchOption.AllDirectories).Where(path => !ignoredPathsRegex.IsMatch(path));
                 var filter = new Regex(string.Format(@"{0}|{1}|{2}", editorSubFolder, pluginSubFolder, pluginsEditorSubFolder).Replace("\\", "\\\\"), RegexOptions.Compiled);
 
                 var runtimeScripts = allFiles.Where(scriptPath => !filter.IsMatch(scriptPath)).Select(scriptPath => new SourceFile { FileName = scriptPath, Contents = File.ReadAllText(scriptPath)}).ToArray();
