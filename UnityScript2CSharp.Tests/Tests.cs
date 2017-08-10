@@ -46,6 +46,7 @@ namespace UnityScript2CSharp.Tests
         [TestCase("int", "int")]
         [TestCase("float", "float")]
         [TestCase("double", "double")]
+        [TestCase("long", "long")]
         [TestCase("char", "char")]
         public void Primitive_Types_Mapping(string usType, string csType)
         {

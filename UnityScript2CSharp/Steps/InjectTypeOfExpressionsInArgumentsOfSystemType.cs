@@ -59,6 +59,11 @@ namespace UnityScript2CSharp.Steps
             {
                 node.Replace(node.Right, CodeBuilder.CreateTypeofExpression((IType)node.Right.Entity));
             }
+            else if (node.Operator == BinaryOperatorType.TypeTest)
+            {
+                var typeofExpression = (TypeofExpression) node.Right;
+                node.Replace(node.Right, CodeBuilder.CreateReference(typeofExpression.Type.Entity));
+            }
 
             base.OnBinaryExpression(node);
         }

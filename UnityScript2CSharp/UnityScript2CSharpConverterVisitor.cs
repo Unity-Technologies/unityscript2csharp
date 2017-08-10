@@ -960,7 +960,14 @@ namespace UnityScript2CSharp
 
         private string CSharpOperatorFor(BinaryOperatorType op)
         {
-            return (op != BinaryOperatorType.And) ? ((op != BinaryOperatorType.Or) ? BooPrinterVisitor.GetBinaryOperatorText(op) : "||") : "&&";
+            switch (op)
+            {
+                    case BinaryOperatorType.And: return "&&";
+                    case BinaryOperatorType.Or: return "||";
+                    case BinaryOperatorType.TypeTest: return "is";
+            }
+
+            return BooPrinterVisitor.GetBinaryOperatorText(op);
         }
 
         private bool HandleSwitch(Block node)
@@ -1179,10 +1186,13 @@ namespace UnityScript2CSharp
                 case "System.Int32": return "int";
                 case "System.Int64": return "long";
                 case "System.Void": return "void";
+                case "System.Single": return "float";
+                case "System.Char": return "char";
+                case "System.Double": return "double";
                 case "Boo.Lang.Hash": return "Hashtable";
                 case "System.DateTime": return fullName;
             }
-
+            
             // UnityEngine.Object always need to be qualified.
             if (_usings.Contains(typeNamespace) && fullName != "UnityEngine.Object")
             {
@@ -1199,7 +1209,7 @@ namespace UnityScript2CSharp
                 return string.Join(".", parentTypes);
             }
 
-            return null;
+            return fullName;
         }
 
         private string TypeNameForCallable(ICallableType callable)

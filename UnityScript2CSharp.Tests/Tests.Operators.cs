@@ -16,6 +16,7 @@ namespace UnityScript2CSharp.Tests
         [TestCase("o != null", "!(o == null)")]
         [TestCase("o == null")]
         [TestCase("o == \"foo\"")]
+        [TestCase("o instanceof System.Action", "o is System.Action")]
         [TestCase("i == 42")]
         [TestCase("i != 42")]
         [TestCase("i > 10")]
