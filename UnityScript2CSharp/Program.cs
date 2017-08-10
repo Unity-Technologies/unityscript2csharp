@@ -13,10 +13,25 @@ namespace UnityScript2CSharp
     {
         static int Main(string[] args)
         {
-            var options  = Parser.Default.ParseArguments<CommandLineArguments>(args);
-            if (!IsValid(options))
+            ParserResult<CommandLineArguments> options = null;
+
+            try
             {
-                return -2;
+                options = Parser.Default.ParseArguments<CommandLineArguments>(args);
+                if (!IsValid(options))
+                    return -2;
+            }
+            catch
+            {
+                Console.WriteLine();
+                Console.WriteLine("Failed to parse command line arguments. See valid command line arguments below:");
+
+                var h = new HelpText { AddDashesToOption = true, AdditionalNewLineAfterOption = true };
+
+                h.AddOptions(new CommandLineArguments());
+                Console.WriteLine(h.ToString());
+                
+                return -3;
             }
 
             try
