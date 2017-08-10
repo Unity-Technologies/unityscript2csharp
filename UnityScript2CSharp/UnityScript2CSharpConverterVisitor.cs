@@ -310,7 +310,7 @@ namespace UnityScript2CSharp
 
         public override void OnConstructor(Constructor node)
         {
-            var stmts = CtorStatementsWithoutSuperInvocation(node);
+            var stmts = CtorStatementsWithoutParameterlessSuperInvocation(node);
             if (stmts.Count == 0)
                 return;
 
@@ -1056,7 +1056,7 @@ namespace UnityScript2CSharp
             return declaringType.ActualType.FullName == "System.Object";
         }
 
-        private static StatementCollection CtorStatementsWithoutSuperInvocation(Constructor node)
+        private static StatementCollection CtorStatementsWithoutParameterlessSuperInvocation(Constructor node)
         {
             var stmts = node.Body.Statements;
             if (stmts.Count == 0)
@@ -1066,7 +1066,8 @@ namespace UnityScript2CSharp
             var superInvocationCandidate = expressionStatement != null
                 ? expressionStatement.Expression as MethodInvocationExpression
                 : null;
-            if (superInvocationCandidate != null && superInvocationCandidate.Target.NodeType == NodeType.SuperLiteralExpression)
+
+            if (superInvocationCandidate != null && superInvocationCandidate.Target.NodeType == NodeType.SuperLiteralExpression && superInvocationCandidate.Arguments.Count == 0)
             {
                 stmts.Remove(stmts.First);
             }
@@ -1083,28 +1084,44 @@ namespace UnityScript2CSharp
 
         private void WriteCtorChainningFor(Constructor node)
         {
-            var chainnedCtorInvocation = FindChainnedCtorInvocationFor(node);
+            ExpressionStatement parent;
+            var chainnedCtorInvocation = FindChainnedOrBaseCtorInvocationFor(node, out parent);
             if (chainnedCtorInvocation != null)
             {
-                _writer.Write(" : this");
+                var target = chainnedCtorInvocation.Target.NodeType == NodeType.SuperLiteralExpression ? "base" : "this";
+                _writer.Write($" : {target}");
                 WriteParameterList(chainnedCtorInvocation.Arguments);
+                node.Body.Statements.Remove(parent);
             }
         }
 
-        private MethodInvocationExpression FindChainnedCtorInvocationFor(Constructor node)
+        private MethodInvocationExpression FindChainnedOrBaseCtorInvocationFor(Constructor node, out ExpressionStatement parent)
         {
             var candidateStatements = node.Body.Statements.OfType<ExpressionStatement>().Where(candidate => candidate.Expression.NodeType == NodeType.MethodInvocationExpression);
             foreach (var stmt in candidateStatements)
             {
-                var chainnedCtorInvocation = (MethodInvocationExpression)stmt.Expression;
-                var referencedType = chainnedCtorInvocation.Target as ReferenceExpression;
-                if (referencedType == null || referencedType.Name != node.DeclaringType.Name)
+                parent = stmt;
+
+                var candidateInvocation = (MethodInvocationExpression)stmt.Expression;
+                var referencedType = candidateInvocation.Target as ReferenceExpression;
+                if (!IsChainnedCtorInvocation(node, referencedType) && !IsBaseCtorInvocation(candidateInvocation))
                     continue;
 
-                node.Body.Statements.Remove(stmt);
-                return chainnedCtorInvocation;
+                return candidateInvocation;
             }
+
+            parent = null;
             return null;
+        }
+
+        private static bool IsBaseCtorInvocation(MethodInvocationExpression invocation)
+        {
+            return invocation.Target.NodeType == NodeType.SuperLiteralExpression;
+        }
+
+        private static bool IsChainnedCtorInvocation(Constructor ctor, ReferenceExpression referencedType)
+        {
+            return referencedType != null && referencedType.Name == ctor.DeclaringType.Name;
         }
 
         bool NeedParensAround(Expression e)

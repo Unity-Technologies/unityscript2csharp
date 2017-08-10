@@ -298,5 +298,14 @@ namespace UnityScript2CSharp.Tests
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
+
+        [Test]
+        public void Super_Constructor()
+        {
+            var sourceFiles = SingleSourceFor("super_ctor.js", "class super_ctor extends System.IO.StringReader { function super_ctor() { super(\"foo\"); } }");
+            var expectedConvertedContents = SingleSourceFor("super_ctor.cs", DefaultUsingsForClasses + " public class super_ctor : System.IO.StringReader { public super_ctor() : base(\"foo\") { } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
     }
 }
