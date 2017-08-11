@@ -1,5 +1,7 @@
 ### What is this
-Link to blog post.
+A tool to help the conversion from UnityScript -> C#
+
+You can read more about in [this blog post](https://blogs.unity3d.com/pt/2017/08/11/unityscripts-long-ride-off-into-the-sunset/).
 
 ### How to use
 
