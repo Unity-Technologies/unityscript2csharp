@@ -1314,7 +1314,17 @@ namespace UnityScript2CSharp
 
         private void NotSupported(Node node)
         {
-            _writer.Write($"/* Node type not supported yet \n{node.ToCodeString()}\n@{node.LexicalInfo}*/");
+            try
+            {
+                _writer.Write($"/* Node type not supported yet \n{node.ToCodeString()}\n@{node.LexicalInfo}*/");
+            }
+            catch
+            {
+                // for some AST nodes, our updates to the AST breakes some BooPrinterVisitor's assumptions whence we get an exception.
+                // In this case, simply log the node.
+                _writer.Write($"/* Node type not supported yet \n{node}\n@{node.LexicalInfo}*/");
+            }
+
             _unsupportedCount++;
         }
 

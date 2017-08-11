@@ -58,7 +58,7 @@ namespace UnityScript2CSharp.Steps
 
         public override void OnBinaryExpression(BinaryExpression node)
         {
-            if (node.Operator == BinaryOperatorType.Assign && node.Left.ExpressionType == TypeSystemServices.TypeType && node.Right.ExpressionType.EntityType == EntityType.Type && node.Right.Entity.EntityType == EntityType.Type)
+            if (node.Operator == BinaryOperatorType.Assign && node.Left.ExpressionType == TypeSystemServices.TypeType && node.Right.ExpressionType.EntityType == EntityType.Type && (node.Right.Entity != null && node.Right.Entity.EntityType == EntityType.Type))
             {
                 node.Replace(node.Right, CodeBuilder.CreateTypeofExpression((IType)node.Right.Entity));
             }
