@@ -11,7 +11,7 @@ Before running the conversion tool:
 
 1. Keep in mind that you'll have best results (i.e, a smoother conversion process) if your UnityScripts have  *#pragma strict* applied to them.
 
-1. Launch Unity editor and make sure you allow APIUpdater to run and update any obsolete API usages. This is necessary to avoid compilation errors during the conversion.
+1. Launch Unity editor (**preferably, 5.6x**) and make sure you allow APIUpdater to run and update any obsolete API usages. This is necessary to avoid compilation errors during the conversion.
 
 Next step is to run the application (UnityScript2CSharp.exe) passing the path to the project (**-p**) the Unity root installation folder (**-u**) and any additional assembly references (**-r**) used by the UnityScript scripts. Bellow you can find a list of valid command line arguments and their meaning:
 
@@ -91,10 +91,10 @@ In case you want to build the tool locally, *"all"* you need to do is:
 
 All tests (in UnityScript2CSharp.Tests.csproj project) can be run with NUnit runner (recommended to use latest version).
 
-####Windows
+###Windows
 If you have Unity installed most likely you don't need any extra step; in case the tests fail to find Unity installation you can follow steps similar to the ones required for OSX/Linux
 
-####OSX / Linux
+###OSX / Linux
 The easiest way to get the tests running is by setting the environment variable **UNITY_INSTALL_FOLDER** to point to the Unity installation folder and launch **Unit** rest runner.
 
 
@@ -123,4 +123,9 @@ In the example above,  if you run the conversion tool specifying the symbol *SYM
 
 The best way to workaround this limitation is to set-up a local VCS repository (git, mercurial or any other of your option) and run the conversion tool with a set of *symbols* then commit the generated code, revert the changes to the UnityScript scripts (i.e, restore the original scripts), run the conversion tool again with a different set of *Symbols* and merge the new version of the converted scripts.
 
+----
+#### **Q**: The conversion fails with exceptions about failures to find Unity types
+
+#### **A**: During the development process we observed some errors like that when refereincing assemblies from Unity 2017.1/2017.2.
+            Please, try to reference Unity assemblies from Unity 5.6.x  (i.e, pass the path to Untiy 5.6 instalation as the command line argument **-u**).
 ----
