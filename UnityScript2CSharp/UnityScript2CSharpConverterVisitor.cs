@@ -44,7 +44,7 @@ namespace UnityScript2CSharp
 
         public override void OnSimpleTypeReference(SimpleTypeReference node)
         {
-            var typeName = TypeNameFor(node.Entity);
+                        var typeName = TypeNameFor(node.Entity);
             _writer.Write(typeName ?? node.Name);
         }
 
@@ -1207,26 +1207,26 @@ namespace UnityScript2CSharp
                 case "System.Char": return "char";
                 case "System.Double": return "double";
                 case "Boo.Lang.Hash": return "Hashtable";
+
+                case "UnityEngine.Object":
                 case "System.DateTime": return fullName;
             }
-            
-            // UnityEngine.Object always need to be qualified.
-            if (_usings.Contains(typeNamespace) && fullName != "UnityEngine.Object")
+
+            var parentTypes = new List<string>();
+            parentTypes.Add(externalType.Name);
+
+            while (externalType.DeclaringType != null)
             {
-                var parentTypes = new List<string>();
+                externalType = (ExternalType) externalType.DeclaringType;
                 parentTypes.Add(externalType.Name);
-
-                while (externalType.DeclaringType != null)
-                {
-                    externalType = (ExternalType)externalType.DeclaringType;
-                    parentTypes.Add(externalType.Name);
-                }
-                parentTypes.Reverse();
-
-                return string.Join(".", parentTypes);
             }
 
-            return fullName;
+            if (!_usings.Contains(typeNamespace) && !string.IsNullOrEmpty(typeNamespace))
+                parentTypes.Add(typeNamespace);
+                    
+            parentTypes.Reverse();
+
+            return string.Join(".", parentTypes);
         }
 
         private string TypeNameForCallable(ICallableType callable)
