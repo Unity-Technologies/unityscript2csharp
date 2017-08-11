@@ -16,6 +16,9 @@ namespace UnityScript2CSharp.Steps
             for (int i = 0; i < node.Arguments.Count; i++)
             {
                 _currentArgument = node.Arguments[i];
+                if (_currentArgument.ExpressionType.ElementType != TypeSystemServices.TypeType)
+                    continue;
+
                 _currentArgument.Accept(this);
             }
 
@@ -55,7 +58,7 @@ namespace UnityScript2CSharp.Steps
 
         public override void OnBinaryExpression(BinaryExpression node)
         {
-            if (node.Operator == BinaryOperatorType.Assign && node.Left.ExpressionType == TypeSystemServices.TypeType && node.Right.ExpressionType.EntityType == EntityType.Type)
+            if (node.Operator == BinaryOperatorType.Assign && node.Left.ExpressionType == TypeSystemServices.TypeType && node.Right.ExpressionType.EntityType == EntityType.Type && node.Right.Entity.EntityType == EntityType.Type)
             {
                 node.Replace(node.Right, CodeBuilder.CreateTypeofExpression((IType)node.Right.Entity));
             }
@@ -71,7 +74,12 @@ namespace UnityScript2CSharp.Steps
         private bool HasImplictTypeOfExpression(ReferenceExpression node)
         {
             if (_currentArgument != null)
-                return _currentArgument.ExpressionType.ElementType == TypeSystemServices.TypeType && (node.ParentNode.NodeType == NodeType.MethodInvocationExpression || node.ParentNode.NodeType == NodeType.ArrayLiteralExpression);
+            {
+                if (node.Entity.EntityType != EntityType.Type)
+                    return false;
+
+                return node.ParentNode.NodeType == NodeType.MethodInvocationExpression || node.ParentNode.NodeType == NodeType.ArrayLiteralExpression;
+            }
 
             return node.ParentNode.NodeType == NodeType.Attribute || node.ParentNode.NodeType == NodeType.YieldStatement;
         }

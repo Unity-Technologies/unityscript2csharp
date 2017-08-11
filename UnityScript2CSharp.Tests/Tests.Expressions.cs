@@ -257,13 +257,16 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
+        [TestCase("var l = p", "System.Type l = p", TestName = "No false positive - infered local variable")]
+        [TestCase("var l:System.Type = p", "System.Type l = p", TestName = "No false positive - local variable")]
+        [TestCase("SystemTypeAsParameter.SimpleMethod(p)", "SystemTypeAsParameter.SimpleMethod(p)", TestName = "No false positive - parameter")]
         [TestCase("SystemTypeAsParameter.SimpleMethod(int)", "SystemTypeAsParameter.SimpleMethod(typeof(int))")]
         [TestCase("var o = new SystemTypeAsParameter(int)", "SystemTypeAsParameter o = new SystemTypeAsParameter(typeof(int))")]
         [TestCase("var t:System.Type = int", "System.Type t = typeof(int)")]
         public void Implicit_TypeOf_Expressions(string usSnippet, string csSnippet)
         {
-            var sourceFiles = SingleSourceFor("implicit_typeof_expressions.js", $"import UnityScript2CSharp.Tests; class C {{ function F() {{ {usSnippet}; }} }}");
-            var expectedConvertedContents = SingleSourceFor("implicit_typeof_expressions.cs", "using UnityScript2CSharp.Tests; " + DefaultUsingsForClasses + $" public class C : object {{ public virtual void F() {{ {csSnippet}; }} }}");
+            var sourceFiles = SingleSourceFor("implicit_typeof_expressions.js", $"import UnityScript2CSharp.Tests; class C {{ function F(p:System.Type) {{ {usSnippet}; }} }}");
+            var expectedConvertedContents = SingleSourceFor("implicit_typeof_expressions.cs", "using UnityScript2CSharp.Tests; " + DefaultUsingsForClasses + $" public class C : object {{ public virtual void F(System.Type p) {{ {csSnippet}; }} }}");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
