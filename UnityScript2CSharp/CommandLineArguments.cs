@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using CommandLine;
 
@@ -5,7 +6,7 @@ namespace UnityScript2CSharp
 {
     public class CommandLineArguments
     {
-        [Option('u', "unityPath", Required = true, HelpText = "Unity installation path.")]
+        [Option('u', "unityPath", Required = false, HelpText = "Unity installation path. By default the tool will attempt to automatically locate your Unity install.")]
         public string UnityPath { get; set; }
 
         [Option('p', "projectPath", Required = true, HelpText = "Path of project to be converted.")]
