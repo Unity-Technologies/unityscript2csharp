@@ -99,9 +99,35 @@ namespace UnityScript2CSharp
             if (hasErrors)
                 return false;
 
+            if (string.IsNullOrWhiteSpace(options.Value.UnityPath))
+            {
+                switch (Environment.OSVersion.Platform)
+                {
+                    case PlatformID.MacOSX:
+                    case PlatformID.Unix:
+                    {
+                        options.Value.UnityPath = "/Applications/Unity/Unity.app";
+                        break;
+                    }
+                    default:
+                    {
+                        options.Value.UnityPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Unity");
+                        if (!Directory.Exists(options.Value.UnityPath))
+                            options.Value.UnityPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Unity");
+                        break;
+                    }
+                }
+            }
+
+            if (!Directory.Exists(options.Value.UnityPath))
+            {
+                Console.WriteLine($"Couldn't find Unity install at {options.Value.UnityPath}. You need to manually specify the path to your Unity install's root folder using the --unityPath option.");
+                return false;
+            }
+
             // For some reason the command line parser is not detecting missing required arguments if we have multiple options
             // marked as required.
-            if (string.IsNullOrWhiteSpace(options.Value.UnityPath) || string.IsNullOrWhiteSpace(options.Value.ProjectPath))
+            if (string.IsNullOrWhiteSpace(options.Value.ProjectPath))
             {
                 Console.WriteLine(HelpText.AutoBuild(options).ToString());
                 return false;
