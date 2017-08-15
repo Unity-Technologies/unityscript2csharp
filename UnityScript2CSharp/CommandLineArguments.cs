@@ -15,7 +15,7 @@ namespace UnityScript2CSharp
         [Option('r', "references", Min = 0, Max = 100, HelpText = "Assembly references required by the scripts (space separated list).")]
         public IEnumerable<string> References { get; set; }
 
-        [Option('g', "gameassemblies", HelpText = "References previously built game assemblies (Assembly-*.dll under Library/).")] public bool ReferenceGameAssemblies { get; set; }
+        [Option('g', "no-game-assemblies", HelpText = "Ignores previously built game assemblies references (Assembly-*.dll under Library/).")] public bool IgnoreGameAssemblyReferences { get; set; }
 
         [Option('s', "symbols", HelpText = "A (comma separated) list of custom symbols to be defined.")]
         public string SymbolsStr
