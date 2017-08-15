@@ -104,11 +104,13 @@ namespace UnityScript2CSharp
                 switch (Environment.OSVersion.Platform)
                 {
                     case PlatformID.MacOSX:
-                    case PlatformID.Unix:
-                    {
-                        options.Value.UnityPath = "/Applications/Unity/Unity.app";
+                        options.Value.UnityPath = "/Applications/Unity/Unity.app/Contents";
                         break;
-                    }
+
+                    case PlatformID.Unix:
+                        options.Value.UnityPath = "/opt/Unity/Data/Managed";
+                        break;
+
                     default:
                     {
                         options.Value.UnityPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Unity");
@@ -175,7 +177,7 @@ namespace UnityScript2CSharp
             if (verbose)
                 Console.WriteLine("Probbing {0}", testPath);
 
-            var found = Directory.GetFiles(testPath, "*.dll").Any(file => file.Contains("UnityEngine"));
+            var found = Directory.GetFiles(testPath, "*.dll").Any(file => unityProbePathRegex.IsMatch(file));
             if (found)
             {
                 unityAssembliesRootPath = testPath;
@@ -281,6 +283,8 @@ namespace UnityScript2CSharp
                 Console.WriteLine(rts.FileName);
             }
         }
+
+        private static Regex unityProbePathRegex = new Regex("(Data|Contents)(?:\\\\|/)Managed(?:\\\\|/)UnityEngine\\.dll", RegexOptions.Compiled | RegexOptions.IgnoreCase);
     }
 
     internal struct WithConsoleColors : IDisposable
