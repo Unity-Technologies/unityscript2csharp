@@ -1340,21 +1340,23 @@ namespace UnityScript2CSharp
             if (!node.ContainsAnnotation(COMMENT_KEY))
                 return;
 
-            var comment = (Comment)node[COMMENT_KEY];
-            if (comment.AnchorKind != anchorKind)
-                return;
-
-            node.RemoveAnnotation(COMMENT_KEY);
-            if (comment.CommentKind == CommentKind.SingleLine && comment.AnchorKind == AnchorKind.Above)
+            var comments = (IList<Comment>) node[COMMENT_KEY];
+            foreach (var comment in comments.Where(comment => comment.AnchorKind == anchorKind).ToArray())
             {
-                _writer.Write(comment.Token.getText());
-                return;
+                comments.Remove(comment);
+
+                var commentText = comment.Token.getText();
+                if (comment.PreviousToken != null && (comment.PreviousToken.getColumn() + comment.PreviousToken.getText().Length) + 1 <= comment.Token.getColumn())
+                    commentText = " " + commentText;
+
+                if (comment.CommentKind == CommentKind.SingleLine && comment.AnchorKind != AnchorKind.Above)
+                    _writer.WriteBeforeNextNewLine(commentText);
+                else
+                    _writer.Write(commentText);
             }
 
-            if (comment.CommentKind == CommentKind.SingleLine)
-                _writer.WriteBeforeNextNewLine(" " + comment.Token.getText());
-            else
-                _writer.Write(comment.Token.getText());
+            if (comments.Count == 0)
+                node.RemoveAnnotation(COMMENT_KEY);
         }
 
         private void ExpectedNotSupported(Node node)

@@ -721,10 +721,11 @@ namespace UnityScript2CSharp.Tests
             // Multiline
             comment = "/* C1 */ ";
 
-            yield return new TestCaseData($"function F() {{ return 42; {comment}\r\n}}", $"public virtual int F() {{ return 42{comment}; }}").SetName("Right MultiLine");
+            yield return new TestCaseData($"function F() {{ return 42; {comment}\r\n}}", $"public virtual int F() {{ return 42 {comment}; }}").SetName("Right MultiLine");
             yield return new TestCaseData($"{comment}\nfunction F() {{ }}", $"{comment}\npublic virtual void F() {{ }}").SetName("Above MultiLine");
             yield return new TestCaseData($"function F() {{ var x = 42;\r\n{comment}\r\nreturn x; }}", $"public virtual int F() {{ int x = 42;\r\n{comment}\r\nreturn x; }}").SetName("Below MultiLine");
             yield return new TestCaseData($"function F() : int {{ {comment} return 42; }}", $"public virtual int F() {{ {comment} return 42; }}").SetName("Left MultiLine");
+            yield return new TestCaseData("function F() : int { return 42 /*1*/; /*2*/ }", "public virtual int F() { return 42 /*1*/ /*2*/; }").SetName("Multiple multiLine comments");
         }
 
         private static IEnumerable CSharpNonClashingKeywords()

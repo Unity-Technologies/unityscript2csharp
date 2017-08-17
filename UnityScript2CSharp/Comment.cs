@@ -20,8 +20,11 @@ namespace UnityScript2CSharp
 
             CommentKind = commentKind;
             Token = token;
+            PreviousToken = previous;
             AnchorKind = AnchorKind.None;
         }
+
+        public IToken PreviousToken { get; private set; }
 
         public static implicit operator bool(Comment c)
         {

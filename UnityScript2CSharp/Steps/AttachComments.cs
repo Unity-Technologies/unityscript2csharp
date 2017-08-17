@@ -10,6 +10,7 @@ namespace UnityScript2CSharp.Steps
     {
         private readonly IDictionary<string, IList<Comment>> _comments;
         private IList<Comment> _sourceComments;
+        private const string COMMENTS_KEY = "COMMENTS";
 
         public AttachComments(IDictionary<string, IList<Comment>> comments)
         {
@@ -25,10 +26,9 @@ namespace UnityScript2CSharp.Steps
 
             foreach (var comment in _sourceComments.ToArray())
             {
-                // attach  them to best candidates
-                comment.BestCandidate.Annotate("COMMENTS", comment);
+                var attachedComments = GetAttachedCommentsFrom(comment.BestCandidate);
+                attachedComments.Add(comment);
 
-                // Remove comment from list of comments to be processed
                 _sourceComments.Remove(comment);
             }
         }
@@ -37,10 +37,9 @@ namespace UnityScript2CSharp.Steps
         {
             foreach (var comment in _sourceComments.ToArray())
             {
-                // attach  them to best candidates
-                comment.BestCandidate.Annotate("COMMENTS", comment);
+                var attachedComments = GetAttachedCommentsFrom(comment.BestCandidate);
+                attachedComments.Add(comment);
 
-                // Remove comment from list of comments to be processed
                 _sourceComments.Remove(comment);
             }
 
@@ -55,17 +54,16 @@ namespace UnityScript2CSharp.Steps
                 return;
             }
 
-            // find comments above *node*
+            // find comments above *node* and either attach them to current node (in case they are orphans) or to the *best candidate* so far.
             var commentsAboveNode = _sourceComments.Where(candidate => candidate.Token.getLine() < node.LexicalInfo.Line).ToArray();
             foreach (var comment in commentsAboveNode)
             {
                 comment.BestCandidate = comment.BestCandidate ?? node;
                 comment.AnchorKind = AnchorKind.Above;
-                
-                // attach  them to best candidates
-                comment.BestCandidate.Annotate("COMMENTS", comment);
 
-                // Remove comment from list of comments to be processed
+                var attachedComments = GetAttachedCommentsFrom(comment.BestCandidate);
+                attachedComments.Add(comment);
+
                 _sourceComments.Remove(comment);
             }
 
@@ -106,6 +104,16 @@ namespace UnityScript2CSharp.Steps
             }
 
             base.OnNode(node);
+        }
+
+        private IList<Comment> GetAttachedCommentsFrom(Node node)
+        {
+            if (!node.ContainsAnnotation(COMMENTS_KEY))
+            {
+                node.Annotate(COMMENTS_KEY, new List<Comment>());
+            }
+
+            return (IList<Comment>) node[COMMENTS_KEY];
         }
 
         private int TokenLengthFor(Node node)
