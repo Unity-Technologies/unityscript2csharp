@@ -107,6 +107,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AnchorKind.cs" />
+    <Compile Include="Comment.cs" />
+    <Compile Include="CommentKind.cs" />
+    <Compile Include="Steps\AttachComments.cs" />
     <Compile Include="BlockIdentation.cs" />
     <Compile Include="CommandLineArguments.cs" />
     <Compile Include="EntityExtensions.cs" />

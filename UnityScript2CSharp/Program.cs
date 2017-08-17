@@ -85,7 +85,7 @@ namespace UnityScript2CSharp
                     if (options.Value.Verbose)
                     {
                         Console.WriteLine();
-                        Console.WriteLine(ex.ToString());
+                        Console.WriteLine(ex.StackTrace);
                     }
 
                     if (!options.Value.IgnoreErrors)
