@@ -74,7 +74,8 @@ namespace UnityScript2CSharp.Tests
                 var generatedScript = File.ReadAllText(convertedFilePath);
                 generatedScript = r.Replace(generatedScript, " ");
 
-                Assert.That(generatedScript.Trim(), Is.EqualTo(expectedConverted[i].Contents), Environment.NewLine + "Converted: " + Environment.NewLine + generatedScript + Environment.NewLine);
+                var expected = r.Replace(expectedConverted[i].Contents, " "); 
+                Assert.That(generatedScript.Trim(), Is.EqualTo(expected), Environment.NewLine + "Converted: " + Environment.NewLine + generatedScript + Environment.NewLine);
             }
         }
 
@@ -100,6 +101,8 @@ namespace UnityScript2CSharp.Tests
                 $@"{UnityInstallFolder}Data\Managed\UnityEngine.dll",
                 $@"{UnityInstallFolder}Data\Managed\UnityEditor.dll",
             };
+
+            sourceFiles = sourceFiles.Select(s => new SourceFile(Path.Combine(Directory.GetCurrentDirectory(), s.FileName), s.Contents)).ToList();
 
             converter.Convert(sourceFiles, new[] {"MY_DEFINE"}, referencedAssemblies, onScriptConverted);
 

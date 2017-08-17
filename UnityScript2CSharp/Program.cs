@@ -36,6 +36,8 @@ namespace UnityScript2CSharp
 
             try
             {
+                options.Value.ProjectPath = Path.GetFullPath(options.Value.ProjectPath);
+
                 // We should ignore scripts in assets/WebGLTemplates
                 var ignoredPathsRegex = new Regex(string.Format("assets{0}{0}webgltemplates{0}{0}", Path.DirectorySeparatorChar), RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
