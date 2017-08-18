@@ -61,7 +61,7 @@ namespace UnityScript2CSharp
                     DumpScripts("Plugin/Editor", pluginEditorScritps);
                 }
 
-                var converter = new UnityScript2CSharpConverter(options.Value.IgnoreErrors);
+                var converter = new UnityScript2CSharpConverter(options.Value.IgnoreErrors, options.Value.SkipComments, options.Value.ShowOrphanComments);
 
                 var references = AssemblyReferencesFrom(options);
 

@@ -7,7 +7,7 @@ namespace UnityScript2CSharp
     {
         private StringBuilder _builder;
         private int _indentation;
-        private string _x;
+        private string _toBeWrittenBeforeNextNewLine;
         private static readonly string _newLine = Environment.NewLine;
 
         public Writer(string contents)
@@ -49,10 +49,10 @@ namespace UnityScript2CSharp
 
         public void WriteLine()
         {
-            if (_x != null)
+            if (_toBeWrittenBeforeNextNewLine != null)
             {
-                _builder.Append(_x);
-                _x = null;
+                _builder.Append(_toBeWrittenBeforeNextNewLine);
+                _toBeWrittenBeforeNextNewLine = null;
             }
 
             _builder.Append(_newLine);
@@ -66,7 +66,7 @@ namespace UnityScript2CSharp
         }
         public void WriteBeforeNextNewLine(string text)
         {
-            _x = text;
+            _toBeWrittenBeforeNextNewLine = text;
         }
 
         public static string NewLine {  get { return _newLine; } }

@@ -30,6 +30,10 @@ namespace UnityScript2CSharp
 
         [Option('i',  HelpText = "Ignore compilation errors. This allows the conversion process to continue instead of aborting.")] public bool IgnoreErrors { get; set; }
 
+        [Option(HelpText = "Do not try to preserve comments (Use this option if processing comments cause any issues).", DefaultValue = false)] public bool SkipComments { get; set; }
+
+        [Option(HelpText = "Show a list of comments that were not written to the converted sources (used to help identifying issues with the comment processing code).")] public bool ShowOrphanComments { get; set; }
+
         [Option('n',  "dry-run", HelpText = "Run the conversion but do not change/create any files on disk.")] public bool DryRun { get; set; }
 
         [Option('v', "verbose", HelpText = "Show verbose messages.")] public bool Verbose { get; set; }

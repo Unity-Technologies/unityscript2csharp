@@ -20,15 +20,20 @@ namespace UnityScript2CSharp
     class UnityScript2CSharpConverter
     {
         private readonly bool _ignoreErrors;
+        private readonly bool _skipComments;
+        private readonly bool _checkOrphanComments;
 
-        public UnityScript2CSharpConverter(bool ignoreErrors = false)
+        public UnityScript2CSharpConverter(bool ignoreErrors = false,  bool skipComments = false, bool checkOrphanComments = true)
         {
             _ignoreErrors = ignoreErrors;
+            _skipComments = skipComments;
+            _checkOrphanComments = checkOrphanComments;
         }
 
         public void Convert(IEnumerable<SourceFile> inputs, IEnumerable<string> definedSymbols, IEnumerable<string> referencedAssemblies, Action<string, string, int> onScriptConverted)
         {
-            var comp = CreatAndInitializeCompiler(inputs, definedSymbols, referencedAssemblies);
+            var comments = CollectCommentsFrom(inputs, definedSymbols);
+            var comp = CreatAndInitializeCompiler(inputs, definedSymbols, referencedAssemblies, comments);
             var result = comp.Run();
 
             HandleCompilationResult(result);
@@ -36,14 +41,20 @@ namespace UnityScript2CSharp
             var visitor = new UnityScript2CSharpConverterVisitor();
             visitor.ScriptConverted += onScriptConverted;
             result.CompileUnit.Accept(visitor);
+
+            if (_checkOrphanComments)
+                result.CompileUnit.Accept(new OrphanCommentVisitor());
         }
 
         private IDictionary<string, IList<Comment>> CollectCommentsFrom(IEnumerable<SourceFile> inputs, IEnumerable<string> definedSymbols)
         {
             var comments = new Dictionary<string, IList<Comment>>();
-            foreach (var source in inputs)
+            if (!_skipComments)
             {
-                comments[source.FileName] = CollectCommentsFor(source, definedSymbols);
+                foreach (var source in inputs)
+                {
+                    comments[source.FileName] = CollectCommentsFor(source, definedSymbols);
+                }
             }
 
             return comments;
@@ -68,18 +79,10 @@ namespace UnityScript2CSharp
             IToken last = null;
             while (token != null && token.Type != UnityScriptLexer.EOF)
             {
-                IToken next = null;
                 try
                 {
                     if (token.Type == UnityScriptLexer.SL_COMMENT || token.Type == UnityScriptLexer.ML_COMMENT)
-                    {
-                        next = lexer.nextToken();
-                        if (next.getLine() > token.getLine())
-                        {
-                            token.setText(token.getText() + Environment.NewLine);
-                        }
                         comments.Add(new Comment(token, token.Type == UnityScriptLexer.SL_COMMENT ? CommentKind.SingleLine : CommentKind.MultipleLine, last));
-                    }
                     else
                         last = token;
                 }
@@ -91,7 +94,7 @@ namespace UnityScript2CSharp
                 {
                     try
                     {
-                        token = next ?? lexer.nextToken();
+                        token = lexer.nextToken();
                     }
                     catch (TokenStreamRecognitionException tre)
                     {
@@ -129,12 +132,11 @@ namespace UnityScript2CSharp
             CompilerWarnings = CompilerWarnings ?? new List<string>();
         }
 
-        internal UnityScriptCompiler CreatAndInitializeCompiler(IEnumerable<SourceFile> inputs, IEnumerable<string> definedSymbols, IEnumerable<string> referencedAssemblies)
+        internal UnityScriptCompiler CreatAndInitializeCompiler(IEnumerable<SourceFile> inputs, IEnumerable<string> definedSymbols, IEnumerable<string> referencedAssemblies, IDictionary<string, IList<Comment>> comments)
         {
             _compiler = new UnityScriptCompiler();
             _compiler.Parameters.TabSize = 4;
-            var comments = CollectCommentsFrom(inputs, definedSymbols);
-
+        
             SetupCompilerParameters(definedSymbols, referencedAssemblies);
             SetupCompilerPipeline(comments);
             foreach (var input in inputs)
@@ -226,7 +228,9 @@ namespace UnityScript2CSharp
             adjustedPipeline.Add(new PromoteImplicitBooleanConversionsToExplicitComparisons());
             adjustedPipeline.Add(new InstanceToTypeReferencedStaticMemberReference());
             adjustedPipeline.Add(new TransforwmKnownUnityEngineMethods());
-            adjustedPipeline.Add(new AttachComments(comments));
+
+            if (!_skipComments)
+                adjustedPipeline.Add(new AttachComments(comments));
 
             _compiler.Parameters.Pipeline = adjustedPipeline;
         }

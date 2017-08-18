@@ -24,25 +24,12 @@ namespace UnityScript2CSharp.Steps
 
             base.OnModule(node);
 
-            foreach (var comment in _sourceComments.ToArray())
-            {
-                var attachedComments = GetAttachedCommentsFrom(comment.BestCandidate);
-                attachedComments.Add(comment);
-
-                _sourceComments.Remove(comment);
-            }
+            AttachRemainingComments(node);
         }
 
         public override void LeaveMethod(Method node)
         {
-            foreach (var comment in _sourceComments.ToArray())
-            {
-                var attachedComments = GetAttachedCommentsFrom(comment.BestCandidate);
-                attachedComments.Add(comment);
-
-                _sourceComments.Remove(comment);
-            }
-
+            AttachRemainingComments(node);
             base.LeaveMethod(node);
         }
 
@@ -58,14 +45,21 @@ namespace UnityScript2CSharp.Steps
             var commentsAboveNode = _sourceComments.Where(candidate => candidate.Token.getLine() < node.LexicalInfo.Line).ToArray();
             foreach (var comment in commentsAboveNode)
             {
-                comment.BestCandidate = comment.BestCandidate ?? node;
-                comment.AnchorKind = AnchorKind.Above;
-
+                if (comment.BestCandidate == null)
+                {
+                    comment.BestCandidate = node;
+                    comment.AnchorKind = AnchorKind.Above;
+                }
+                
                 var attachedComments = GetAttachedCommentsFrom(comment.BestCandidate);
                 attachedComments.Add(comment);
 
                 _sourceComments.Remove(comment);
             }
+
+
+            if (node.Entity != null && node.Entity.FullName == "Boo.Lang.Builtins.array")
+                return;
 
             // Handle comments in the same line
             var foundOnSameLine = _sourceComments.Where(candidate => candidate.Token.getLine() == node.LexicalInfo.Line);
@@ -75,55 +69,79 @@ namespace UnityScript2CSharp.Steps
                 {
                     comment.BestCandidate = node;
                     comment.Distance = Int32.MaxValue;
-                    continue;
                 }
 
+                int distance = 0;
                 if (node.LexicalInfo.Column > comment.Token.getColumn()) // comment is on left of the AST node
                 {
                     var endOfCommentCollumn = comment.Token.getColumn() + comment.Token.getText().Length;
-                    var distance = node.LexicalInfo.Column - endOfCommentCollumn;
-                    if (distance <= comment.Distance)
+                    distance = node.LexicalInfo.Column - endOfCommentCollumn;
+                    if (distance <= comment.Distance && distance >= 0)
                     {
                         comment.BestCandidate = node;
                         comment.Distance = distance;
                         comment.AnchorKind = AnchorKind.Left;
                     }
                 }
-                else
+                
+                // comment sould be on RIGHT of the AST node
+                var endOfNodeColumn = EndColumnOf(node);
+                distance = comment.Token.getColumn() - endOfNodeColumn;
+                if (distance <= comment.Distance && (distance >= 0 || comment.CommentKind == CommentKind.SingleLine))
                 {
-                    // comment is on RIGHT of the AST node
-                    var endOfNodeColumn = node.LexicalInfo.Column + TokenLengthFor(node);
-                    var distance = comment.Token.getColumn() - endOfNodeColumn;
-                    if (distance <= comment.Distance)
-                    {
-                        comment.BestCandidate= node;
-                        comment.Distance = distance;
-                        comment.AnchorKind = AnchorKind.Right;
-                    }
+                    comment.BestCandidate = node;
+                    comment.Distance = distance;
+                    comment.AnchorKind = AnchorKind.Right;
                 }
             }
 
             base.OnNode(node);
         }
 
+        private void AttachRemainingComments(Node node)
+        {
+            if (!node.EndSourceLocation.IsValid)
+                return;
+
+            foreach (var comment in _sourceComments.Where(comment => comment.Token.getLine() <= node.EndSourceLocation.Line).ToArray())
+            {
+                if (comment.BestCandidate == null)
+                {
+                    comment.BestCandidate = node;
+                    comment.AnchorKind = AnchorKind.Below;
+                }
+
+                var attachedComments = GetAttachedCommentsFrom(comment.BestCandidate);
+                attachedComments.Add(comment);
+                _sourceComments.Remove(comment);
+            }
+        }
+
         private IList<Comment> GetAttachedCommentsFrom(Node node)
         {
             if (!node.ContainsAnnotation(COMMENTS_KEY))
             {
-                node.Annotate(COMMENTS_KEY, new List<Comment>());
+                node.Annotate(COMMENTS_KEY, new System.Collections.Generic.List<Comment>());
             }
 
             return (IList<Comment>) node[COMMENTS_KEY];
         }
 
-        private int TokenLengthFor(Node node)
+        // This method returns an aproximation for the *end column* of the passed node.
+        private int EndColumnOf(Node node)
         {
             switch (node.NodeType)
             {
-                case NodeType.ReturnStatement: return "return".Length;
+                case NodeType.BinaryExpression: return ((BinaryExpression) node).Left.LexicalInfo.Column + node.ToString().Length;
+                case NodeType.ReturnStatement: return node.LexicalInfo.Column + "return".Length;
+                case NodeType.IfStatement:
+                {
+                    var condition = ((IfStatement)node).Condition;
+                    return condition.LexicalInfo.Column + condition.ToString().Length + 1; // consider the ')' after the condition
+                }
             }
 
-            return node.ToString().Length;
+            return node.LexicalInfo.Column + node.ToString().Length;
         }
     }
 }

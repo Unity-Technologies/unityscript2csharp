@@ -44,12 +44,12 @@ namespace UnityScript2CSharp
 
         public override void OnSimpleTypeReference(SimpleTypeReference node)
         {
-            HandleComments(node, AnchorKind.Left);
+            WriteComments(node, AnchorKind.Left);
 
             var typeName = TypeNameFor(node.Entity);
             _writer.Write(typeName ?? node.Name);
 
-            HandleComments(node, AnchorKind.Right);
+            WriteComments(node, AnchorKind.Right);
         }
 
         private void _builderAppendIdented(string str)
@@ -75,12 +75,20 @@ namespace UnityScript2CSharp
 
         public override void OnArrayTypeReference(ArrayTypeReference node)
         {
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
+
             node.ElementType.Accept(this);
             _writer.Write($"[{new String(',', (int) (node.Rank.Value -1))}]");
+
+            WriteComments(node, AnchorKind.Right);
         }
 
         public override void OnCallableTypeReference(CallableTypeReference node)
         {
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
+
             var types = new List<TypeReference>(node.Parameters.Select(p => p.Type));
             if (node.ReturnType == null)
             {
@@ -98,6 +106,7 @@ namespace UnityScript2CSharp
                 WriteCommaSeparatedList(types);
                 _writer.Write(">");
             }
+            WriteComments(node, AnchorKind.Right);
         }
 
         public override void OnGenericTypeReference(GenericTypeReference node)
@@ -147,6 +156,9 @@ namespace UnityScript2CSharp
             if (IsSyntheticDelegateUsedByCallable(node))
                 return;
 
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
+
             _writer.WriteLine("[System.Serializable]"); // Every class in UnityScript is serializable
 
             WriteAttributes(node.Attributes);
@@ -159,6 +171,8 @@ namespace UnityScript2CSharp
             _writer.WriteLine("{");
             WriteMembersOf(node);
             _writer.WriteLine("}");
+
+            WriteComments(node, AnchorKind.Right);
         }
 
         public override void OnStructDefinition(StructDefinition node)
@@ -186,8 +200,15 @@ namespace UnityScript2CSharp
 
         public override void OnEnumDefinition(EnumDefinition node)
         {
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
+
             _writer.IndentNextWrite = true;
-            _writer.WriteLine($"{ModifiersToString(node.Modifiers)} enum {node.Name}");
+            _writer.Write($"{ModifiersToString(node.Modifiers)} enum {node.Name}");
+
+            WriteComments(node, AnchorKind.Right);
+
+            _writer.WriteLine();
             _writer.WriteLine("{");
             using (new BlockIdentation(_writer))
             {
@@ -203,16 +224,24 @@ namespace UnityScript2CSharp
 
         public override void OnEnumMember(EnumMember node)
         {
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
+
             _writer.Write(node.Name);
             if (node.Initializer != null)
             {
                 _writer.Write(" = ");
                 node.Initializer.Accept(this);
             }
+
+            WriteComments(node, AnchorKind.Right);
         }
 
         public override void OnField(Field node)
         {
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
+
             WriteAttributes(node.Attributes);
 
             _builderAppend(ModifiersToString(node.Modifiers));
@@ -225,6 +254,8 @@ namespace UnityScript2CSharp
             {
                 _builderAppend(" = ");
             }
+
+            WriteComments(node, AnchorKind.Right);
 
             _writer.WriteLine(";");
         }
@@ -256,10 +287,14 @@ namespace UnityScript2CSharp
 
         public override void OnMethod(Method node)
         {
-            HandleComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
 
             if (node.Name == "Main" || node.IsSynthetic)
+            {
+                WriteComments(node, AnchorKind.Below);
                 return;
+            }
 
             WriteAttributes(node.Attributes);
 
@@ -273,10 +308,14 @@ namespace UnityScript2CSharp
             _builderAppend(node.Name);
             WriteParameterList(node.Parameters);
 
+            WriteComments(node, AnchorKind.Right);
+
             if (isInterface)
                 _writer.WriteLine(";");
             else
                 node.Body.Accept(this);
+
+            WriteComments(node, AnchorKind.Below);
         }
 
         public override bool EnterBlock(Block node)
@@ -311,6 +350,9 @@ namespace UnityScript2CSharp
 
         public override void OnConstructor(Constructor node)
         {
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
+
             var stmts = CtorStatementsWithoutParameterlessSuperInvocation(node);
             if (stmts.Count == 0)
                 return;
@@ -325,6 +367,8 @@ namespace UnityScript2CSharp
 
             WriteCtorChainningFor(node);
 
+            WriteComments(node, AnchorKind.Right);
+
             node.Body.Accept(this);
         }
 
@@ -336,9 +380,14 @@ namespace UnityScript2CSharp
 
         public override void OnParameterDeclaration(ParameterDeclaration node)
         {
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
+
             node.Type.Accept(this);
             _builderAppend(' ');
             _builderAppend(node.Name);
+
+            WriteComments(node, AnchorKind.Right);
         }
 
         public override void OnGenericParameterDeclaration(GenericParameterDeclaration node)
@@ -373,6 +422,9 @@ namespace UnityScript2CSharp
 
         public override void OnAttribute(Attribute node)
         {
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
+
             if (node.Name == "System.SerializableAttribute")
                 return;
 
@@ -397,6 +449,8 @@ namespace UnityScript2CSharp
                 _writer.Write(")");
 
             _writer.WriteLine("]");
+
+            WriteComments(node, AnchorKind.Right);
         }
 
         public override void OnStatementModifier(StatementModifier node)
@@ -462,9 +516,14 @@ namespace UnityScript2CSharp
 
         public override void OnIfStatement(IfStatement node)
         {
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
+
             _builderAppendIdented("if (");
             node.Condition.Accept(this);
             _builderAppend(")");
+
+            WriteComments(node, AnchorKind.Right);
 
             node.TrueBlock.Accept(this);
             if (node.FalseBlock != null)
@@ -482,6 +541,9 @@ namespace UnityScript2CSharp
 
         public override void OnForStatement(ForStatement node)
         {
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
+
             _writer.Write("foreach (");
             VisitPossibleClashingDeclaration(node.Declarations[0]);
 
@@ -489,42 +551,56 @@ namespace UnityScript2CSharp
             node.Iterator.Accept(this);
             _writer.Write(")");
 
+            WriteComments(node, AnchorKind.Right);
+
             node.Block.Accept(this);
         }
 
         public override void OnWhileStatement(WhileStatement node)
         {
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
+
             _builderAppendIdented("while (");
             node.Condition.Accept(this);
             _builderAppend(")");
+
+            WriteComments(node, AnchorKind.Right);
+
             node.Block.Accept(this);
         }
 
         public override void OnBreakStatement(BreakStatement node)
         {
-            HandleComments(node, AnchorKind.Left);
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
+
             _writer.WriteLine("break;");
-            HandleComments(node, AnchorKind.Right);
+
+            WriteComments(node, AnchorKind.Right);
         }
 
         public override void OnContinueStatement(ContinueStatement node)
         {
-            HandleComments(node, AnchorKind.Left);
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
+
             _writer.WriteLine("continue;");
-            HandleComments(node, AnchorKind.Right);
+
+            WriteComments(node, AnchorKind.Right);
         }
 
         public override void OnReturnStatement(ReturnStatement node)
         {
-            HandleComments(node, AnchorKind.Above);
-            HandleComments(node, AnchorKind.Left);
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
 
             if (TryHandleYieldBreak(node))
                 return;
 
             _builderAppendIdented("return");
 
-            HandleComments(node, AnchorKind.Right);
+            WriteComments(node, AnchorKind.Right);
 
             if (node.Expression != null)
             {
@@ -537,6 +613,9 @@ namespace UnityScript2CSharp
 
         public override void OnYieldStatement(YieldStatement node)
         {
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
+
             _writer.Write("yield return ");
             if (node.Expression != null)
                 node.Expression.Accept(this);
@@ -544,6 +623,8 @@ namespace UnityScript2CSharp
                 _writer.Write("null");
 
             _writer.WriteLine(";");
+
+            WriteComments(node, AnchorKind.Right);
         }
 
         public override void OnRaiseStatement(RaiseStatement node)
@@ -560,11 +641,15 @@ namespace UnityScript2CSharp
 
         public override void OnExpressionStatement(ExpressionStatement node)
         {
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
+
             node.Expression.Accept(this);
             if (!_lastIgnored)
                 _writer.WriteLine(";");
 
             _lastIgnored = false;
+            WriteComments(node, AnchorKind.Right);
         }
 
         public override void OnOmittedExpression(OmittedExpression node)
@@ -575,14 +660,22 @@ namespace UnityScript2CSharp
 
         public override void OnExpressionPair(ExpressionPair node)
         {
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
+
             node.First.Accept(this);
             _writer.Write(" = ");
             node.Second.Accept(this);
+
+            WriteComments(node, AnchorKind.Right);
         }
 
         public override void OnMethodInvocationExpression(MethodInvocationExpression node)
         {
-            if (node.Target.Entity != null && node.Target.Entity.EntityType == EntityType.BuiltinFunction)
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
+
+            if (node.Target.Entity != null && node.Target.Entity.EntityType == EntityType.BuiltinFunction && node.Target.Entity != BuiltinFunction.Quack)
             {
                 _lastIgnored = true;
                 return;
@@ -618,6 +711,8 @@ namespace UnityScript2CSharp
             WriteParameterList(node.Arguments, refOutWriter);
 
             _brackets.Pop();
+
+            WriteComments(node, AnchorKind.Right);
         }
 
         private void HandleNewExpression(MethodInvocationExpression node)
@@ -630,6 +725,9 @@ namespace UnityScript2CSharp
 
         public override void OnUnaryExpression(UnaryExpression node)
         {
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
+
             bool postOperator = AstUtil.IsPostUnaryOperator(node.Operator);
             var operatorText = node.Operator == UnaryOperatorType.LogicalNot ? "!" : BooPrinterVisitor.GetUnaryOperatorText(node.Operator);
             if (!postOperator)
@@ -641,10 +739,15 @@ namespace UnityScript2CSharp
             {
                 _builderAppend(operatorText);
             }
+
+            WriteComments(node, AnchorKind.Right);
         }
 
         public override void OnBinaryExpression(BinaryExpression node)
         {
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
+
             var needParensAround = node.Operator != BinaryOperatorType.Assign;
             if (needParensAround)
             {
@@ -671,10 +774,15 @@ namespace UnityScript2CSharp
                     _writer.Write($" {CSharpOperatorFor(node.Operator)} ");
                     node.Right.Accept(this);
                 });
+
+            WriteComments(node, AnchorKind.Right);
         }
 
         public override void OnConditionalExpression(ConditionalExpression node)
         {
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
+
             var parent = node.ParentNode as BinaryExpression;
             var needsParens = parent != null && (parent.Right != node || parent.Operator != BinaryOperatorType.Assign);
 
@@ -686,15 +794,21 @@ namespace UnityScript2CSharp
                     _writer.Write(" : ");
                     VisitWrapping(node.FalseValue, node.FalseValue.NodeType == NodeType.ConditionalExpression, "(", ")");
                 });
+
+            WriteComments(node, AnchorKind.Right);
         }
 
         public override void OnReferenceExpression(ReferenceExpression node)
         {
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
+
             if (node.ContainsAnnotation("VALUE_TYPE_INITIALIZATON_MARKER"))
             {
                 _writer.Write("default(");
                 _writer.Write(TypeNameFor(node.Entity) ?? node.Name);
                 _writer.Write(")");
+                WriteComments(node, AnchorKind.Right);
                 return;
             }
 
@@ -702,16 +816,26 @@ namespace UnityScript2CSharp
                 _writer.Write("object");
             else
                 _writer.Write(TypeNameFor(node.Entity) ?? node.Name);
+
+            WriteComments(node, AnchorKind.Right);
         }
 
         public override void OnMemberReferenceExpression(MemberReferenceExpression node)
         {
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
+
             node.Target.Accept(this);
             _builderAppend($".{node.Name}");
+
+            WriteComments(node, AnchorKind.Right);
         }
 
         public override void OnGenericReferenceExpression(GenericReferenceExpression node)
         {
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
+
             if (node.IsArrayInstantiation())
             {
                 _writer.Write("new ");
@@ -731,6 +855,8 @@ namespace UnityScript2CSharp
                     _writer.Write(", ");
             }
             _writer.Write(">");
+
+            WriteComments(node, AnchorKind.Right);
         }
 
         public override void OnQuasiquoteExpression(QuasiquoteExpression node)
@@ -760,9 +886,10 @@ namespace UnityScript2CSharp
                 value.Replace(replacement.Key, replacement.Value);
             }
 
-            HandleComments(node, AnchorKind.Left);
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
             _writer.Write($"\"{value}\"");
-            HandleComments(node, AnchorKind.Right);
+            WriteComments(node, AnchorKind.Right);
         }
 
         public override void OnCharLiteralExpression(CharLiteralExpression node)
@@ -779,44 +906,50 @@ namespace UnityScript2CSharp
 
         public override void OnIntegerLiteralExpression(IntegerLiteralExpression node)
         {
-            HandleComments(node, AnchorKind.Left);
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
             _writer.Write(node.Value);
-            HandleComments(node, AnchorKind.Right);
+            WriteComments(node, AnchorKind.Right);
         }
 
         public override void OnDoubleLiteralExpression(DoubleLiteralExpression node)
         {
-            HandleComments(node, AnchorKind.Left);
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
             _writer.Write($"{node.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}f");
-            HandleComments(node, AnchorKind.Right);
+            WriteComments(node, AnchorKind.Right);
         }
 
         public override void OnNullLiteralExpression(NullLiteralExpression node)
         {
-            HandleComments(node, AnchorKind.Left);
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
             _builderAppend("null");
-            HandleComments(node, AnchorKind.Right);
+            WriteComments(node, AnchorKind.Right);
         }
 
         public override void OnSelfLiteralExpression(SelfLiteralExpression node)
         {
-            HandleComments(node, AnchorKind.Left);
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
             _writer.Write("this");
-            HandleComments(node, AnchorKind.Right);
+            WriteComments(node, AnchorKind.Right);
         }
 
         public override void OnSuperLiteralExpression(SuperLiteralExpression node)
         {
-            HandleComments(node, AnchorKind.Left);
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
             _writer.Write("base");
-            HandleComments(node, AnchorKind.Right);
+            WriteComments(node, AnchorKind.Right);
         }
 
         public override void OnBoolLiteralExpression(BoolLiteralExpression node)
         {
-            HandleComments(node, AnchorKind.Left);
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
             _writer.Write(node.Value ? "true" : "false");
-            HandleComments(node, AnchorKind.Right);
+            WriteComments(node, AnchorKind.Right);
         }
 
         public override void OnRELiteralExpression(RELiteralExpression node)
@@ -869,6 +1002,9 @@ namespace UnityScript2CSharp
 
         public override void OnHashLiteralExpression(HashLiteralExpression node)
         {
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
+
             _writer.Write("new Hashtable() {");
             foreach (var item in node.Items)
             {
@@ -879,6 +1015,8 @@ namespace UnityScript2CSharp
                 _writer.Write(" }, ");
             }
             _writer.Write("}");
+
+            WriteComments(node, AnchorKind.Right);
         }
 
         public override void OnListLiteralExpression(ListLiteralExpression node)
@@ -916,23 +1054,36 @@ namespace UnityScript2CSharp
 
         public override void OnSlicingExpression(SlicingExpression node)
         {
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
+
             node.Target.Accept(this);
             _writer.Write("[");
             WriteCommaSeparatedList(node.Indices);
             _writer.Write("]");
+
+            WriteComments(node, AnchorKind.Right);
         }
 
         public override void OnTryCastExpression(TryCastExpression node)
         {
             var isTargetOfMemberReferenceExpression = NeedParensAround(node);
 
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
+
             VisitWrapping(node.Target, isTargetOfMemberReferenceExpression, "(");
             _writer.Write(" as ");
             VisitWrapping(node.Type, isTargetOfMemberReferenceExpression, posfix: ")");
+
+            WriteComments(node, AnchorKind.Right);
         }
 
         public override void OnCastExpression(CastExpression node)
         {
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
+
             WrapWith(NeedParensAround(node), "(", ")", delegate
                 {
                     _writer.Write("(");
@@ -944,13 +1095,20 @@ namespace UnityScript2CSharp
                         node.Target.Accept(this);
                     });
                 });
+
+            WriteComments(node, AnchorKind.Right);
         }
 
         public override void OnTypeofExpression(TypeofExpression node)
         {
+            WriteComments(node, AnchorKind.Above);
+            WriteComments(node, AnchorKind.Left);
+
             _writer.Write("typeof(");
             node.Type.Accept(this);
             _writer.Write(")");
+
+            WriteComments(node, AnchorKind.Right);
         }
 
         public override void OnCustomStatement(CustomStatement node)
@@ -978,9 +1136,9 @@ namespace UnityScript2CSharp
 
             if (isReturningIEnumerable)
             {
-                HandleComments(node, AnchorKind.Left);
+                WriteComments(node, AnchorKind.Left);
                 _writer.Write("yield break;");
-                HandleComments(node, AnchorKind.Right);
+                WriteComments(node, AnchorKind.Right);
                 _writer.WriteLine();
             }
 
@@ -1335,7 +1493,7 @@ namespace UnityScript2CSharp
             return "Label" + label.Replace("$", "_");
         }
 
-        private void HandleComments(Node node, AnchorKind anchorKind)
+        private void WriteComments(Node node, AnchorKind anchorKind)
         {
             if (!node.ContainsAnnotation(COMMENT_KEY))
                 return;
@@ -1353,6 +1511,9 @@ namespace UnityScript2CSharp
                     _writer.WriteBeforeNextNewLine(commentText);
                 else
                     _writer.Write(commentText);
+
+                if (comment.AnchorKind == AnchorKind.Above)
+                    _writer.WriteLine();
             }
 
             if (comments.Count == 0)
