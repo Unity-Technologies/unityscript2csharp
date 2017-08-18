@@ -53,6 +53,9 @@ namespace UnityScript2CSharp
                 var pluginScripts = allFiles.Where(scriptPath => scriptPath.Contains(pluginSubFolder) && !scriptPath.Contains(pluginsEditorSubFolder)).Select(scriptPath => new SourceFile { FileName = scriptPath, Contents = File.ReadAllText(scriptPath) }).ToArray();
                 var pluginEditorScritps  = allFiles.Where(scriptPath => scriptPath.Contains(pluginsEditorSubFolder)).Select(scriptPath => new SourceFile { FileName = scriptPath, Contents = File.ReadAllText(scriptPath) }).ToArray();
 
+                if (!ValidateAssemblyReferences(options))
+                    return -1;
+
                 if (options.Value.DumpScripts)
                 {
                     DumpScripts("Runtime", runtimeScripts);
@@ -63,17 +66,12 @@ namespace UnityScript2CSharp
 
                 var converter = new UnityScript2CSharpConverter(options.Value.IgnoreErrors, options.Value.SkipComments, options.Value.ShowOrphanComments);
 
-                var references = AssemblyReferencesFrom(options);
-
-                if (!ValidateAssemblyReferences(options))
-                    return -1;
-
                 var referencedSymbols = new List<SymbolInfo>();
 
-                ConvertScripts("runtime", runtimeScripts, converter, references, options.Value, referencedSymbols);
-                ConvertScripts("editor", editorScripts, converter, references, options.Value, referencedSymbols);
-                ConvertScripts("plugins", pluginScripts, converter, references, options.Value, referencedSymbols);
-                ConvertScripts("editor plugins", pluginEditorScritps, converter, references, options.Value, referencedSymbols);
+                ConvertScripts(AssemblyType.Runtime, runtimeScripts, converter, options.Value, referencedSymbols);
+                ConvertScripts(AssemblyType.Editor, editorScripts, converter, options.Value, referencedSymbols);
+                ConvertScripts(AssemblyType.RuntimePlugins, pluginScripts, converter, options.Value, referencedSymbols);
+                ConvertScripts(AssemblyType.EditorPlugins, pluginEditorScritps, converter, options.Value, referencedSymbols);
 
                 ReportConversionFinished(runtimeScripts.Length + editorScripts.Length + pluginScripts.Length, referencedSymbols, options.Value.ProjectPath);
             }
@@ -137,22 +135,23 @@ namespace UnityScript2CSharp
             return true;
         }
 
-        private static List<string> AssemblyReferencesFrom(ParserResult<CommandLineArguments> options)
+        private static List<string> AssemblyReferencesFor(CommandLineArguments options, AssemblyType assemblyType)
         {
-            var references = new List<string>(options.Value.References);
+            var references = new List<string>(options.References);
             references.Add(typeof(object).Assembly.Location);
 
-            AppendGameAssemblies(references, options);
+            if (!options.IgnoreGameAssemblyReferences)
+                AppendGameAssemblies(references, options, assemblyType);
 
-            if (string.IsNullOrWhiteSpace(options.Value.UnityPath))
+            if (string.IsNullOrWhiteSpace(options.UnityPath))
                 return references;
 
             string unityAssembliesRootPath;
-            if (!TryFindUnityAssembliesRoot(options.Value.UnityPath, options.Value.Verbose, out unityAssembliesRootPath))
+            if (!TryFindUnityAssembliesRoot(options.UnityPath, options.Verbose, out unityAssembliesRootPath))
             {
                 var previous = Console.ForegroundColor;
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Could not find UnityEngine.dll / UnityEditor.dll in {0}", options.Value.UnityPath);
+                Console.WriteLine("Could not find UnityEngine.dll / UnityEditor.dll in {0}", options.UnityPath);
                 Console.ForegroundColor = previous;
                 return references;
             }
@@ -163,12 +162,34 @@ namespace UnityScript2CSharp
             return references;
         }
 
-        private static void AppendGameAssemblies(List<string> references, ParserResult<CommandLineArguments> options)
+        private static void AppendGameAssemblies(List<string> references, CommandLineArguments options, AssemblyType assemblyType)
         {
-            if (!options.Value.ReferenceGameAssemblies)
-                return;
+            var assemblies = new string[0];
+            var libraryScriptAssembliesFolder = Path.Combine(options.ProjectPath, "Library/ScriptAssemblies");
 
-            var assemblies = Directory.GetFiles(Path.Combine(options.Value.ProjectPath, "Library/ScriptAssemblies"), "*-firstpass.dll");
+            switch (assemblyType)
+            {
+                case AssemblyType.RuntimePlugins:
+                    return;
+
+                case AssemblyType.EditorPlugins:
+                case AssemblyType.Runtime:
+                    assemblies = Directory.GetFiles(libraryScriptAssembliesFolder, "*-firstpass.dll");
+                    break;
+
+                case AssemblyType.Editor:
+                    assemblies = Directory.GetFiles(libraryScriptAssembliesFolder, "*.dll").Where(assemblyPath => assemblyPath.Contains("-firstpass") || !assemblyPath.Contains("-Editor")).ToArray();
+                    break;
+            }
+
+            if (assemblies.Length == 0)
+            {
+                using (WithConsoleColors.SetTo(ConsoleColor.DarkYellow, ConsoleColor.Black))
+                {
+                    Console.WriteLine($"Warning: No game assemblies found in '{libraryScriptAssembliesFolder}'. Conversion may not be possible");
+                }
+            }
+
             references.AddRange(assemblies);
         }
 
@@ -209,9 +230,12 @@ namespace UnityScript2CSharp
             return ok;
         }
 
-        private static void ConvertScripts(string scriptType, IList<SourceFile> scripts, UnityScript2CSharpConverter converter, IEnumerable<string> references, CommandLineArguments args, List<SymbolInfo> referencedSymbols)
+        //private static void ConvertScripts(string scriptType, IList<SourceFile> scripts, UnityScript2CSharpConverter converter, IEnumerable<string> references, CommandLineArguments args, List<SymbolInfo> referencedSymbols)
+        private static void ConvertScripts(AssemblyType assemblyType, IList<SourceFile> scripts, UnityScript2CSharpConverter converter, CommandLineArguments args, List<SymbolInfo> referencedSymbols)
         {
-            Console.WriteLine("Converting '{0}' ({1} scripts)", scriptType, scripts.Count);
+            IEnumerable<string> references = AssemblyReferencesFor(args, assemblyType);
+
+            Console.WriteLine("Converting '{0}' ({1} scripts)", assemblyType, scripts.Count);
 
             Action<string, string, int> handler = (scriptPath, context, unsupportedCount) => HandleConvertedScript(scriptPath, context, args.RemoveOriginalFiles, args.Verbose, unsupportedCount);
             if (args.DryRun)
@@ -283,6 +307,14 @@ namespace UnityScript2CSharp
                 Console.WriteLine(rts.FileName);
             }
         }
+    }
+
+    enum AssemblyType
+    {
+        Editor,
+        Runtime,
+        RuntimePlugins,
+        EditorPlugins
     }
 
     internal struct WithConsoleColors : IDisposable
