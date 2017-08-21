@@ -36,6 +36,8 @@ namespace UnityScript2CSharp
 
             try
             {
+                options.Value.ProjectPath = Path.GetFullPath(options.Value.ProjectPath);
+
                 // We should ignore scripts in assets/WebGLTemplates
                 var ignoredPathsRegex = new Regex(string.Format("assets{0}{0}webgltemplates{0}{0}", Path.DirectorySeparatorChar), RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
@@ -62,7 +64,7 @@ namespace UnityScript2CSharp
                     DumpScripts("Plugin/Editor", pluginEditorScritps);
                 }
 
-                var converter = new UnityScript2CSharpConverter(options.Value.IgnoreErrors);
+                var converter = new UnityScript2CSharpConverter(options.Value.IgnoreErrors, options.Value.SkipComments, options.Value.ShowOrphanComments);
 
                 var referencedSymbols = new List<SymbolInfo>();
 
@@ -81,7 +83,7 @@ namespace UnityScript2CSharp
                     if (options.Value.Verbose)
                     {
                         Console.WriteLine();
-                        Console.WriteLine(ex.ToString());
+                        Console.WriteLine(ex.StackTrace);
                     }
 
                     if (!options.Value.IgnoreErrors)

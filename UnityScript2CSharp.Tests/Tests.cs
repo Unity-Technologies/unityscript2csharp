@@ -23,12 +23,12 @@ namespace UnityScript2CSharp.Tests
 
             var referencedSymbol = converter.ReferencedPreProcessorSymbols.ElementAt(0);
             Assert.That(referencedSymbol.LineNumber, Is.EqualTo(2));
-            Assert.That(referencedSymbol.Source, Is.EqualTo("preprocessor.js"));
+            Assert.That(referencedSymbol.Source, Contains.Substring("preprocessor.js"));
             Assert.That(referencedSymbol.PreProcessorExpression, Is.EqualTo(condition));
 
             referencedSymbol = converter.ReferencedPreProcessorSymbols.ElementAt(1);
             Assert.That(referencedSymbol.LineNumber, Is.EqualTo(4));
-            Assert.That(referencedSymbol.Source, Is.EqualTo("preprocessor.js"));
+            Assert.That(referencedSymbol.Source, Contains.Substring("preprocessor.js"));
             Assert.That(referencedSymbol.PreProcessorExpression, Is.EqualTo("FOO"));
         }
 
@@ -684,6 +684,16 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
+        [Test, TestCaseSource("CommentPreservingScenarios")]
+        public void Comments_Are_Preserved(string usCode, string csCode)
+        {
+            var fileName = TestContext.CurrentContext.Test.Name.Replace(" ", "_") + "_comments";
+            var sourceFiles = new[] { new SourceFile { FileName = fileName + ".js", Contents = usCode } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = fileName + ".cs", Contents = DefaultGeneratedClass + fileName + " : MonoBehaviour { " + csCode + " }" } };
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
         [Test]
         public void Test_Formatting()
         {
@@ -697,6 +707,28 @@ namespace UnityScript2CSharp.Tests
         [Test]
         public void Scripts_In_Plugin_Folder_Works()
         {
+        }
+
+        private static IEnumerable CommentPreservingScenarios()
+        {
+            // Singleline
+            var comment = "// C1";
+
+            yield return new TestCaseData($"function F() {{ return 42; {comment}\r\n }}", $"public virtual int F() {{ return 42; {comment} }}").SetName("Right SingleLine");
+            yield return new TestCaseData($"function F() {{ var x = 42;\r\n{comment}\r\nreturn x; }}", $"public virtual int F() {{ int x = 42;\r\n{comment}\r\nreturn x; }}").SetName("Above SingleLine 2");
+            yield return new TestCaseData($"{comment}\r\nfunction F() {{ }}", $"{comment}\r\npublic virtual void F() {{ }}").SetName("Above SingleLine");
+            
+            // Multiline
+            comment = "/* C1 */";
+
+            yield return new TestCaseData($"function F() {{ return 42; {comment}\r\n}}", $"public virtual int F() {{ return 42 {comment}; }}").SetName("Right MultiLine");
+            yield return new TestCaseData($"{comment}\r\nfunction F() {{ }}", $"{comment}\r\npublic virtual void F() {{ }}").SetName("Above MultiLine");
+            yield return new TestCaseData($"function F() {{ var x = 42;\r\n{comment}\r\nreturn x; }}", $"public virtual int F() {{ int x = 42;\r\n{comment}\r\nreturn x; }}").SetName("Below MultiLine");
+            yield return new TestCaseData($"function F() : int {{ {comment} return 42; }}", $"public virtual int F() {{ {comment} return 42; }}").SetName("Left MultiLine");
+            yield return new TestCaseData("function F() : int { return 42 /*1*/; /*2*/ }", "public virtual int F() { return 42 /*1*/ /*2*/; }").SetName("Multiple multiLine comments");
+
+            yield return new TestCaseData("function F(/*B*/ i:int /*A*/ ) { }", "public virtual void F(/*B*/int /*A*/ i) { }").SetName("In Parameters");
+            yield return new TestCaseData("// 1\r\nprivate var i:int;\r\nfunction F() { }", "// 1\r\nprivate int i;\r\npublic virtual void F() { }").SetName("Above Fields");
         }
 
         private static IEnumerable CSharpNonClashingKeywords()

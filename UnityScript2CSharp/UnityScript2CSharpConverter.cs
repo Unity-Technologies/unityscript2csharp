@@ -3,12 +3,15 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using antlr;
 using Boo.Lang.Compiler;
 using Boo.Lang.Compiler.IO;
 using Boo.Lang.Compiler.Steps;
 using Boo.Lang.Compiler.TypeSystem.Services;
+using Boo.Lang.Useful.IO;
 using Mono.Cecil;
 using UnityScript;
+using UnityScript.Parser;
 using UnityScript.Steps;
 using UnityScript2CSharp.Steps;
 
@@ -17,15 +20,20 @@ namespace UnityScript2CSharp
     class UnityScript2CSharpConverter
     {
         private readonly bool _ignoreErrors;
+        private readonly bool _skipComments;
+        private readonly bool _checkOrphanComments;
 
-        public UnityScript2CSharpConverter(bool ignoreErrors = false)
+        public UnityScript2CSharpConverter(bool ignoreErrors = false,  bool skipComments = false, bool checkOrphanComments = true)
         {
             _ignoreErrors = ignoreErrors;
+            _skipComments = skipComments;
+            _checkOrphanComments = checkOrphanComments;
         }
 
         public void Convert(IEnumerable<SourceFile> inputs, IEnumerable<string> definedSymbols, IEnumerable<string> referencedAssemblies, Action<string, string, int> onScriptConverted)
         {
-            var comp = CreatAndInitializeCompiler(inputs, definedSymbols, referencedAssemblies);
+            var comments = CollectCommentsFrom(inputs, definedSymbols);
+            var comp = CreatAndInitializeCompiler(inputs, definedSymbols, referencedAssemblies, comments);
             var result = comp.Run();
 
             HandleCompilationResult(result);
@@ -33,6 +41,68 @@ namespace UnityScript2CSharp
             var visitor = new UnityScript2CSharpConverterVisitor();
             visitor.ScriptConverted += onScriptConverted;
             result.CompileUnit.Accept(visitor);
+
+            if (_checkOrphanComments)
+                result.CompileUnit.Accept(new OrphanCommentVisitor());
+        }
+
+        private IDictionary<string, IList<Comment>> CollectCommentsFrom(IEnumerable<SourceFile> inputs, IEnumerable<string> definedSymbols)
+        {
+            var comments = new Dictionary<string, IList<Comment>>();
+            if (!_skipComments)
+            {
+                foreach (var source in inputs)
+                {
+                    comments[source.FileName] = CollectCommentsFor(source, definedSymbols);
+                }
+            }
+
+            return comments;
+        }
+        
+        private IList<Comment> CollectCommentsFor(SourceFile sourceFile, IEnumerable<string> definedSymbols)
+        {
+            var comments = new List<Comment>();
+            var p = new PreProcessor();
+            p.PreserveLines = true;
+            foreach (var symbol in definedSymbols)
+            {
+                p.Define(symbol);
+            }
+
+            var result = p.Process(sourceFile.Contents);
+
+            var lexer = UnityScriptParser.UnityScriptLexerFor(new StringReader(result), sourceFile.FileName, 4);
+            lexer.PreserveComments = true;
+
+            var token = lexer.nextToken();
+            IToken last = null;
+            while (token != null && token.Type != UnityScriptLexer.EOF)
+            {
+                try
+                {
+                    if (token.Type == UnityScriptLexer.SL_COMMENT || token.Type == UnityScriptLexer.ML_COMMENT)
+                        comments.Add(new Comment(token, token.Type == UnityScriptLexer.SL_COMMENT ? CommentKind.SingleLine : CommentKind.MultipleLine, last));
+                    else
+                        last = token;
+                }
+                catch (TokenStreamRecognitionException tre)
+                {
+                    //TODO: Collect errors from this phase so we can at least show them to user ?
+                }
+                finally
+                {
+                    try
+                    {
+                        token = lexer.nextToken();
+                    }
+                    catch (TokenStreamRecognitionException tre)
+                    {
+                    }
+                }
+            }
+
+            return comments;
         }
 
         public IEnumerable<string> CompilerErrors { get; private set; }
@@ -45,8 +115,7 @@ namespace UnityScript2CSharp
         {
             if (result.Errors.Count > 0)
             {
-                CompilerErrors = result.Errors.Select(error => error.ToString());
-
+                CompilerErrors = result.Errors.Select(error => error.ToString(!_ignoreErrors));
                 if (!_ignoreErrors)
                 {
                     var errorsAsString = result.Errors.Aggregate("\t", (acc, curr) => acc + Environment.NewLine + "\t" + curr + Environment.NewLine + "\t" + curr.InnerException);
@@ -63,11 +132,13 @@ namespace UnityScript2CSharp
             CompilerWarnings = CompilerWarnings ?? new List<string>();
         }
 
-        internal UnityScriptCompiler CreatAndInitializeCompiler(IEnumerable<SourceFile> inputs, IEnumerable<string> definedSymbols, IEnumerable<string> referencedAssemblies)
+        internal UnityScriptCompiler CreatAndInitializeCompiler(IEnumerable<SourceFile> inputs, IEnumerable<string> definedSymbols, IEnumerable<string> referencedAssemblies, IDictionary<string, IList<Comment>> comments)
         {
             _compiler = new UnityScriptCompiler();
-            SetupCompilerParameters(definedSymbols, referencedAssemblies, null);
-            SetupCompilerPipeline();
+            _compiler.Parameters.TabSize = 4;
+        
+            SetupCompilerParameters(definedSymbols, referencedAssemblies);
+            SetupCompilerPipeline(comments);
             foreach (var input in inputs)
             {
                 _compiler.Parameters.Input.Add(new StringInput(input.FileName, input.Contents));
@@ -76,7 +147,7 @@ namespace UnityScript2CSharp
             return _compiler;
         }
 
-        protected virtual void SetupCompilerParameters(IEnumerable<string> definedSymbols, IEnumerable<string> assemblyReferences, IList<Assembly> actualAssemblyReferences)
+        protected virtual void SetupCompilerParameters(IEnumerable<string> definedSymbols, IEnumerable<string> assemblyReferences)
         {
             _compiler.Parameters.GenerateInMemory = true;
 
@@ -110,7 +181,7 @@ namespace UnityScript2CSharp
             throw new Exception("MonoBehaviour not found");
         }
 
-        protected virtual void SetupCompilerPipeline()
+        protected virtual void SetupCompilerPipeline(IDictionary<string, IList<Comment>> comments)
         {
             var pipeline = new Boo.Lang.Compiler.Pipelines.Compile { BreakOnErrors = false };
 
@@ -157,6 +228,9 @@ namespace UnityScript2CSharp
             adjustedPipeline.Add(new PromoteImplicitBooleanConversionsToExplicitComparisons());
             adjustedPipeline.Add(new InstanceToTypeReferencedStaticMemberReference());
             adjustedPipeline.Add(new TransforwmKnownUnityEngineMethods());
+
+            if (!_skipComments)
+                adjustedPipeline.Add(new AttachComments(comments));
 
             _compiler.Parameters.Pipeline = adjustedPipeline;
         }

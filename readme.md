@@ -27,6 +27,8 @@ Next step is to run the application (UnityScript2CSharp.exe) passing the path to
 | -o, –deleteOriginals | Deletes original files (default is to rename to .js.old)|
 | -d | Dumps out the list of scripts being processed|
 |-i	| Ignore compilation errors. This allows the conversion process to continue instead of aborting. |
+| --skipcomments | (Default: False) Do not try to preserve comments (Use this option if processing comments cause any issues).
+| --showorphancomments  | Show a list of comments that were not written to the converted sources (used to help identifying issues with the comment processing code).
 |-v, –verbose |	Show verbose messages |
 |-n, –dry-run |	Run the conversion but do not change/create any files on disk. |
 |–help	| Display this help screen. |
@@ -37,7 +39,7 @@ UnityScript2CSharp.exe **-p** m:\Work\Repo\4-0_AngryBots **-u** M:\Work\Repo\uni
 
 ### Limitations
 
-* Comments are not preserved
+* Some comments may not be preserved or be misplaced.
 
 * *Guarded code* (#if … )
 

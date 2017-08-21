@@ -7,13 +7,12 @@ namespace UnityScript2CSharp
     {
         private StringBuilder _builder;
         private int _indentation;
-        private int _checkPoint;
+        private string _toBeWrittenBeforeNextNewLine;
         private static readonly string _newLine = Environment.NewLine;
 
         public Writer(string contents)
         {
             _builder = new StringBuilder(contents);
-            _checkPoint = 0;
         }
 
         public bool IndentNextWrite { get; set; }
@@ -32,28 +31,30 @@ namespace UnityScript2CSharp
 
         public void Write(string str)
         {
-            _checkPoint = _builder.Length;
             IndentIfRequired();
             _builder.Append(str);
         }
 
         public void Write(char ch)
         {
-            _checkPoint = _builder.Length;
             IndentIfRequired();
             _builder.Append(ch);
         }
 
         internal void Write(long l)
         {
-            _checkPoint = _builder.Length;
             IndentIfRequired();
             _builder.Append(l);
         }
 
         public void WriteLine()
         {
-            _checkPoint = _builder.Length;
+            if (_toBeWrittenBeforeNextNewLine != null)
+            {
+                _builder.Append(_toBeWrittenBeforeNextNewLine);
+                _toBeWrittenBeforeNextNewLine = null;
+            }
+
             _builder.Append(_newLine);
             IndentNextWrite = true;
         }
@@ -63,15 +64,13 @@ namespace UnityScript2CSharp
             Write(str);
             WriteLine();
         }
-
-        public static string NewLine {  get { return _newLine; } }
-
-        public void DiscardLastWrittenText()
+        public void WriteBeforeNextNewLine(string text)
         {
-            _builder.Remove(_checkPoint, _builder.Length - _checkPoint);
-            _checkPoint = _builder.Length;
+            _toBeWrittenBeforeNextNewLine = text;
         }
 
+        public static string NewLine {  get { return _newLine; } }
+        
         private void IndentIfRequired()
         {
             if (IndentNextWrite)
