@@ -68,6 +68,7 @@ namespace UnityScript2CSharp.Steps
                 if (!comment)
                 {
                     comment.BestCandidate = node;
+                    comment.AnchorKind = AnchorKind.Right;
                     comment.Distance = Int32.MaxValue;
                 }
 
@@ -87,7 +88,7 @@ namespace UnityScript2CSharp.Steps
                 // comment sould be on RIGHT of the AST node
                 var endOfNodeColumn = EndColumnOf(node);
                 distance = comment.Token.getColumn() - endOfNodeColumn;
-                if (distance <= comment.Distance && (distance >= 0 || comment.CommentKind == CommentKind.SingleLine))
+                if (distance <= comment.Distance && distance >= 0)
                 {
                     comment.BestCandidate = node;
                     comment.Distance = distance;

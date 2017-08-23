@@ -717,7 +717,7 @@ namespace UnityScript2CSharp.Tests
             yield return new TestCaseData($"function F() {{ return 42; {comment}\r\n }}", $"public virtual int F() {{ return 42; {comment} }}").SetName("Right SingleLine");
             yield return new TestCaseData($"function F() {{ var x = 42;\r\n{comment}\r\nreturn x; }}", $"public virtual int F() {{ int x = 42;\r\n{comment}\r\nreturn x; }}").SetName("Above SingleLine 2");
             yield return new TestCaseData($"{comment}\r\nfunction F() {{ }}", $"{comment}\r\npublic virtual void F() {{ }}").SetName("Above SingleLine");
-            
+
             // Multiline
             comment = "/* C1 */";
 
@@ -729,6 +729,10 @@ namespace UnityScript2CSharp.Tests
 
             yield return new TestCaseData("function F(/*B*/ i:int /*A*/ ) { }", "public virtual void F(/*B*/int /*A*/ i) { }").SetName("In Parameters");
             yield return new TestCaseData("// 1\r\nprivate var i:int;\r\nfunction F() { }", "// 1\r\nprivate int i;\r\npublic virtual void F() { }").SetName("Above Fields");
+            yield return new TestCaseData($"function F({comment}) {{ }}", $"public virtual void F(){comment} {{ }}").SetName("Inside empty parameter list same line");
+            yield return new TestCaseData($"function F({comment})\r\n {{ }}", $"public virtual void F(){comment} {{ }}").SetName("Inside Empty parameter list next line");
+
+            yield return new TestCaseData($"function F() {{ for(var i in {comment} [1, 2]) {{ }} }}", $"public virtual void F() {{ foreach (int i in new int {comment}[] {{1, 2}}) {{ }} }}").SetName("After 'in' in a foreach");
         }
 
         private static IEnumerable CSharpNonClashingKeywords()

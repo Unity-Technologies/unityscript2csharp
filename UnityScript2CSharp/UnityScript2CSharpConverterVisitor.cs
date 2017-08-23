@@ -1035,6 +1035,8 @@ namespace UnityScript2CSharp
         {
             _writer.Write("new ");
             node.Type.ElementType.Accept(this);
+
+            WriteComments(node.Type.Rank, AnchorKind.All); // Make sure comments attached to the rank are processed (even tough we don't use the rank in the conveted source)
             _writer.Write("[] {");
             WriteCommaSeparatedList(node.Items);
             _writer.Write("}");
@@ -1493,13 +1495,13 @@ namespace UnityScript2CSharp
             return "Label" + label.Replace("$", "_");
         }
 
-        private void WriteComments(Node node, AnchorKind anchorKind)
+        private void WriteComments(Node node, AnchorKind anchorKindSelector)
         {
             if (!node.ContainsAnnotation(COMMENT_KEY))
                 return;
 
             var comments = (IList<Comment>) node[COMMENT_KEY];
-            foreach (var comment in comments.Where(comment => comment.AnchorKind == anchorKind).ToArray())
+            foreach (var comment in comments.Where(comment => (comment.AnchorKind & anchorKindSelector) == comment.AnchorKind).ToArray())
             {
                 comments.Remove(comment);
 
