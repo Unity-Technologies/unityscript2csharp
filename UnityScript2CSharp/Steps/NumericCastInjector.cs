@@ -39,17 +39,17 @@ namespace UnityScript2CSharp.Steps
             base.OnMethodInvocationExpression(node);
         }
 
-        private bool NeedsCastWithPotentialDataLoss(IType paramType, IType argumentType)
+        private bool NeedsCastWithPotentialDataLoss(IType targetType, IType sourceType)
         {
-            if (paramType != argumentType
-                && paramType != TypeSystemServices.ObjectType
-                && !argumentType.IsNull()
-                && !paramType.IsAssignableFrom(argumentType))
+            if (targetType != sourceType
+                && targetType != TypeSystemServices.ObjectType
+                && !sourceType.IsNull()
+                && !targetType.IsAssignableFrom(sourceType))
             {
-                if (TypeSystemServices.IsNumber(paramType) && TypeSystemServices.IsNumber(argumentType))
-                    return !IsWideningPromotion(paramType, argumentType);
+                if (TypeSystemServices.IsNumber(targetType) && TypeSystemServices.IsNumber(sourceType))
+                    return !IsWideningPromotion(targetType, sourceType);
 
-                return true;
+                return TypeSystemServices.IsNumber(targetType) ^ TypeSystemServices.IsNumber(sourceType);
             }
 
             return false;

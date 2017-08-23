@@ -61,7 +61,7 @@ namespace UnityScript2CSharp.Tests
         [TestCase("int", "if(++p) {} ", "if (++p != 0) { }", TestName = "Pre Increment")]
         [TestCase("System.IComparable", "if(p && (p.CompareTo(1) || !p)) {} ", "if ((p != null) && ((p.CompareTo(1) != 0) || (p == null))) { }", TestName = "Method in multiple binary expressions")]
         [TestCase("System.IComparable", "if(p.CompareTo(1)) {} ", "if (p.CompareTo(1) != 0) { }", TestName = "Simple Method")]
-        [TestCase("System.IComparable", "var ba = System.Collections.BitArray(10); ba.SetAll(p && p.CompareTo(1));", "BitArray ba = new System.Collections.BitArray(10); ba.SetAll((bool) ((p != null) && (p.CompareTo(1) != 0)));", TestName = "As method parameter")]
+        [TestCase("System.IComparable", "var ba = System.Collections.BitArray(10); ba.SetAll(p && p.CompareTo(1));", "BitArray ba = new System.Collections.BitArray(10); ba.SetAll((p != null) && (p.CompareTo(1) != 0));", TestName = "As method parameter")]
 
         [TestCase("System.Object", "while (p && System.Environment.ProcessorCount > 10) {}", "while ((p != null) && (System.Environment.ProcessorCount > 10)) { }", "object", TestName = "Object as LRS of Binary Expression")]
         [TestCase("System.Object", "while(p) {}", "while (p != null) { }", "object")]
@@ -304,6 +304,15 @@ namespace UnityScript2CSharp.Tests
         {
             var sourceFiles = SingleSourceFor("super_ctor.js", "class super_ctor extends System.IO.StringReader { function super_ctor() { super(\"foo\"); } }");
             var expectedConvertedContents = SingleSourceFor("super_ctor.cs", DefaultUsingsForClasses + " public class super_ctor : System.IO.StringReader { public super_ctor() : base(\"foo\") { } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
+        public void Return_In_Constructors_Does_Not_Cause_Crashes()
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "return_in_ctors.js", Contents = "#pragma strict\r\npublic class ReturnInCtor { function ReturnInCtor() { return; } }" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "return_in_ctors.cs", Contents = DefaultUsingsForClasses + " public class ReturnInCtor : object { public ReturnInCtor() { return; } }" } };
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }

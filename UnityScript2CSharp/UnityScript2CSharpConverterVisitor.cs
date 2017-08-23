@@ -760,10 +760,7 @@ namespace UnityScript2CSharp
 
             WrapWith(needParensAround, "(", ")", delegate()
                 {
-                    var isDeclarationStatement = node.Operator == BinaryOperatorType.Assign &&
-                        node.Left.NodeType == NodeType.ReferenceExpression && node.IsSynthetic;
-
-                    if (isDeclarationStatement)
+                    if (node.IsDeclarationStatement())
                     {
                         var localDeclaration = (InternalLocal)node.Left.Entity;
                         localDeclaration.OriginalDeclaration.Type.Accept(this);
@@ -1091,7 +1088,7 @@ namespace UnityScript2CSharp
                     _writer.Write("(");
                     node.Type.Accept(this);
                     _writer.Write(") ");
-                    var needParentheses = node.Target.NodeType == NodeType.BinaryExpression || node.Target.NodeType == NodeType.ConditionalExpression;
+                    var needParentheses = node.Target.NodeType == NodeType.BinaryExpression || node.Target.NodeType == NodeType.ConditionalExpression || node.Target.NodeType == NodeType.BlockExpression;
                     WrapWith(needParentheses, "(", ")", delegate
                     {
                         node.Target.Accept(this);
@@ -1134,6 +1131,9 @@ namespace UnityScript2CSharp
         private bool TryHandleYieldBreak(ReturnStatement node)
         {
             var declaringMethod = node.GetAncestor<Method>();
+            if (declaringMethod.IsConstructor())
+                return false;
+
             var isReturningIEnumerable = node.Expression == null && declaringMethod.ReturnType.Matches(new SimpleTypeReference(typeof(System.Collections.IEnumerator).FullName));
 
             if (isReturningIEnumerable)
@@ -1208,7 +1208,7 @@ namespace UnityScript2CSharp
 
         private void WriteCommaSeparatedList<T>(IEnumerable<T> items, Action<T, int> preWrite = null) where T : Node
         {
-            preWrite = preWrite ?? delegate(T t, int i) {};
+            preWrite = preWrite ?? delegate {};
             var index = 0;
             var last = items.LastOrDefault();
             foreach (var item in items)

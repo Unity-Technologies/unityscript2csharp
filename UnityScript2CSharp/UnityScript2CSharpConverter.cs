@@ -206,6 +206,7 @@ namespace UnityScript2CSharp
             adjustedPipeline.Replace(typeof(ProcessUnityScriptMethods), new SelectiveUnaryExpressionExpansionProcessUnityScriptMethods());
             adjustedPipeline.Insert(0, new PreProcessCollector(_referencedPreProcessorSymbols));
 
+            adjustedPipeline.Add(new FixFunctionReferences());
             adjustedPipeline.Add(new CSharpReservedKeywordIdentifierClashFix());
             adjustedPipeline.Add(new CtorFieldInitializationFix());
             adjustedPipeline.Add(new RemoveUnnecessaryCastInArrayInstantiation());
