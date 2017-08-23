@@ -760,10 +760,7 @@ namespace UnityScript2CSharp
 
             WrapWith(needParensAround, "(", ")", delegate()
                 {
-                    var isDeclarationStatement = node.Operator == BinaryOperatorType.Assign &&
-                        node.Left.NodeType == NodeType.ReferenceExpression && node.IsSynthetic;
-
-                    if (isDeclarationStatement)
+                    if (node.IsDeclarationStatement())
                     {
                         var localDeclaration = (InternalLocal)node.Left.Entity;
                         localDeclaration.OriginalDeclaration.Type.Accept(this);

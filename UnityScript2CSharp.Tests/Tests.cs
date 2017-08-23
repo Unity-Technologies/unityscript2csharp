@@ -694,6 +694,33 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
+        [TestCase("var f:Function = System.Console.Clear", "System.Delegate f = (System.Action) System.Console.Clear", TestName = "Non Generic Action Local")]
+        [TestCase("var f:Function = M2; f = f;", "System.Delegate f = (System.Action<object>) this.M2; f = f", TestName = "Action Local Assignment")]
+        [TestCase("var f:Function = M2", "System.Delegate f = (System.Action<object>) this.M2", TestName = "Action Local")]
+        [TestCase("var f:Function; f = M2", "System.Delegate f = null; f = (System.Action<object>) this.M2", TestName = "Action Assignment")]
+        [TestCase("M(M2)", "this.M((System.Action<object>) this.M2)", TestName = "Action Parameter")]
+        [TestCase("M(function(o:System.Object) { Debug.Log(o); })", "this.M((System.Action<object>) ((object o) => { Debug.Log(o); } ))", TestName = "Action Parameter Lambda")]
+        [TestCase("var f:Function = M3", "System.Delegate f = (System.Func<int>) this.M3", TestName = "Func Initialized Local")]
+        [TestCase("var f:Function; f = M3", "System.Delegate f = null; f = (System.Func<int>) this.M3", TestName = "Func Assignment")]
+        [TestCase("M(M3)", "this.M((System.Func<int>) this.M3)", TestName = "Func Parameter")]
+        [TestCase("M(function(s:String) s.Length)", "this.M((System.Func<string, int>) ((string s) => { return s.Length; } ))", TestName = "Func Parameter Lambda")]
+        public void Test_Function(string usExp, string csharpExp)
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "function.js", Contents = $"function M(f : Function) {{ f(10); f (f); }} function M2(o: System.Object) {{ {usExp}; }} function M3() {{ return 42; }}" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "function.cs", Contents = DefaultGeneratedClass + $"function : MonoBehaviour {{ public virtual void M(System.Delegate f) {{ f.DynamicInvoke(new object[] {{10}}); f.DynamicInvoke(new object[] {{f}}); }} public virtual void M2(object o) {{ {csharpExp}; }} public virtual int M3() {{ return 42; }} }}" } };
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
+        public void Test_Function_Fields()
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "function_field.js", Contents = "public var field_func: Function; public var field_sa : System.Action; function M2() {} function M() { field_func = M2; field_sa = M2; }" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "function_field.cs", Contents = DefaultGeneratedClass + "function_field : MonoBehaviour { public System.Delegate field_func; public System.Action field_sa; public virtual void M2() { } public virtual void M() { this.field_func = (System.Action) this.M2; this.field_sa = this.M2; } }" } };
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
         [Test]
         public void Test_Formatting()
         {

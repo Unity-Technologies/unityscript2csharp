@@ -30,5 +30,10 @@ namespace UnityScript2CSharp.Extensions
         {
             return node.GetAncestors<Import>().Any(imp => imp.Namespace == ns.FullName);
         }
+
+        public static bool IsDeclarationStatement(this BinaryExpression node)
+        {
+            return node.Operator == BinaryOperatorType.Assign && node.Left.NodeType == NodeType.ReferenceExpression && node.IsSynthetic;
+        }
     }
 }
