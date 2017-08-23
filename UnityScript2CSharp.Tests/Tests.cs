@@ -623,7 +623,7 @@ namespace UnityScript2CSharp.Tests
         [TestCase("var f = function(i:int) i % 2", "Func<intint> f = (int i) => { return i % 2; } ", TestName = "Explicit Parameter Type")]
         [TestCase("var f = function(i) { var x : int = i; return x + 1; }", "Func<object,int> f = (object i) => { int x = (int) i; return x + 1; } ", TestName = "Inferred Parameter Explicit Type ")]   // Object means we infer the lambda parameter type incorrecly
         [TestCase("var f = function(i) i % 2; F( f(1) )", "Func<object,object> f = (object i) => { return i % 2; } ; this.F((int) f(1))", TestName = "Inferred parameter with specific argument type")]  // Object means we infer the lambda parameter type incorrecly
-        public void Lamba_Expressions(string functionDecl, string csFunctionDecl)
+        public void Lambda_Expressions(string functionDecl, string csFunctionDecl)
         {
             var sourceFiles = new[] { new SourceFile { FileName = "lambda_expressions.js", Contents = $"function F(p:int) {{ {functionDecl}; }}" } };
             var expectedConvertedContents = new[] { new SourceFile { FileName = "lambda_expressions.cs", Contents = DefaultGeneratedClass + $"lambda_expressions : MonoBehaviour {{ public virtual void F(int p) {{ {csFunctionDecl}; }} }}" } };
@@ -632,7 +632,7 @@ namespace UnityScript2CSharp.Tests
         }
 
         [Test]
-        public void Lamba_Expressions_Type_Parameters_Inference()
+        public void Lambda_Expressions_Type_Parameters_Inference()
         {
             var sourceFiles = new[] { new SourceFile { FileName = "lambda_expressions_inference.js", Contents = "function F(f:function(int):int) { return f(10); } function M() { return F(function(i) i + 1); }" } };
             var expectedConvertedContents = new[] { new SourceFile { FileName = "lambda_expressions_inference.cs", Contents = "using System; " + DefaultGeneratedClass + "lambda_expressions_inference : MonoBehaviour { public virtual int F(Func<int, int> f) { return f(10); } public virtual int M() { return this.F((int i) => { return i + 1; } ); } }" } };

@@ -61,7 +61,7 @@ namespace UnityScript2CSharp.Tests
         [TestCase("int", "if(++p) {} ", "if (++p != 0) { }", TestName = "Pre Increment")]
         [TestCase("System.IComparable", "if(p && (p.CompareTo(1) || !p)) {} ", "if ((p != null) && ((p.CompareTo(1) != 0) || (p == null))) { }", TestName = "Method in multiple binary expressions")]
         [TestCase("System.IComparable", "if(p.CompareTo(1)) {} ", "if (p.CompareTo(1) != 0) { }", TestName = "Simple Method")]
-        [TestCase("System.IComparable", "var ba = System.Collections.BitArray(10); ba.SetAll(p && p.CompareTo(1));", "BitArray ba = new System.Collections.BitArray(10); ba.SetAll((bool) ((p != null) && (p.CompareTo(1) != 0)));", TestName = "As method parameter")]
+        [TestCase("System.IComparable", "var ba = System.Collections.BitArray(10); ba.SetAll(p && p.CompareTo(1));", "BitArray ba = new System.Collections.BitArray(10); ba.SetAll((p != null) && (p.CompareTo(1) != 0));", TestName = "As method parameter")]
 
         [TestCase("System.Object", "while (p && System.Environment.ProcessorCount > 10) {}", "while ((p != null) && (System.Environment.ProcessorCount > 10)) { }", "object", TestName = "Object as LRS of Binary Expression")]
         [TestCase("System.Object", "while(p) {}", "while (p != null) { }", "object")]
