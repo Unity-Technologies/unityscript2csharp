@@ -1203,7 +1203,7 @@ namespace UnityScript2CSharp
 
         private void WriteCommaSeparatedList<T>(IEnumerable<T> items, Action<T, int> preWrite = null) where T : Node
         {
-            preWrite = preWrite ?? delegate(T t, int i) {};
+            preWrite = preWrite ?? delegate {};
             var index = 0;
             var last = items.LastOrDefault();
             foreach (var item in items)
