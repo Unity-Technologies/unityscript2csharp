@@ -1,6 +1,7 @@
 using Boo.Lang.Compiler.Ast;
 using Boo.Lang.Compiler.Steps;
 using Boo.Lang.Compiler.TypeSystem;
+using UnityScript2CSharp.Extensions;
 
 namespace UnityScript2CSharp.Steps
 {
@@ -59,7 +60,8 @@ namespace UnityScript2CSharp.Steps
         public override void OnReturnStatement(ReturnStatement node)
         {
             var declaringMethod = node.GetAncestor<Method>();
-            var declaredReturnType = ((IType)declaringMethod.ReturnType.Entity);
+            if (declaringMethod.IsConstructor())
+                return;
 
             if (NoReturnValueWasSpecified(node))
             {
@@ -67,6 +69,7 @@ namespace UnityScript2CSharp.Steps
                 return;
             }
 
+            var declaredReturnType = (IType)declaringMethod.ReturnType.Entity;
             if (declaredReturnType.IsEnum ^ node.Expression.ExpressionType.IsEnum)
             {
                 node.Replace(node.Expression, CodeBuilder.CreateCast(declaredReturnType, node.Expression));

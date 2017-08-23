@@ -307,5 +307,14 @@ namespace UnityScript2CSharp.Tests
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
+
+        [Test]
+        public void Return_In_Constructors_Does_Not_Cause_Crashes()
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "return_in_ctors.js", Contents = "#pragma strict\r\npublic class ReturnInCtor { function ReturnInCtor() { return; } }" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "return_in_ctors.cs", Contents = DefaultUsingsForClasses + " public class ReturnInCtor : object { public ReturnInCtor() { return; } }" } };
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
     }
 }

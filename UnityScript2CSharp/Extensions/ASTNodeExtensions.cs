@@ -6,6 +6,11 @@ namespace UnityScript2CSharp.Extensions
 {
     public static class ASTNodeExtensions
     {
+        public static bool IsConstructor(this Method node)
+        {
+            return node.NodeType == NodeType.Constructor;
+        }
+
         public static bool IsConstructorInvocation(this Node node)
         {
             if (node.NodeType != NodeType.MethodInvocationExpression)

@@ -1129,6 +1129,9 @@ namespace UnityScript2CSharp
         private bool TryHandleYieldBreak(ReturnStatement node)
         {
             var declaringMethod = node.GetAncestor<Method>();
+            if (declaringMethod.IsConstructor())
+                return false;
+
             var isReturningIEnumerable = node.Expression == null && declaringMethod.ReturnType.Matches(new SimpleTypeReference(typeof(System.Collections.IEnumerator).FullName));
 
             if (isReturningIEnumerable)
