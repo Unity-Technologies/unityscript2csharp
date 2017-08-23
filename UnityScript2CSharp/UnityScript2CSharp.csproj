@@ -110,6 +110,7 @@
     <Compile Include="AnchorKind.cs" />
     <Compile Include="Comment.cs" />
     <Compile Include="CommentKind.cs" />
+    <Compile Include="CompilerErrorComparer.cs" />
     <Compile Include="OrphanCommentVisitor.cs" />
     <Compile Include="Steps\AttachComments.cs" />
     <Compile Include="BlockIdentation.cs" />

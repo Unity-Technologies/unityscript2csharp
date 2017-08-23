@@ -105,7 +105,7 @@ namespace UnityScript2CSharp
             return comments;
         }
 
-        public IEnumerable<string> CompilerErrors { get; private set; }
+        public IEnumerable<CompilerError> CompilerErrors { get; private set; }
 
         public IEnumerable<string> CompilerWarnings { get; private set; }
 
@@ -115,7 +115,7 @@ namespace UnityScript2CSharp
         {
             if (result.Errors.Count > 0)
             {
-                CompilerErrors = result.Errors.Select(error => error.ToString(!_ignoreErrors));
+                CompilerErrors = result.Errors.ToList();
                 if (!_ignoreErrors)
                 {
                     var errorsAsString = result.Errors.Aggregate("\t", (acc, curr) => acc + Environment.NewLine + "\t" + curr + Environment.NewLine + "\t" + curr.InnerException);
@@ -128,7 +128,7 @@ namespace UnityScript2CSharp
                 CompilerWarnings = result.Warnings.Select(warning => warning.ToString());
             }
 
-            CompilerErrors = CompilerErrors ?? new List<string>();
+            CompilerErrors = CompilerErrors ?? new List<CompilerError>();
             CompilerWarnings = CompilerWarnings ?? new List<string>();
         }
 

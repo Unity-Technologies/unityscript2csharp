@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using Boo.Lang.Compiler;
 using CommandLine;
 using CommandLine.Text;
 using UnityScript2CSharp.Steps;
@@ -67,13 +69,14 @@ namespace UnityScript2CSharp
                 var converter = new UnityScript2CSharpConverter(options.Value.IgnoreErrors, options.Value.SkipComments, options.Value.ShowOrphanComments);
 
                 var referencedSymbols = new List<SymbolInfo>();
+                var errors = new HashSet<CompilerError>(new CompilerErrorComparer());
+                
+                ConvertScripts(AssemblyType.Runtime, runtimeScripts, converter, options.Value, referencedSymbols, errors);
+                ConvertScripts(AssemblyType.Editor, editorScripts, converter, options.Value, referencedSymbols, errors);
+                ConvertScripts(AssemblyType.RuntimePlugins, pluginScripts, converter, options.Value, referencedSymbols, errors);
+                ConvertScripts(AssemblyType.EditorPlugins, pluginEditorScritps, converter, options.Value, referencedSymbols, errors);
 
-                ConvertScripts(AssemblyType.Runtime, runtimeScripts, converter, options.Value, referencedSymbols);
-                ConvertScripts(AssemblyType.Editor, editorScripts, converter, options.Value, referencedSymbols);
-                ConvertScripts(AssemblyType.RuntimePlugins, pluginScripts, converter, options.Value, referencedSymbols);
-                ConvertScripts(AssemblyType.EditorPlugins, pluginEditorScritps, converter, options.Value, referencedSymbols);
-
-                ReportConversionFinished(runtimeScripts.Length + editorScripts.Length + pluginScripts.Length, referencedSymbols, options.Value.ProjectPath);
+                ReportConversionFinished(runtimeScripts.Length + editorScripts.Length + pluginScripts.Length, options.Value, referencedSymbols, errors);
             }
             catch (Exception ex)
             {
@@ -232,8 +235,7 @@ namespace UnityScript2CSharp
             return ok;
         }
 
-        //private static void ConvertScripts(string scriptType, IList<SourceFile> scripts, UnityScript2CSharpConverter converter, IEnumerable<string> references, CommandLineArguments args, List<SymbolInfo> referencedSymbols)
-        private static void ConvertScripts(AssemblyType assemblyType, IList<SourceFile> scripts, UnityScript2CSharpConverter converter, CommandLineArguments args, List<SymbolInfo> referencedSymbols)
+        private static void ConvertScripts(AssemblyType assemblyType, IList<SourceFile> scripts, UnityScript2CSharpConverter converter, CommandLineArguments args, List<SymbolInfo> referencedSymbols, HashSet<CompilerError> compilerErrors)
         {
             IEnumerable<string> references = AssemblyReferencesFor(args, assemblyType);
 
@@ -246,6 +248,10 @@ namespace UnityScript2CSharp
             converter.Convert(scripts, args.Symbols, references, handler);
 
             referencedSymbols.AddRange(converter.ReferencedPreProcessorSymbols);
+            foreach (var error in converter.CompilerErrors)
+            {
+                compilerErrors.Add(error);
+            }
 
             using (WithConsoleColors.SetTo(ConsoleColor.Yellow, ConsoleColor.Black))
             {
@@ -256,16 +262,44 @@ namespace UnityScript2CSharp
             }
         }
 
-        private static void ReportConversionFinished(int totalScripts, IEnumerable<SymbolInfo> referencedSymbols, string projectPath)
+        private static void ReportConversionFinished(int totalScripts, CommandLineArguments args, IEnumerable<SymbolInfo> referencedSymbols, IEnumerable<CompilerError> compilerErrors)
         {
-            Console.WriteLine("Finished converting {0} scripts.", totalScripts);
+            var errorCount = compilerErrors.Count();
+
+            Console.WriteLine();
+            Console.WriteLine("Finished converting {0} scripts in '{1}' with {2} error(s).", totalScripts, args.ProjectPath, errorCount);
+
+            if (errorCount > 0)
+            {
+                using (WithConsoleColors.SetTo(ConsoleColor.DarkRed, ConsoleColor.Black))
+                {
+                    Console.WriteLine("(some scripts may not have been converted)");
+                    Console.WriteLine();
+
+                    Console.Write("Issues found during conversion");
+                    var converterIsTheCulprit = HasInternalCompilerErrors(compilerErrors);
+                    if (converterIsTheCulprit)
+                    {
+                        Console.Write(" (at least one of those were caused by a converter issue/limitation)");
+                    }
+                    Console.WriteLine(" :");
+                    Console.WriteLine();
+
+                    foreach (var error in compilerErrors)
+                    {
+                        Console.WriteLine($"{error.LexicalInfo}{Environment.NewLine}\t{error.Message}{CallStackFrom(error)}");
+                        Console.WriteLine();
+                    }
+                }
+            }
 
             if (!referencedSymbols.Any())
                 return;
 
-            var projectPathLength = projectPath.Length;
+            var projectPathLength = args.ProjectPath.Length;
             using (WithConsoleColors.SetTo(ConsoleColor.Cyan, ConsoleColor.Black))
             {
+                Console.WriteLine();
                 Console.WriteLine("Your project contains scripts that relies on conditional compilation; this may cause parts of those scripts to not be converted.");
                 Console.WriteLine("See below a list of scripts that uses conditional compilation:");
                 foreach (var symbolInfo in referencedSymbols)
@@ -273,6 +307,17 @@ namespace UnityScript2CSharp
                     Console.WriteLine($"\t{symbolInfo.Source.Substring(projectPathLength)}({symbolInfo.LineNumber}) : {symbolInfo.PreProcessorExpression}");
                 }
             }
+        }
+
+        private static string CallStackFrom(CompilerError error)
+        {
+            return error.InnerException != null ? error.InnerException.StackTrace : error.StackTrace;
+        }
+
+        private static bool HasInternalCompilerErrors(IEnumerable<CompilerError> compilerErrors)
+        {
+            var internalErrorCode = "BCE0055";
+            return compilerErrors.Any(error => error.Code == internalErrorCode);
         }
 
         private static void HandleConvertedScript(string scriptPath, string content, bool removeOriginalFiles, bool verbose, int unsupportedCount)
