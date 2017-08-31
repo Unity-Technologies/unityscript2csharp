@@ -1,3 +1,4 @@
+using System.Collections;
 using NUnit.Framework;
 
 namespace UnityScript2CSharp.Tests
@@ -195,6 +196,15 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
+        [TestCaseSource("Switch_On_Non_Const_Scenarios")]
+        public void Switch_On_Non_Const(string us, string cs)
+        {
+            var sourceFiles = SingleSourceFor("switch_non_const.js", us);
+            var expectedConvertedContents = SingleSourceFor("switch_non_const.cs", DefaultGeneratedClass + "switch_non_const : MonoBehaviour { " + cs + " }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
         [TestCase("i")]
         [TestCase("i + 1")]
         [TestCase("System.Environment.ProcessorCount")]
@@ -315,6 +325,29 @@ namespace UnityScript2CSharp.Tests
             var expectedConvertedContents = new[] { new SourceFile { FileName = "return_in_ctors.cs", Contents = DefaultUsingsForClasses + " public class ReturnInCtor : object { public ReturnInCtor() { return; } }" } };
 
             AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        private static IEnumerable Switch_On_Non_Const_Scenarios()
+        {
+            yield return new TestCaseData(
+                "function F(name:String, tbc:String) { switch(name) { case tbc: return 1; default: return 3; } }",
+                "public virtual int F(string name, string tbc) { switch (name) { default: if (name == tbc) { return 1; } return 3; break; } }")
+                .SetName("Existing Default");
+
+            yield return new TestCaseData(
+                "function F(name:String, tbc:String) { switch(name) { case tbc: return 1; } }",
+                "public virtual int F(string name, string tbc) { switch (name) { default: if (name == tbc) { return 1; } break; } }")
+                .SetName("With No Default");
+
+            yield return new TestCaseData(
+                "function F(name:String, tbc:String) { switch(name) { case System.Environment.MachineName: return 1; case tbc: return 2; } }",
+                "public virtual int F(string name, string tbc) { switch (name) { default: if (name == System.Environment.MachineName) { return 1; }  if (name == tbc) { return 2; } break; } }")
+                .SetName("Multiple Non Constant Expressions");
+
+            yield return new TestCaseData(
+                "function F(i:int, tbc:int) { switch(i) { case 1: return -1; case tbc: return 2; } }",
+                "public virtual int F(int i, int tbc) { switch (i) { case 1: return -1; break; default: if (i == tbc) { return 2; } break; } }")
+                .SetName("Mixed Const/Non Const");
         }
     }
 }

@@ -59,6 +59,8 @@ namespace UnityScript2CSharp
             conditionVarInitialization.Right.Accept(_us2CsVisitor);
             _writer.WriteLine(")");
             _writer.WriteLine("{");
+
+            var nonConstExpressionCaseEntries = new List<IfStatement>();
             using (new BlockIdentation(_writer))
             {
                 var cases = node.Statements.OfType<IfStatement>().Where(stmt => IsCaseEntry(stmt, conditionVarInitialization.Left));
@@ -70,10 +72,11 @@ namespace UnityScript2CSharp
                         // Log: Expecting binary expression in "case", found: actual
                         continue;
                     }
-                    WriteSwitchCase(equalityCheck, caseStatement.TrueBlock);
+                    if (!WriteSwitchCase(equalityCheck, caseStatement.TrueBlock))
+                        nonConstExpressionCaseEntries.Add(caseStatement);
                 }
 
-                WriteDefaultCase(node, conditionVarInitialization.Left);
+                WriteDefaultCase(node, nonConstExpressionCaseEntries, conditionVarInitialization);
             }
             _writer.WriteLine("}");
         }
@@ -101,15 +104,16 @@ namespace UnityScript2CSharp
             return false;
         }
 
-        private void WriteDefaultCase(Block node, Expression expectedLocalVarInComparison)
+        private void WriteDefaultCase(Block node, IList<IfStatement> nonConstExpressionCaseEntries, BinaryExpression conditionVarInitialization)
         {
-            var statementIndex = FindDefaultCase(node, expectedLocalVarInComparison);
-            if (!statementIndex.Any())
+            var statementIndex = FindDefaultCase(node, conditionVarInitialization.Left);
+            if (!statementIndex.Any() && nonConstExpressionCaseEntries.Count == 0)
                 return;
 
             _writer.WriteLine("default:");
             using (new BlockIdentation(_writer))
             {
+                WriteNonConstSwitchCases(nonConstExpressionCaseEntries, conditionVarInitialization.Right);
                 foreach (var stmt in statementIndex)
                 {
                     if (stmt.NodeType == NodeType.LabelStatement)
@@ -138,10 +142,24 @@ namespace UnityScript2CSharp
 
             return index != -1 ? node.Statements.Skip(index) : Enumerable.Empty<Statement>();
         }
-
-        private void WriteSwitchCase(BinaryExpression equalityCheck, Block caseBlock)
+        private void WriteNonConstSwitchCases(IList<IfStatement> nonConstExpressionCaseEntries, Expression tbc)
         {
-            foreach (var caseConstant in CaseConstantsFor(equalityCheck))
+            foreach (var caseEntry in nonConstExpressionCaseEntries)
+            {
+                var condition = (BinaryExpression) caseEntry.Condition;
+                condition.Left = tbc;
+                caseEntry.Accept(_us2CsVisitor);
+            }
+        }
+
+        private bool WriteSwitchCase(BinaryExpression equalityCheck, Block caseBlock)
+        {
+            var caseConstants = CaseConstantsFor(equalityCheck);
+            if (caseConstants.Count == 0) // no constants found. Most likely this is a case with a "non const expression", like 'case System.Environment.MachineName:'
+                return false;             // we are going to process those in the "default" section, through "if statements" instead.
+                              
+
+            foreach (var caseConstant in caseConstants)
             {
                 _writer.WriteLine($"case {caseConstant}:");
             }
@@ -155,9 +173,11 @@ namespace UnityScript2CSharp
                 }
                 _writer.WriteLine("break;");
             }
+
+            return true;
         }
 
-        private IEnumerable<string> CaseConstantsFor(BinaryExpression binaryExpression)
+        private IList<string> CaseConstantsFor(BinaryExpression binaryExpression)
         {
             return LiteralCollector.Collect(binaryExpression);
         }
@@ -205,12 +225,12 @@ namespace UnityScript2CSharp
                 base.OnMemberReferenceExpression(node);
             }
 
-            public static IEnumerable<string> Collect(BinaryExpression binaryExpression)
+            public static IList<string> Collect(BinaryExpression binaryExpression)
             {
                 return _instance.CollectInternal(binaryExpression);
             }
 
-            private IEnumerable<string> CollectInternal(BinaryExpression binaryExpression)
+            private IList<string> CollectInternal(BinaryExpression binaryExpression)
             {
                 _literals.Clear();
                 binaryExpression.Accept(this);
