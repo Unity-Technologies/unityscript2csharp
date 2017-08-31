@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using Boo.Lang.Compiler;
 using CommandLine;
@@ -161,7 +160,17 @@ namespace UnityScript2CSharp
                 return references;
             }
 
-            references.Add(Path.Combine(unityAssembliesRootPath, "UnityEngine.dll"));
+            var modularizedUnityEngineFolder = Path.Combine(unityAssembliesRootPath, "UnityEngine");
+            if (Directory.Exists(modularizedUnityEngineFolder))
+            {
+                foreach (var assemblyPath in Directory.GetFiles(modularizedUnityEngineFolder, "*.dll"))
+                {
+                    references.Add(assemblyPath);
+                }
+            }
+            else
+                references.Add(Path.Combine(unityAssembliesRootPath, "UnityEngine.dll"));
+
             references.Add(Path.Combine(unityAssembliesRootPath, "UnityEditor.dll"));
 
             return references;
@@ -187,7 +196,7 @@ namespace UnityScript2CSharp
                     break;
             }
 
-            if (assemblies.Length == 0)
+            if (assemblies.Length == 0 && Directory.GetFiles(libraryScriptAssembliesFolder, "*.dll").Length  == 0)
             {
                 using (WithConsoleColors.SetTo(ConsoleColor.DarkYellow, ConsoleColor.Black))
                 {
