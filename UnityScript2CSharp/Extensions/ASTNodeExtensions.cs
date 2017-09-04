@@ -40,5 +40,11 @@ namespace UnityScript2CSharp.Extensions
         {
             return node.Operator == BinaryOperatorType.Assign && node.Left.NodeType == NodeType.ReferenceExpression && node.IsSynthetic;
         }
+
+        public static bool IsEnum(this ReferenceExpression re)
+        {
+            var type = re.Entity as IType;
+            return type != null && type.IsEnum;
+        }
     }
 }

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Boo.Lang.Compiler.Ast;
 using Boo.Lang.Compiler.TypeSystem;
+using UnityScript2CSharp.Extensions;
 
 namespace UnityScript2CSharp
 {
@@ -147,18 +148,21 @@ namespace UnityScript2CSharp
             foreach (var caseEntry in nonConstExpressionCaseEntries)
             {
                 var condition = (BinaryExpression) caseEntry.Condition;
-                condition.Left = tbc;
+                FixNonConstReferencesAsCaseCondition(condition, tbc);
                 caseEntry.Accept(_us2CsVisitor);
             }
         }
 
+        private void FixNonConstReferencesAsCaseCondition(BinaryExpression condition, Expression tbc)
+        {
+            condition.Accept(new NonConstSwitchConditionFixer(tbc));
+        }
+
         private bool WriteSwitchCase(BinaryExpression equalityCheck, Block caseBlock)
         {
-            var caseConstants = CaseConstantsFor(equalityCheck);
-            if (caseConstants.Count == 0) // no constants found. Most likely this is a case with a "non const expression", like 'case System.Environment.MachineName:'
-                return false;             // we are going to process those in the "default" section, through "if statements" instead.
+            if (CaseConstantsFor(equalityCheck, out IList<string> caseConstants)) // no constants found. Most likely this is a case with a "non const expression", like 'case System.Environment.MachineName:'
+                return false;                                                     // we are going to process those in the "default" section, through "if statements" instead.
                               
-
             foreach (var caseConstant in caseConstants)
             {
                 _writer.WriteLine($"case {caseConstant}:");
@@ -177,9 +181,9 @@ namespace UnityScript2CSharp
             return true;
         }
 
-        private IList<string> CaseConstantsFor(BinaryExpression binaryExpression)
+        private bool CaseConstantsFor(BinaryExpression binaryExpression, out IList<string> foundConstants)
         {
-            return LiteralCollector.Collect(binaryExpression);
+            return LiteralCollector.Collect(binaryExpression, out foundConstants);
         }
 
         private class LiteralCollector : DepthFirstVisitor
@@ -212,33 +216,61 @@ namespace UnityScript2CSharp
             public override void OnMemberReferenceExpression(MemberReferenceExpression node)
             {
                 var target = node.Target as ReferenceExpression;
-                if (target != null)
+                if (target != null && target.IsEnum())
                 {
-                    var type = target.Entity as IType;
-                    if (type != null && type.IsEnum)
-                    {
-                        _literals.Add(node.ToCodeString());
-                        return;
-                    }
+                    _literals.Add(node.ToCodeString());
+                    return;
                 }
 
                 base.OnMemberReferenceExpression(node);
             }
 
-            public static IList<string> Collect(BinaryExpression binaryExpression)
+            public override void OnReferenceExpression(ReferenceExpression node)
             {
-                return _instance.CollectInternal(binaryExpression);
+                if (node.Name.Contains("$switch$"))
+                    return;
+                
+                if (!node.IsEnum())
+                    hasNonConstInCase = true;
             }
 
-            private IList<string> CollectInternal(BinaryExpression binaryExpression)
+            public static bool Collect(BinaryExpression binaryExpression, out IList<string> foundConstants)
             {
-                _literals.Clear();
-                binaryExpression.Accept(this);
-                return _literals;
+                return _instance.CollectInternal(binaryExpression, out foundConstants);
             }
+
+            private bool CollectInternal(BinaryExpression binaryExpression, out IList<string> foundConstants)
+            {
+                _literals = foundConstants = new List<string>();
+                hasNonConstInCase = false;
+
+                binaryExpression.Accept(this);
+                return _instance.HasNonConstInCase;
+            }
+
+            public bool HasNonConstInCase => hasNonConstInCase;
 
             private static LiteralCollector _instance = new LiteralCollector();
             private IList<string> _literals = new List<string>();
+            private bool hasNonConstInCase;
+        }
+    }
+
+    internal class NonConstSwitchConditionFixer : DepthFirstTransformer
+    {
+        private readonly Expression _tbc;
+
+        public NonConstSwitchConditionFixer(Expression tbc)
+        {
+            _tbc = tbc;
+        }
+
+        public override void OnReferenceExpression(ReferenceExpression node)
+        {
+            if (node.Name.Contains("$switch$"))
+            {
+                node.ParentNode.Replace(node, _tbc);
+            }
         }
     }
 }

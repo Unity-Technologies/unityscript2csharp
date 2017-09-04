@@ -348,6 +348,26 @@ namespace UnityScript2CSharp.Tests
                 "function F(i:int, tbc:int) { switch(i) { case 1: return -1; case tbc: return 2; } }",
                 "public virtual int F(int i, int tbc) { switch (i) { case 1: return -1; break; default: if (i == tbc) { return 2; } break; } }")
                 .SetName("Mixed Const/Non Const");
+
+            yield return new TestCaseData(
+                "function F(i:int) { switch(i) { case System.Environment.ProcessorCount:\r\ncase i:\r\n return -1; } }",
+                "public virtual int F(int i) { switch (i) { default: if ((i == System.Environment.ProcessorCount) || (i == i)) { return -1; } break; } }")
+                .SetName("With Fall Throughs");
+
+            yield return new TestCaseData(
+                "function F(i:int) { switch(i) { case i:\r\ncase 42:\r\n return -1; } }",
+                "public virtual int F(int i) { switch (i) { default: if ((i == i) || (i == 42)) { return -1; } break; } }")
+                .SetName("With Mixed Fall Throughs - Simple References");
+
+            yield return new TestCaseData(
+                "function F(i:int) { switch(i) { case System.Environment.ProcessorCount:\r\ncase 42:\r\n return -1; } }",
+                "public virtual int F(int i) { switch (i) { default: if ((i == System.Environment.ProcessorCount) || (i == 42)) { return -1; } break; } }")
+                .SetName("With Mixed Fall Throughs - Property");
+
+            yield return new TestCaseData(
+                "function M(i:int) { return i; } function F(i:int) { switch(i) { case M(i):\r\ncase 42:\r\n return -1; } }",
+                "public virtual int M(int i) { return i; } public virtual int F(int i) { switch (i) { default: if ((i == this.M(i)) || (i == 42)) { return -1; } break; } }")
+                .SetName("With Mixed Fall Throughs - Method");
         }
     }
 }
