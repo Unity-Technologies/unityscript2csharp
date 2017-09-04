@@ -1545,7 +1545,6 @@ namespace UnityScript2CSharp
         }
 
         private Stack<char[]> _brackets = new Stack<char[]>();
-        private bool _ignoreSyntheticExpressions = true;
 
         private static char[] RoundBrackets = {'(', ')'};
         private static char[] SquareBrackets = {'[', ']'};
@@ -1557,7 +1556,6 @@ namespace UnityScript2CSharp
 
     internal class AutoVarDeclarationFinder : FastDepthFirstVisitor
     {
-        private readonly Block _whereToLookFor;
         private ReferenceExpression _toBeFound;
         private Node _found;
 
