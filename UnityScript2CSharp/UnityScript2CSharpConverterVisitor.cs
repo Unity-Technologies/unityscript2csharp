@@ -906,6 +906,8 @@ namespace UnityScript2CSharp
             WriteComments(node, AnchorKind.Above);
             WriteComments(node, AnchorKind.Left);
             _writer.Write(node.Value);
+            if (node.IsLong)
+                _writer.Write("l");
             WriteComments(node, AnchorKind.Right);
         }
 

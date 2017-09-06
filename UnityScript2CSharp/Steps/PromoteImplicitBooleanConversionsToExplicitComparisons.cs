@@ -44,6 +44,8 @@ namespace UnityScript2CSharp.Steps
 
         public override bool EnterBinaryExpression(BinaryExpression node)
         {
+            FixBooleanExpression(node);
+
             if (node.ExpressionType == TypeSystemServices.BoolType || (AstUtil.GetBinaryOperatorKind(node.Operator) != BinaryOperatorKind.Comparison && AstUtil.GetBinaryOperatorKind(node.Operator) != BinaryOperatorKind.Logical))
                 return true;
 
@@ -53,6 +55,15 @@ namespace UnityScript2CSharp.Steps
             node.ExpressionType = TypeSystemServices.BoolType;
 
             return false;
+        }
+
+        private void FixBooleanExpression(BinaryExpression node)
+        {
+            if (AstUtil.GetBinaryOperatorKind(node) != BinaryOperatorKind.Comparison)
+                return;
+
+            if (node.ExpressionType != TypeSystemServices.BoolType)
+                node.ExpressionType = TypeSystemServices.BoolType;
         }
 
         private void ConvertExpressionToBooleanIfNecessary(Node parent, Expression expression)

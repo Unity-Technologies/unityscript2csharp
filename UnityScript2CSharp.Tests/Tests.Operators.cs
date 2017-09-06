@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using NUnit.Framework;
 
 namespace UnityScript2CSharp.Tests
@@ -93,6 +95,35 @@ namespace UnityScript2CSharp.Tests
             var expectedConvertedContents = SingleSourceFor("operator_expression_type.cs", "using UnityScript2CSharp.Tests; " + DefaultGeneratedClass + "operator_expression_type : MonoBehaviour { public virtual string F(Operators op) { return (op * 1.2f).Message; } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test, TestCaseSource("Arithmetic_Operators_With_Object_Typed_Var_Scenarios")]
+        public void Arithmetic_Operators_With_Object_Typed_Var(string type, string usExpression, string csExpression)
+        {
+            var sourceFiles = SingleSourceFor("arithmetic_operators_object_operand.js", $"function F(f:{type}, o:Object) : boolean {{ return {usExpression}; }}");
+            var expectedConvertedContents = SingleSourceFor("arithmetic_operators_object_operand.cs", DefaultGeneratedClass + $"arithmetic_operators_object_operand : MonoBehaviour {{ public virtual bool F({type} f, object o) {{ return {csExpression}; }} }}");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        protected static IEnumerable Arithmetic_Operators_With_Object_Typed_Var_Scenarios()
+        {
+            var typeValueMapping = new Dictionary<string, string>
+            {
+                {"float", "1F"},
+                {"int", "1"},
+                {"long", "1"},
+            };
+
+            foreach (var typeName in new[] {"float", "int", "long"})
+            {
+                var valueSufix = typeName[0] != 'i' ? typeName.Substring(0, 1) : "";
+
+                yield return new TestCaseData(typeName, $"f > o + 1{valueSufix}", $"f > ((({typeName}) o) + 1{valueSufix})").SetName($"Simple ({typeName})");
+                yield return new TestCaseData(typeName, $"o + 1{valueSufix} > f", $"((({typeName}) o) + 1{valueSufix}) > f").SetName($"Simle - Reversed ({typeName})");
+                yield return new TestCaseData(typeName, $"(f > 2) && (f > o + 1{valueSufix})", $"(f > 2) && (f > ((({typeName}) o) + 1{valueSufix}))").SetName($"Composed ({typeName})");
+                yield return new TestCaseData(typeName, $"(f > 2) && (f > o + 1{valueSufix})", $"(f > 2) && (f > ((({typeName}) o) + 1{valueSufix}))").SetName($"Composed - Reversed ({typeName})");
+            }
         }
     }
 }

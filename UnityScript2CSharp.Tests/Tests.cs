@@ -600,11 +600,11 @@ namespace UnityScript2CSharp.Tests
 
         [TestCase("var f = function() 2", "Func<int> f = () => { return 2; } ", TestName = "Simplest Lambda")]
         [TestCase("var f = function() { return 2; }", "Func<int> f = () => { return 2; } ", TestName = "Explicit Return")]
-        [TestCase("var f = function(i) i % 2", "Func<object,object> f = (object i) => { return i % 2; } ", TestName = "Inferred Parameter Type")]
-        [TestCase("var f = function(i) { return i + 1; }", "Func<object,object> f = (object i) => { return i + 1; } ", TestName = "Inferred Parameter 2")]
+        [TestCase("var f = function(i) i % 2", "Func<object,object> f = (object i) => { return ((int) i) % 2; } ", TestName = "Inferred Parameter Type")]
+        [TestCase("var f = function(i) { return i + 1; }", "Func<object,object> f = (object i) => { return ((int) i) + 1; } ", TestName = "Inferred Parameter 2")]
         [TestCase("var f = function(i:int) i % 2", "Func<intint> f = (int i) => { return i % 2; } ", TestName = "Explicit Parameter Type")]
         [TestCase("var f = function(i) { var x : int = i; return x + 1; }", "Func<object,int> f = (object i) => { int x = (int) i; return x + 1; } ", TestName = "Inferred Parameter Explicit Type ")]   // Object means we infer the lambda parameter type incorrecly
-        [TestCase("var f = function(i) i % 2; F( f(1) )", "Func<object,object> f = (object i) => { return i % 2; } ; this.F((int) f(1))", TestName = "Inferred parameter with specific argument type")]  // Object means we infer the lambda parameter type incorrecly
+        [TestCase("var f = function(i) i % 2; F( f(1) )", "Func<object,object> f = (object i) => { return ((int) i) % 2; } ; this.F((int) f(1))", TestName = "Inferred parameter with specific argument type")]  // Object means we infer the lambda parameter type incorrecly
         public void Lambda_Expressions(string functionDecl, string csFunctionDecl)
         {
             var sourceFiles = new[] { new SourceFile { FileName = "lambda_expressions.js", Contents = $"function F(p:int) {{ {functionDecl}; }}" } };

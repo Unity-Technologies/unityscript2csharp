@@ -17,6 +17,20 @@ namespace UnityScript2CSharp.Steps
                     node.Replace(node.Right, CodeBuilder.CreateCast(node.Left.ExpressionType.Type, node.Right));
                 }
             }
+            else if (AstUtil.GetBinaryOperatorKind(node) == BinaryOperatorKind.Arithmetic && node.ExpressionType.ElementType == TypeSystemServices.ObjectType)
+            {
+                if(TypeSystemServices.IsNumber(node.Left.ExpressionType))
+                {
+                    node.ExpressionType = node.Left.ExpressionType;
+                    node.Replace(node.Right, CodeBuilder.CreateCast(node.ExpressionType, node.Right));
+                }
+                else
+                {
+                    node.ExpressionType = node.Right.ExpressionType;
+                    node.Replace(node.Left, CodeBuilder.CreateCast(node.ExpressionType, node.Left));
+                }
+            }
+
             base.OnBinaryExpression(node);
         }
 
