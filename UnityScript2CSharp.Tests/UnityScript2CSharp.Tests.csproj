@@ -48,6 +48,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Tests.Operators.cs" />
+    <Compile Include="Tests.Statements.Switch.cs" />
     <Compile Include="Tests.Statements.Yield.cs" />
     <Compile Include="TestSubjects.cs" />
     <Compile Include="Tests.Utilities.cs" />
