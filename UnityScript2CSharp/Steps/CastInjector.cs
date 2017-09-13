@@ -6,7 +6,14 @@ using Boo.Lang.Runtime;
 
 namespace UnityScript2CSharp.Steps
 {
-    class NumericCastInjector : AbstractTransformerCompilerStep
+    /* 
+     * There are 2 scenarios in which we inject casts: 
+     *  
+     * 1. Assigning / Passing "big" type to "small" type (long -> int, for instance) 
+     * 2. Assigning / Passing "Object" type to any other type type (object -> String, for instance)  
+     *      This is safe because US compiler would emit an error had the cast not be valid. 
+     */
+    class CastInjector : AbstractTransformerCompilerStep
     {
         public override void OnBinaryExpression(BinaryExpression node)
         {
@@ -19,7 +26,7 @@ namespace UnityScript2CSharp.Steps
             }
             else if (AstUtil.GetBinaryOperatorKind(node) == BinaryOperatorKind.Arithmetic && node.ExpressionType.ElementType == TypeSystemServices.ObjectType)
             {
-                if(TypeSystemServices.IsNumber(node.Left.ExpressionType))
+                if (TypeSystemServices.IsNumber(node.Left.ExpressionType))
                 {
                     node.ExpressionType = node.Left.ExpressionType;
                     node.Replace(node.Right, CodeBuilder.CreateCast(node.ExpressionType, node.Right));
@@ -32,8 +39,8 @@ namespace UnityScript2CSharp.Steps
             }
 
             base.OnBinaryExpression(node);
-        }
-
+        } 
+ 
         public override void OnMethodInvocationExpression(MethodInvocationExpression node)
         {
             if (node.Target.Entity != null && node.Target.Entity.EntityType == EntityType.Method)
@@ -55,10 +62,13 @@ namespace UnityScript2CSharp.Steps
 
         private bool NeedsCastWithPotentialDataLoss(IType targetType, IType sourceType)
         {
-            if (targetType != sourceType
-                && targetType != TypeSystemServices.ObjectType
-                && !sourceType.IsNull()
-                && !targetType.IsAssignableFrom(sourceType))
+            if (targetType == sourceType)
+                return false;
+
+            if (sourceType == TypeSystemServices.ObjectType)
+                return true;
+
+            if (targetType != TypeSystemServices.ObjectType && !sourceType.IsNull() && !targetType.IsAssignableFrom(sourceType))
             {
                 if (TypeSystemServices.IsNumber(targetType) && TypeSystemServices.IsNumber(sourceType))
                     return !IsWideningPromotion(targetType, sourceType);
@@ -69,17 +79,17 @@ namespace UnityScript2CSharp.Steps
             return false;
         }
 
-        private bool IsWideningPromotion(IType paramType, IType argumentType)
+        private bool IsWideningPromotion(IType targeType, IType sourceType)
         {
-            var expected = paramType as ExternalType;
-            if (null == expected)
+            var externalTargetType = targeType as ExternalType;
+            if (null == externalTargetType)
                 return false;
 
-            var actual = argumentType as ExternalType;
-            if (null == actual)
+            var externalSourceType = sourceType as ExternalType;
+            if (null == externalSourceType)
                 return false;
 
-            return NumericTypes.IsWideningPromotion(expected.ActualType, actual.ActualType);
+            return NumericTypes.IsWideningPromotion(externalTargetType.ActualType, externalSourceType.ActualType);
         }
     }
 }

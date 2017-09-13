@@ -444,11 +444,15 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
-        [Test]
-        public void Ensure_Qualified_UnityEngine_Object_Type_References_Is_Not_Resolved_To_System_Object()
+        [Test, TestCaseSource("UnityEngine_Object_Test_Scenarios")]
+        public void Ensure_Qualified_UnityEngine_Object_Type_References_Is_Not_Resolved_To_System_Object(string usSnipet, string csSnipet, bool importTestNamespaces)
         {
-            var sourceFiles = new[] { new SourceFile { FileName = "unity_object_type_ref.js", Contents = "function F() { return new UnityEngine.Object(); }" } };
-            var expectedConvertedContents = new[] { new SourceFile { FileName = "unity_object_type_ref.cs", Contents = DefaultGeneratedClass + "unity_object_type_ref : MonoBehaviour { public virtual UnityEngine.Object F() { return new UnityEngine.Object(); } }" } };
+            var importTestNamespace = importTestNamespaces ? "import UnityScript2CSharp.Tests;" : "";
+            var useTestNamespace = importTestNamespaces ? "using UnityScript2CSharp.Tests; " : "";
+
+            var sourceFiles = new[] { new SourceFile { FileName = "unity_object_type.js", Contents = $"{importTestNamespace} function F() {{ {usSnipet} }}" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "unity_object_type.cs", Contents = useTestNamespace + DefaultGeneratedClass + $"unity_object_type : MonoBehaviour {{ public virtual void F() {{ {csSnipet} }} }}" } };
+
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
@@ -838,6 +842,29 @@ namespace UnityScript2CSharp.Tests
             yield return new Tuple<string, string>("o.GetComponent(typeof(known_methods))", "(known_methods) o.GetComponent(typeof(known_methods))");
             yield return new Tuple<string, string>("o.GetComponent(known_methods)", "(known_methods) o.GetComponent(typeof(known_methods))");
             yield return new Tuple<string, string>("o.GetComponent.<known_methods>()", "o.GetComponent<known_methods>()");
+        }
+
+        private static IEnumerable UnityEngine_Object_Test_Scenarios()
+        {
+            yield return new TestCaseData(
+                "var obj = new UnityEngine.Object();", 
+                "UnityEngine.Object obj = new UnityEngine.Object();", false)
+                .SetName("Infered from new expression");
+
+            yield return new TestCaseData(
+                "var obj:UnityEngine.Object = null;", 
+                "UnityEngine.Object obj = null;", false)
+                .SetName("Explicit fully qualified");
+
+            yield return new TestCaseData(
+                "var obj = ObjectType.Generic.<UnityEngine.Object>();", 
+                "UnityEngine.Object obj = ObjectType.Generic<UnityEngine.Object>();", true)
+                .SetName("Infered from generic return type");
+
+            yield return new TestCaseData(
+                "var obj:UnityEngine.Object = ObjectType.NonGeneric();", 
+                "UnityEngine.Object obj = (UnityEngine.Object) ObjectType.NonGeneric();", true)
+                .SetName("Explicit from return type");
         }
     }
 
