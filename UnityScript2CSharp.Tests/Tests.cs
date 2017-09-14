@@ -707,6 +707,15 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
+        [Test, TestCaseSource("Function_Variable_Capturing_Scenarios")]
+        public void Test_Function_Variable_Capturing(string usFunctionDelaration, string csFunctionDeclaration)
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "function_variable_capturing.js", Contents = usFunctionDelaration } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "function_variable_capturing.cs", Contents = "using System; " + DefaultGeneratedClass + $"function_variable_capturing : MonoBehaviour {{ {csFunctionDeclaration} }}" } };
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
         [Test]
         public void Test_Formatting()
         {
@@ -865,6 +874,44 @@ namespace UnityScript2CSharp.Tests
                 "var obj:UnityEngine.Object = ObjectType.NonGeneric();", 
                 "UnityEngine.Object obj = (UnityEngine.Object) ObjectType.NonGeneric();", true)
                 .SetName("Explicit from return type");
+        }
+
+        private static IEnumerable Function_Variable_Capturing_Scenarios()
+        {
+            yield return new TestCaseData(
+                    "function F(callback : function(int), value : int) : function() { var f = function() { callback(value); }; value = value + 42; return f; }",
+                    "public virtual Action F(Action<int> callback, int value) { Action f = () => { callback(value); } ; value = value + 42; return f; }")
+                    .SetName("Complex Capturing");
+
+            yield return new TestCaseData(
+                    "function F(callback : function(int), value : int) : function() { return function() { callback(value); }; }",
+                    "public virtual Action F(Action<int> callback, int value) { return () => { callback(value); } ; }")
+                    .SetName("Simple Parameter");
+
+            yield return new TestCaseData(
+                    "function F(callback : function(int), value : int) : function() { value = value + 42; return function() { callback(value); }; }",
+                    "public virtual Action F(Action<int> callback, int value) { value = value + 42; return () => { callback(value); } ; }")
+                    .SetName("Complex Parameter");
+
+            yield return new TestCaseData(
+                    "function F(callback : function(int)) : function() { var i = 42; return function() { callback(i); }; }",
+                    "public virtual Action F(Action<int> callback) { int i = 42; return () => { callback(i); } ; }")
+                    .SetName("Simple Locals");
+
+            yield return new TestCaseData(
+                    "function F(callback : function(int), j:int) : function() { var l1 = 42; var l2 = j; return function() { callback(l1 + l2); }; }",
+                    "public virtual Action F(Action<int> callback, int j) { int l1 = 42; int l2 = j; return () => { callback(l1 + l2); } ; }")
+                    .SetName("Complex Locals");
+
+            yield return new TestCaseData(
+                    "var f: int; function F(callback : function(int)) : function() { return function() { callback(f); }; }",
+                    "public int f; public virtual Action F(Action<int> callback) { return () => { callback(this.f); } ; }")
+                    .SetName("Simple Fields");
+
+            yield return new TestCaseData(
+                    "var f: int; function F(callback : function(int), i:int) : function() { return function() { callback(f + i); }; }",
+                    "public int f; public virtual Action F(Action<int> callback, int i) { return () => { callback(this.f + i); } ; }")
+                    .SetName("Complex Fields");
         }
     }
 

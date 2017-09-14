@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using Boo.Lang.Compiler.Ast;
 using Boo.Lang.Compiler.TypeSystem;
@@ -6,6 +7,12 @@ namespace UnityScript2CSharp.Extensions
 {
     public static class ASTNodeExtensions
     {
+        public static IEnumerable<T> WithExpressionStatementOfType<T>(this StatementCollection source) where T : Expression
+        {
+            var found = source.OfType<ExpressionStatement>().Where(stmt => stmt.Expression.GetType() == typeof(T));
+            return found.Select(stmt => (T) stmt.Expression);
+        }
+
         public static bool IsConstructor(this Method node)
         {
             return node.NodeType == NodeType.Constructor;

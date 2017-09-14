@@ -197,6 +197,7 @@ namespace UnityScript2CSharp
             pipeline.Remove(typeof(ProcessMethodBodies));
 
             var adjustedPipeline = UnityScriptCompiler.Pipelines.AdjustBooPipeline(pipeline);
+            adjustedPipeline.Add(new FixClosures());
 
             adjustedPipeline.Remove(typeof(InjectCallableConversions));
             adjustedPipeline.Remove(typeof(CheckIdentifiers));
