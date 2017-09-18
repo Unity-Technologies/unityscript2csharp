@@ -197,6 +197,7 @@ namespace UnityScript2CSharp
             pipeline.Remove(typeof(ProcessMethodBodies));
 
             var adjustedPipeline = UnityScriptCompiler.Pipelines.AdjustBooPipeline(pipeline);
+            adjustedPipeline.Add(new FixClosures());
 
             adjustedPipeline.Remove(typeof(InjectCallableConversions));
             adjustedPipeline.Remove(typeof(CheckIdentifiers));
@@ -215,7 +216,7 @@ namespace UnityScript2CSharp
             adjustedPipeline.Add(new FixSwitchWithOnlyDefault());
             adjustedPipeline.Add(new MergeMainMethodStatementsIntoStartMethod());
             adjustedPipeline.Add(new ExpandValueTypeObjectInitialization());
-            adjustedPipeline.Add(new NumericCastInjector());
+            adjustedPipeline.Add(new CastInjector());
             adjustedPipeline.Add(new ExpandAssignmentToValueTypeMembers());
             adjustedPipeline.Add(new ApplyEnumToImplicitConversions());
             adjustedPipeline.Add(new InferredMethodReturnTypeFix());

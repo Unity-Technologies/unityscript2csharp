@@ -329,5 +329,14 @@ namespace UnityScript2CSharp.Tests
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
+
+        [Test]
+        public void Cast_Is_Injected_When_Assigning_Or_Passing_Object_To_Any_Other_Type()
+        {
+            var sourceFiles = SingleSourceFor("cast_object_to_unityengine_object.js", "import UnityScript2CSharp.Tests; function F() { var obj:Object = null; ObjectType.Parameter.<UnityEngine.Object>(obj); }");
+            var expectedConvertedContents = SingleSourceFor("cast_object_to_unityengine_object.cs", "using UnityScript2CSharp.Tests; " + DefaultGeneratedClass + "cast_object_to_unityengine_object : MonoBehaviour { public virtual void F() { object obj = null; ObjectType.Parameter<UnityEngine.Object>((UnityEngine.Object) obj); } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
     }
 }

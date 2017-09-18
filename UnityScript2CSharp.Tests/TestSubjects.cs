@@ -152,4 +152,13 @@ namespace UnityScript2CSharp.Tests
             j = i;
         }
     }
+
+    public struct ObjectType
+    {
+        public static Object NonGeneric() {  return null; }
+
+        public static T Generic<T>() {  return default(T); }
+
+        public static void Parameter<T>(T p) { }
+    }
 }

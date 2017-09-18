@@ -121,6 +121,7 @@
     <Compile Include="Steps\ExpandAssignmentToValueTypeMembers.cs" />
     <Compile Include="Steps\ExpandValueTypeObjectInitialization.cs" />
     <Compile Include="Steps\CtorFieldInitializationFix.cs" />
+    <Compile Include="Steps\FixClosures.cs" />
     <Compile Include="Steps\FixEnumReferences.cs" />
     <Compile Include="Steps\FixFunctionReferences.cs" />
     <Compile Include="Steps\FixSwitchWithOnlyDefault.cs" />
@@ -128,7 +129,7 @@
     <Compile Include="Steps\InferredMethodReturnTypeFix.cs" />
     <Compile Include="Steps\InstanceToTypeReferencedStaticMemberReference.cs" />
     <Compile Include="Steps\MergeMainMethodStatementsIntoStartMethod.cs" />
-    <Compile Include="Steps\NumericCastInjector.cs" />
+    <Compile Include="Steps\CastInjector.cs" />
     <Compile Include="Steps\OperatorMethodToLanguageOperator.cs" />
     <Compile Include="Steps\PreProcessCollector.cs" />
     <Compile Include="Steps\PromoteImplicitBooleanConversionsToExplicitComparisons.cs" />

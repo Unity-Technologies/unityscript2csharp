@@ -220,6 +220,7 @@ namespace UnityScript2CSharp
                 }
             }
             _writer.WriteLine("}");
+            _writer.WriteLine();
         }
 
         public override void OnEnumMember(EnumMember node)
@@ -1442,6 +1443,11 @@ namespace UnityScript2CSharp
                     parameters.Append(",");
             }
 
+            // Special handling of UnityScript code assigning "lambda expressions" (that does not return values) to local vars
+            // otherwise the local would be typed as Func<void> which is not valid in C#.
+            if (originalSignature.ReturnType?.Name == "Void" && parameters.Length > 0)
+                return "Action";
+
             var genericTypeName = (originalSignature.ReturnType == null ? "Action" : "Func");
             return genericTypeName + "<" + parameters + ">";
         }
@@ -1481,14 +1487,12 @@ namespace UnityScript2CSharp
         {
             using (new BlockIdentation(_writer))
             {
-                var lastMember = node.Members.LastOrDefault();
                 foreach (var member in node.Members)
                 {
+                    _writer.Mark();
                     member.Accept(this);
-                    if (member != lastMember)
-                        _writer.WriteLine();
+                    _writer.WriteLineIfChanged();
                 }
-                _writer.WriteLine();
             }
         }
 
