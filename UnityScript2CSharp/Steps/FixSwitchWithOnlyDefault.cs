@@ -46,13 +46,13 @@ namespace UnityScript2CSharp.Steps
                 if (binaryExp.Operator != BinaryOperatorType.Assign || binaryExp.Left.NodeType != NodeType.ReferenceExpression || !binaryExp.Left.ToCodeString().Contains("$switch$"))
                     return;
 
-                var originalLocal = ((InternalLocal)binaryExp.Left.Entity).Local;
+                var originalLocal = ((InternalLocal) binaryExp.Left.Entity).Local;
                 var varName = originalLocal.Name.Replace("$", "_");
                 var local = new Local(varName, true);
                 var internalLocal = new InternalLocal(local, binaryExp.ExpressionType);
                 local.Entity = internalLocal;
 
-                internalLocal.OriginalDeclaration = new Declaration(varName, new SimpleTypeReference(internalLocal.Type.FullName));
+                internalLocal.OriginalDeclaration = new Declaration(varName, CodeBuilder.CreateTypeReference(internalLocal.Type));
 
                 // we need a DeclarationStatment as the parent of the "OriginalDeclaration"
                 var ds = new DeclarationStatement(internalLocal.OriginalDeclaration, binaryExp.Right);
