@@ -716,6 +716,33 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
+        [TestCase(
+            "class Outer { private enum NestedEnum { First }\n function F() { } }",
+            DefaultUsingsForClasses + " public class Outer : object { private enum NestedEnum { First = 0 } public virtual void F() { } }",
+            TestName = "Explicit Enum")]
+
+        [TestCase(
+            "private enum Same_Source_But_Not_Inner { First }\n function F() { }",
+            DefaultUsings + " internal enum Same_Source_But_Not_Inner { First = 0 } [System.Serializable] public partial class nested_private_types : MonoBehaviour { public virtual void F() { } }",
+            TestName = "Implicit Enum")]
+
+        [TestCase(
+            "class Outer { private class Inner { } }",
+            DefaultUsingsForClasses + " public class Outer : object { [System.Serializable] private class Inner : object { } }",
+            TestName = "Explicit Class")]
+
+        [TestCase(
+            "private class Same_Source_But_Not_Inner { }\n function F() { }",
+            DefaultUsings + " [System.Serializable] internal class Same_Source_But_Not_Inner : object { } [System.Serializable] public partial class nested_private_types : MonoBehaviour { public virtual void F() { } }",
+            TestName = "Implicit Class")]
+        public void Test_Nested_Private_Types(string usSource, string csSource)
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "nested_private_types.js", Contents = usSource } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "nested_private_types.cs", Contents = csSource} };
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
         [Test]
         public void Test_Formatting()
         {
