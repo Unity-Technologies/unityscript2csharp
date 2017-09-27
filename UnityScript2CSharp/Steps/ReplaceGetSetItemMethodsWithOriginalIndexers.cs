@@ -29,7 +29,7 @@ namespace UnityScript2CSharp.Steps
                 return;
             }
 
-            if (target.Name =="get_Item") 
+            if (target.Name =="get_Item" || target.Name == "get_Chars")
             {
                 var indexerArgs = node.Arguments.Take(node.Arguments.Count).Select(arg => new Slice(arg)).ToArray();
                 var slicingExpression = new SlicingExpression(target.Target, indexerArgs);

@@ -307,6 +307,16 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
+        [TestCase("\"1\"")]
+        [TestCase("txt")]
+        public void Indexers_With_Non_Standard_Get_Setter_Name(string expression)
+        {
+            var sourceFiles = SingleSourceFor("indexers2.js", $"function F(txt:String) {{ return txt.Split({expression}[0]); }}");
+            var expectedConvertedContents = SingleSourceFor("indexers2.cs", DefaultGeneratedClass + $"indexers2 : MonoBehaviour {{ public virtual string[] F(string txt) {{ return txt.Split(new char[] {{{expression}[0]}}); }} }}");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
         [TestCase("float", "double")]
         [TestCase("int", "long")]
         [TestCase("int", "float")]
