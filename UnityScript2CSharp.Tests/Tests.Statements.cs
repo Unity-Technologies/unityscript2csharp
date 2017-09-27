@@ -5,15 +5,6 @@ namespace UnityScript2CSharp.Tests
     public partial class Tests
     {
         [Test]
-        public void Arrays()
-        {
-            var sourceFiles = SingleSourceFor("arrays.js", "public var a : int [];");
-            var expectedConvertedContents = SingleSourceFor("arrays.cs", DefaultGeneratedClass + @"arrays : MonoBehaviour { public int[] a; }");
-
-            AssertConversion(sourceFiles, expectedConvertedContents);
-        }
-
-        [Test]
         public void If()
         {
             var sourceFiles = SingleSourceFor("if_statement.js", "function F(b:boolean) { if (b) return; }");
