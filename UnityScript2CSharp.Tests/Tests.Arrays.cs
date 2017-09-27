@@ -100,5 +100,17 @@ namespace UnityScript2CSharp.Tests
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
+
+        [TestCase("int", "int")]
+        [TestCase("String", "string")]
+        [TestCase("System.Object", "object")]
+        [TestCase("boolean", "bool")]
+        public void Arrays_Three_Dimensions_Item_Access(string usTypeName, string csTypeName)
+        {
+            var sourceFiles = SingleSourceFor("three_dimensions_array_item_access.js", $"function F() {{ var a:{usTypeName}[,,] = new {usTypeName}[1,2,3]; return a[0,0,1]; }}");
+            var expectedConvertedContents = SingleSourceFor("three_dimensions_array_item_access.cs", DefaultGeneratedClass + $@"three_dimensions_array_item_access : MonoBehaviour {{ public virtual {csTypeName} F() {{ {csTypeName}[,,] a = new {csTypeName}[1, 2, 3]; return a[0, 0, 1]; }} }}");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
     }
 }

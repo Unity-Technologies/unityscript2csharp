@@ -35,7 +35,7 @@ namespace UnityScript2CSharp.Extensions
             var gre = (GenericReferenceExpression)node;
             // Arrays in UnityScript are represented as a GenericReferenceExpession
             var target = gre.Target as ReferenceExpression;
-            return target != null && target.Name == "array";
+            return target != null && (target.Name == "array" || target.ToCodeString() == "Boo.Lang.Builtins.matrix");
         }
 
         public static bool NeedsQualificationFor(this Node node, INamespace ns)
