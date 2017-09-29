@@ -25,7 +25,7 @@ namespace UnityScript2CSharp.Tests
             var sourceFiles = new[] { new SourceFile { FileName = "type_attributes.js", Contents = $"@System.Obsolete({args}) class C {{}}" } };
 
             var argsIncludingParentheses = args.Length > 0 ? $"({args})" : string.Empty;
-            var expectedConvertedContents = new[] { new SourceFile { FileName = "type_attributes.cs", Contents = DefaultUsingsForClasses + $" [System.Obsolete{argsIncludingParentheses}] public class C : object {{ }}" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "type_attributes.cs", Contents = $"[System.Serializable] [System.Obsolete{argsIncludingParentheses}] public class C : object {{ }}" } };
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -35,7 +35,7 @@ namespace UnityScript2CSharp.Tests
         {
             var sourceFiles = new[] { new SourceFile { FileName = "non_compliant_attribute_type_name.js", Contents = "import UnityScript2CSharp.Tests; @NonCompliant class C {}" } };
 
-            var expectedConvertedContents = new[] { new SourceFile { FileName = "non_compliant_attribute_type_name.cs", Contents = "using UnityScript2CSharp.Tests; " + DefaultUsingsForClasses + " [UnityScript2CSharp.Tests.NonCompliant] public class C : object { }" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "non_compliant_attribute_type_name.cs", Contents = "using UnityScript2CSharp.Tests; " + DefaultUsingsNoUnityType + " [UnityScript2CSharp.Tests.NonCompliant] public class C : object { }" } };
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
@@ -55,7 +55,7 @@ namespace UnityScript2CSharp.Tests
         {
             var sourceFiles = new[] { new SourceFile { FileName = "serializable_attribute.js", Contents = "@System.Serializable class C {}" } };
 
-            var expectedConvertedContents = new[] { new SourceFile { FileName = "serializable_attribute.cs", Contents = DefaultUsings + " [System.Serializable] public class C : object { }" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "serializable_attribute.cs", Contents = DefaultUsingsNoUnityType + " public class C : object { }" } };
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
     }
