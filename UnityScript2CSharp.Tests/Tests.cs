@@ -689,6 +689,15 @@ namespace UnityScript2CSharp.Tests
         }
 
         [Test]
+        public void UnityEditor_Namespace_Is_Imported()
+        {
+            SourceFile[] sources = { new SourceFile("editor_types.js", "class E extends Editor {}") };
+            SourceFile[] expectedConverted = { new SourceFile("editor_types.cs", "using UnityEditor; using System.Collections; [System.Serializable] public class E : Editor { }") };
+
+            AssertConversion(sources, expectedConverted);
+        }
+
+        [Test]
         public void Test_Formatting()
         {
         }
