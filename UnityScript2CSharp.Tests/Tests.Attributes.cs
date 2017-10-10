@@ -25,7 +25,7 @@ namespace UnityScript2CSharp.Tests
             var sourceFiles = new[] { new SourceFile { FileName = "type_attributes.js", Contents = $"@System.Obsolete({args}) class C {{}}" } };
 
             var argsIncludingParentheses = args.Length > 0 ? $"({args})" : string.Empty;
-            var expectedConvertedContents = new[] { new SourceFile { FileName = "type_attributes.cs", Contents = $"[System.Serializable] [System.Obsolete{argsIncludingParentheses}] public class C : object {{ }}" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "type_attributes.cs", Contents = $"using System.Collections; [System.Serializable] [System.Obsolete{argsIncludingParentheses}] public class C : object {{ }}" } };
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
