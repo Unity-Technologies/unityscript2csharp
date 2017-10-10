@@ -611,6 +611,10 @@ namespace UnityScript2CSharp.Tests
                                         ? DefaultUsingsNoUnityType + " " + string.Format(csharpSnippet, keyword)
                                         : DefaultGeneratedClass + $"name_clashes : MonoBehaviour {{ {string.Format(csharpSnippet, keyword)} }}";
 
+            if (fullTypeDefinition && unityScriptSnippet.Contains("enum"))
+            {
+                expectedContents = UsingSystemCollections + " " + string.Format(csharpSnippet, keyword);
+            }
             var expectedConvertedContents = new[] {new SourceFile { FileName = "name_clashes.cs", Contents = expectedContents } };
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
