@@ -36,7 +36,7 @@ namespace UnityScript2CSharp.Tests
         public void Simplest()
         {
             var sourceFiles = new[] { new SourceFile { FileName = "foo.js", Contents = "class Foo { }" } };
-            var expectedConvertedContents = new[] { new SourceFile { FileName = "foo.cs", Contents = DefaultUsingsForClasses + " public class Foo : object { }" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "foo.cs", Contents = DefaultUsingsNoUnityType + " public class Foo : object { }" } };
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -51,7 +51,7 @@ namespace UnityScript2CSharp.Tests
         public void Primitive_Types_Mapping(string usType, string csType)
         {
             var sourceFiles = new[] { new SourceFile { FileName = "primitive-types.js", Contents = $"class Foo {{ var v:{usType}; }}" } };
-            var expectedConvertedContents = new[] { new SourceFile { FileName = "primitive-types.cs", Contents = DefaultUsingsForClasses + $@" public class Foo : object {{ public {csType} v; }}" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "primitive-types.cs", Contents = DefaultUsingsNoUnityType + $@" public class Foo : object {{ public {csType} v; }}" } };
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -81,8 +81,8 @@ namespace UnityScript2CSharp.Tests
 
             var expectedConvertedContents = new[]
             {
-                new SourceFile { FileName = "foo.cs", Contents = DefaultUsingsForClasses +  " public class Foo : object { }" },
-                new SourceFile { FileName = "bar.cs", Contents = DefaultUsingsForClasses +  " public class Bar : object { }" }
+                new SourceFile { FileName = "foo.cs", Contents = DefaultUsingsNoUnityType +  " public class Foo : object { }" },
+                new SourceFile { FileName = "bar.cs", Contents = DefaultUsingsNoUnityType +  " public class Bar : object { }" }
             };
 
             AssertConversion(sourceFiles, expectedConvertedContents);
@@ -110,7 +110,7 @@ namespace UnityScript2CSharp.Tests
         public void Complex_Field_With_Ctor_Chainning()
         {
             SourceFile[] sources = { new SourceFile("complex_fields_with_ctor.js", "class C { var i1:C = new C(1); var i2:C = new C(2); function C(v:int) { var i = v; } function C() { C(42); } function C(s:String) {} }") };
-            SourceFile[] expectedConverted = { new SourceFile("complex_fields_with_ctor.cs", DefaultUsingsForClasses + " public class C : object { public C i1; public C i2; public C(int v) { if (!this.initialized__C) { this.i1 = new C(1); this.i2 = new C(2); this.initialized__C = true; } int i = v; } public C() : this(42) { if (!this.initialized__C) { this.i1 = new C(1); this.i2 = new C(2); this.initialized__C = true; } } public C(string s) { if (!this.initialized__C) { this.i1 = new C(1); this.i2 = new C(2); this.initialized__C = true; } } private bool initialized__C; }") };
+            SourceFile[] expectedConverted = { new SourceFile("complex_fields_with_ctor.cs", DefaultUsingsNoUnityType+ " public class C : object { public C i1; public C i2; public C(int v) { if (!this.initialized__C) { this.i1 = new C(1); this.i2 = new C(2); this.initialized__C = true; } int i = v; } public C() : this(42) { if (!this.initialized__C) { this.i1 = new C(1); this.i2 = new C(2); this.initialized__C = true; } } public C(string s) { if (!this.initialized__C) { this.i1 = new C(1); this.i2 = new C(2); this.initialized__C = true; } } private bool initialized__C; }") };
 
             AssertConversion(sources, expectedConverted);
         }
@@ -155,7 +155,7 @@ namespace UnityScript2CSharp.Tests
         public void Type_Declaration_Modifiers(string modifier, string expectedModifiers)
         {
             var sourceFiles = new[] { new SourceFile { FileName = "foo.js", Contents = modifier + " class Foo { }" } };
-            var expectedConvertedContents = new[] { new SourceFile { FileName = "foo.cs", Contents = DefaultUsingsForClasses +  $@" {expectedModifiers ?? modifier} class Foo : object {{ }}" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "foo.cs", Contents = DefaultUsingsNoUnityType +  $@" {expectedModifiers ?? modifier} class Foo : object {{ }}" } };
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
@@ -166,7 +166,7 @@ namespace UnityScript2CSharp.Tests
         public void Field_Declaration_Modifiers(string modifier, string expectedModifiers)
         {
             var sourceFiles = new[] { new SourceFile { FileName = "field-modifiers.js", Contents = "class FieldModifiers { " + modifier + " var i : int; }" } };
-            var expectedConvertedContents = new[] { new SourceFile { FileName = "field-modifiers.cs", Contents = DefaultUsingsForClasses +  $@" public class FieldModifiers : object {{ {expectedModifiers ?? modifier} int i; }}" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "field-modifiers.cs", Contents = DefaultUsingsNoUnityType +  $@" public class FieldModifiers : object {{ {expectedModifiers ?? modifier} int i; }}" } };
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
@@ -202,7 +202,7 @@ namespace UnityScript2CSharp.Tests
         public void Method_Overriding()
         {
             var sourceFiles = new[] { new SourceFile { FileName = "method_overriding.js", Contents = "import UnityScript2CSharp.Tests; class Foo extends Base { function M() {} }" } };
-            var expectedConvertedContents = new[] { new SourceFile { FileName = "method_overriding.cs", Contents = "using UnityScript2CSharp.Tests; " + DefaultUsingsForClasses + " public class Foo : Base { public override void M() { } }" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "method_overriding.cs", Contents = "using UnityScript2CSharp.Tests; " + DefaultUsingsNoUnityType + " public class Foo : Base { public override void M() { } }" } };
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
@@ -319,7 +319,7 @@ namespace UnityScript2CSharp.Tests
         public void Locals_With_Custom_Type()
         {
             var sourceFiles = SingleSourceFor("locals_custom.js", "class C { function F() { var c:C; } }");
-            var expectedConvertedContents = SingleSourceFor("locals_custom.cs", DefaultUsingsForClasses + " public class C : object { public virtual void F() { C c = null; } }");
+            var expectedConvertedContents = SingleSourceFor("locals_custom.cs", DefaultUsingsNoUnityType + " public class C : object { public virtual void F() { C c = null; } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -328,7 +328,7 @@ namespace UnityScript2CSharp.Tests
         public void Locals_Are_Not_Ignored_Due_To_Handling_Of_ForEach_Locals()
         {
             var sourceFiles = SingleSourceFor("locals_custom.js", "class C { function F(l:int[]) { var i:int; for(var c in l) { } } }");
-            var expectedConvertedContents = SingleSourceFor("locals_custom.cs", DefaultUsingsForClasses + " public class C : object { public virtual void F(int[] l) { int i = 0; foreach (int c in l) { } } }");
+            var expectedConvertedContents = SingleSourceFor("locals_custom.cs", DefaultUsingsNoUnityType + " public class C : object { public virtual void F(int[] l) { int i = 0; foreach (int c in l) { } } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -362,7 +362,7 @@ namespace UnityScript2CSharp.Tests
         public void Enums_Simple()
         {
             var sourceFiles = SingleSourceFor("enum_definition.js", "enum  E { EnumMember1, EnumMember2 = 10, EnumMember3 = 42, EnumMember4 }");
-            var expectedConvertedContents = SingleSourceFor("enum_definition.cs", DefaultUsings + " public enum E { EnumMember1 = 0, EnumMember2 = 10, EnumMember3 = 42, EnumMember4 = 43 }");
+            var expectedConvertedContents = SingleSourceFor("enum_definition.cs",  "using System.Collections; public enum E { EnumMember1 = 0, EnumMember2 = 10, EnumMember3 = 42, EnumMember4 = 43 }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -415,7 +415,7 @@ namespace UnityScript2CSharp.Tests
         public void No_Constructor()
         {
             var sourceFiles = new[] { new SourceFile { FileName = "noctor.js", Contents = "class NoCtor { }" } };
-            var expectedConvertedContents = new[] { new SourceFile { FileName = "noctor.cs", Contents = DefaultUsingsForClasses + " public class NoCtor : object { }" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "noctor.cs", Contents = DefaultUsingsNoUnityType + " public class NoCtor : object { }" } };
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
@@ -456,60 +456,6 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
-        [TestCase("\"Foo\""), Category("Attributes")]
-        [TestCase("\"Foo\", false"), Category("Attributes")]
-        [TestCase(""), Category("Attributes")]
-        public void Attributes_On_Methods(string args)
-        {
-            var sourceFiles = new[] { new SourceFile { FileName = "method_attributes.js", Contents = $"@System.Obsolete({args}) function F() {{ }}" } };
-
-            var argsIncludingParentheses = args.Length > 0 ? $"({args})" : string.Empty;
-            var expectedConvertedContents = new[] { new SourceFile { FileName = "method_attributes.cs", Contents = DefaultGeneratedClass + $"method_attributes : MonoBehaviour {{ [System.Obsolete{argsIncludingParentheses}] public virtual void F() {{ }} }}" } };
-            AssertConversion(sourceFiles, expectedConvertedContents);
-        }
-
-        [TestCase("\"Foo\""), Category("Attributes")]
-        [TestCase("\"Foo\", false"), Category("Attributes")]
-        [TestCase(""), Category("Attributes")]
-        public void Attributes_On_Types(string args)
-        {
-            var sourceFiles = new[] { new SourceFile { FileName = "type_attributes.js", Contents = $"@System.Obsolete({args}) class C {{}}" } };
-
-            var argsIncludingParentheses = args.Length > 0 ? $"({args})" : string.Empty;
-            var expectedConvertedContents = new[] { new SourceFile { FileName = "type_attributes.cs", Contents = DefaultUsingsForClasses + $" [System.Obsolete{argsIncludingParentheses}] public class C : object {{ }}" } };
-
-            AssertConversion(sourceFiles, expectedConvertedContents);
-        }
-
-        [Test]
-        public void Non_Compliant_Attribute_Type_Name()
-        {
-            var sourceFiles = new[] { new SourceFile { FileName = "non_compliant_attribute_type_name.js", Contents = "import UnityScript2CSharp.Tests; @NonCompliant class C {}" } };
-
-            var expectedConvertedContents = new[] { new SourceFile { FileName = "non_compliant_attribute_type_name.cs", Contents = "using UnityScript2CSharp.Tests; " + DefaultUsingsForClasses + " [UnityScript2CSharp.Tests.NonCompliant] public class C : object { }" } };
-            AssertConversion(sourceFiles, expectedConvertedContents);
-        }
-
-        [TestCase(""), Category("Attributes")]
-        [TestCase("42"), Category("Attributes")]
-        [TestCase("42, Prop = true"), Category("Attributes")]
-        public void Attributes_With_Named_Arguments(string args)
-        {
-            var sourceFiles = new[] { new SourceFile { FileName = "attribute_named_arguments.js", Contents = $"import UnityScript2CSharp.Tests; @Attr({args}) public var i:int = 10;" } };
-            var expectedWithParams = args.Length > 0 ? $"({args})" : string.Empty;
-            var expectedConvertedContents = new[] { new SourceFile { FileName = "attribute_named_arguments.cs", Contents = "using UnityScript2CSharp.Tests; " + DefaultGeneratedClass + $"attribute_named_arguments : MonoBehaviour {{ [UnityScript2CSharp.Tests.Attr{expectedWithParams}] public int i; public attribute_named_arguments() {{ this.i = 10; }} }}" } };
-            AssertConversion(sourceFiles, expectedConvertedContents);
-        }
-
-        [Test]
-        public void Serialized_Attribute_Is_Not_Duplicated()
-        {
-            var sourceFiles = new[] { new SourceFile { FileName = "serializable_attribute.js", Contents = "@System.Serializable class C {}" } };
-
-            var expectedConvertedContents = new[] { new SourceFile { FileName = "serializable_attribute.cs", Contents = DefaultUsings + " [System.Serializable] public class C : object { }" } };
-            AssertConversion(sourceFiles, expectedConvertedContents);
-        }
-
         [Test]
         public void String_Literals([ValueSource("StringLiteralTestProvider")] string str)
         {
@@ -522,7 +468,7 @@ namespace UnityScript2CSharp.Tests
         public void Base_Types()
         {
             var sourceFiles = new[] { new SourceFile { FileName = "base_types.js", Contents = "class Foo implements System.ICloneable, System.IDisposable { function Dispose() {} function Clone() { return null; } }" } };
-            var expectedConvertedContents = new[] { new SourceFile { FileName = "base_types.cs", Contents = DefaultUsingsForClasses + " public class Foo : object, System.ICloneable, System.IDisposable { public virtual void Dispose() { } public virtual object Clone() { return null; } }" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "base_types.cs", Contents = DefaultUsingsNoUnityType + " public class Foo : object, System.ICloneable, System.IDisposable { public virtual void Dispose() { } public virtual object Clone() { return null; } }" } };
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
@@ -634,7 +580,7 @@ namespace UnityScript2CSharp.Tests
         public void Interface_Definition(string usMethod, string csMethod)
         {
             var sourceFiles = new[] {new SourceFile { FileName = "interface_definition.js", Contents = $"interface Itf {{ {usMethod}; }}" } };
-            var expectedConvertedContents = new[] {new SourceFile { FileName = "interface_definition.cs", Contents = DefaultUsings + $" public interface Itf {{ {csMethod}; }}" } };
+            var expectedConvertedContents = new[] {new SourceFile { FileName = "interface_definition.cs", Contents = UsingSystemCollections + $" public interface Itf {{ {csMethod}; }}" } };
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -643,7 +589,7 @@ namespace UnityScript2CSharp.Tests
         public void Interface_Inheritance()
         {
             var sourceFiles = new[] {new SourceFile { FileName = "interface_inheritance.js", Contents = "interface Itf extends System.IDisposable { function F(); }" } };
-            var expectedConvertedContents = new[] {new SourceFile { FileName = "interface_inheritance.cs", Contents = DefaultUsings + " public interface Itf : System.IDisposable { void F(); }" } };
+            var expectedConvertedContents = new[] {new SourceFile { FileName = "interface_inheritance.cs", Contents = UsingSystemCollections + " public interface Itf : System.IDisposable { void F(); }" } };
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -652,7 +598,7 @@ namespace UnityScript2CSharp.Tests
         public void Interface_Implementation()
         {
             var sourceFiles = new[] {new SourceFile { FileName = "interfaces_implementation.js", Contents = "class Foo implements System.IDisposable { function Dispose() {} } " } };
-            var expectedConvertedContents = new[] {new SourceFile { FileName = "interfaces_implementation.cs", Contents = DefaultUsingsForClasses + " public class Foo : object, System.IDisposable { public virtual void Dispose() { } }" } };
+            var expectedConvertedContents = new[] {new SourceFile { FileName = "interfaces_implementation.cs", Contents = DefaultUsingsNoUnityType + " public class Foo : object, System.IDisposable { public virtual void Dispose() { } }" } };
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -661,10 +607,9 @@ namespace UnityScript2CSharp.Tests
         public void CSharp_Reserved_Keywords_Used_As_Identifiers_Get_At_Symbol_Appended(string keyword, string unityScriptSnippet, string csharpSnippet, bool fullTypeDefinition)
         {
             var sourceFiles = new[] {new SourceFile { FileName = "name_clashes.js", Contents = string.Format(unityScriptSnippet, keyword) } };
-
             var expectedContents = fullTypeDefinition
-                ? DefaultUsings + " " + string.Format(csharpSnippet, keyword)
-                : DefaultGeneratedClass + $"name_clashes : MonoBehaviour {{ {string.Format(csharpSnippet, keyword)} }}";
+                                        ? DefaultUsingsNoUnityType + " " + string.Format(csharpSnippet, keyword)
+                                        : DefaultGeneratedClass + $"name_clashes : MonoBehaviour {{ {string.Format(csharpSnippet, keyword)} }}";
 
             var expectedConvertedContents = new[] {new SourceFile { FileName = "name_clashes.cs", Contents = expectedContents } };
             AssertConversion(sourceFiles, expectedConvertedContents);
@@ -718,7 +663,7 @@ namespace UnityScript2CSharp.Tests
 
         [TestCase(
             "class Outer { private enum NestedEnum { First }\n function F() { } }",
-            DefaultUsingsForClasses + " public class Outer : object { private enum NestedEnum { First = 0 } public virtual void F() { } }",
+            DefaultUsingsNoUnityType + " public class Outer : object { private enum NestedEnum { First = 0 } public virtual void F() { } }",
             TestName = "Explicit Enum")]
 
         [TestCase(
@@ -728,7 +673,7 @@ namespace UnityScript2CSharp.Tests
 
         [TestCase(
             "class Outer { private class Inner { } }",
-            DefaultUsingsForClasses + " public class Outer : object { [System.Serializable] private class Inner : object { } }",
+            DefaultUsingsNoUnityType + " public class Outer : object { [System.Serializable] private class Inner : object { } }",
             TestName = "Explicit Class")]
 
         [TestCase(
@@ -741,6 +686,15 @@ namespace UnityScript2CSharp.Tests
             var expectedConvertedContents = new[] { new SourceFile { FileName = "nested_private_types.cs", Contents = csSource} };
 
             AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
+        public void UnityEditor_Namespace_Is_Imported()
+        {
+            SourceFile[] sources = { new SourceFile("editor_types.js", "class E extends Editor {}") };
+            SourceFile[] expectedConverted = { new SourceFile("editor_types.cs", "using UnityEditor; using System.Collections; [System.Serializable] public class E : Editor { }") };
+
+            AssertConversion(sources, expectedConverted);
         }
 
         [Test]
@@ -797,8 +751,8 @@ namespace UnityScript2CSharp.Tests
 
             var fullClassScenarios = new[]
             {
-                new Tuple<string, string, string>("Class", "class {0} {{ }}", "[System.Serializable] public class @{0} : object {{ }}"),
-                new Tuple<string, string, string>("Base Class", "class {0} {{}} class C extends {0} {{ }}", "[System.Serializable] public class @{0} : object {{ }} [System.Serializable] public class C : @{0} {{ }}"),
+                new Tuple<string, string, string>("Class", "class {0} {{ }}", "public class @{0} : object {{ }}"),
+                new Tuple<string, string, string>("Base Class", "class {0} {{}} class C extends {0} {{ }}", "public class @{0} : object {{ }} [System.Serializable] public class C : @{0} {{ }}"),
                 new Tuple<string, string, string>("Enum", "enum {0} {{ }}", "public enum @{0} {{ }}"),
                 new Tuple<string, string, string>("EnumMember", "enum E {{ {0} }}", "public enum E {{ @{0} = 0 }}"),
             };
@@ -847,12 +801,12 @@ namespace UnityScript2CSharp.Tests
             {
                 foreach (var scenario in snippetScenarios)
                 {
-                    yield return new TestCaseData(keyword, scenario.Item2, scenario.Item3, false).SetName($"{scenario.Item1 + "-" + keyword}");
+                    yield return new TestCaseData(keyword, scenario.Item2, scenario.Item3, false).SetName($"{scenario.Item1 + "-" + keyword} : Snippet");
                 }
 
                 foreach (var scenario in fullClassScenarios)
                 {
-                    yield return new TestCaseData(keyword, scenario.Item2, scenario.Item3, true).SetName($"{scenario.Item1 + "-" + keyword}");
+                    yield return new TestCaseData(keyword, scenario.Item2, scenario.Item3, true).SetName($"{scenario.Item1 + "-" + keyword} : Full class");
                 }
             }
         }

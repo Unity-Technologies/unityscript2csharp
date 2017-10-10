@@ -5,15 +5,6 @@ namespace UnityScript2CSharp.Tests
     public partial class Tests
     {
         [Test]
-        public void Arrays()
-        {
-            var sourceFiles = SingleSourceFor("arrays.js", "public var a : int [];");
-            var expectedConvertedContents = SingleSourceFor("arrays.cs", DefaultGeneratedClass + @"arrays : MonoBehaviour { public int[] a; }");
-
-            AssertConversion(sourceFiles, expectedConvertedContents);
-        }
-
-        [Test]
         public void If()
         {
             var sourceFiles = SingleSourceFor("if_statement.js", "function F(b:boolean) { if (b) return; }");
@@ -77,9 +68,9 @@ namespace UnityScript2CSharp.Tests
 
             var expectedConvertedContents = new[]
             {
-                new SourceFile("auto_bool_conversion_enum_implicit_values.cs", "using UnityEngine; using UnityEditor; using System.Collections; public enum EnumImplicitValues { First = 0, Second = 1 }"),
-                new SourceFile("auto_bool_conversion_enum_explicit_values.cs", "using UnityEngine; using UnityEditor; using System.Collections; public enum EnumExplicitValues { Third = 3, Fourth = 0 }"),
-                new SourceFile("auto_bool_conversion.cs", DefaultGeneratedClass + $"auto_bool_conversion : MonoBehaviour {{ public virtual bool F({csharpTypeName ?? type} p) {{ {csSnippet} }} }}"),
+                new SourceFile("auto_bool_conversion_enum_implicit_values.cs", "using System.Collections; public enum EnumImplicitValues { First = 0, Second = 1 }"),
+                new SourceFile("auto_bool_conversion_enum_explicit_values.cs", "using System.Collections; public enum EnumExplicitValues { Third = 3, Fourth = 0 }"),
+                new SourceFile("auto_bool_conversion.cs",  DefaultGeneratedClass + $"auto_bool_conversion : MonoBehaviour {{ public virtual bool F({csharpTypeName ?? type} p) {{ {csSnippet} }} }}"),
             };
 
             AssertConversion(sourceFiles, expectedConvertedContents);
@@ -207,7 +198,7 @@ namespace UnityScript2CSharp.Tests
         public void Super_Constructor()
         {
             var sourceFiles = SingleSourceFor("super_ctor.js", "class super_ctor extends System.IO.StringReader { function super_ctor() { super(\"foo\"); } }");
-            var expectedConvertedContents = SingleSourceFor("super_ctor.cs", DefaultUsingsForClasses + " public class super_ctor : System.IO.StringReader { public super_ctor() : base(\"foo\") { } }");
+            var expectedConvertedContents = SingleSourceFor("super_ctor.cs", DefaultUsingsNoUnityType + " public class super_ctor : System.IO.StringReader { public super_ctor() : base(\"foo\") { } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -216,7 +207,7 @@ namespace UnityScript2CSharp.Tests
         public void Return_In_Constructors_Does_Not_Cause_Crashes()
         {
             var sourceFiles = new[] { new SourceFile { FileName = "return_in_ctors.js", Contents = "#pragma strict\r\npublic class ReturnInCtor { function ReturnInCtor() { return; } }" } };
-            var expectedConvertedContents = new[] { new SourceFile { FileName = "return_in_ctors.cs", Contents = DefaultUsingsForClasses + " public class ReturnInCtor : object { public ReturnInCtor() { return; } }" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "return_in_ctors.cs", Contents = DefaultUsingsNoUnityType + " public class ReturnInCtor : object { public ReturnInCtor() { return; } }" } };
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }

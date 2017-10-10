@@ -47,6 +47,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Tests.Arrays.cs" />
+    <Compile Include="Tests.Attributes.cs" />
     <Compile Include="Tests.Operators.cs" />
     <Compile Include="Tests.Statements.Switch.cs" />
     <Compile Include="Tests.Statements.Yield.cs" />

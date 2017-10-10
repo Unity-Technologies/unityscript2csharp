@@ -16,6 +16,13 @@ namespace UnityEngine
     }
 }
 
+namespace UnityEditor
+{
+    public class Editor
+    {
+    }
+}
+
 namespace UnityScript2CSharp.Tests
 {
     public class Outer
