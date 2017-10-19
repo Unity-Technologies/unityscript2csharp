@@ -1,4 +1,5 @@
 **/bin/*
 **/obj/*
 packages/
-.vs/
+.vs
+EditorIntegration/Library 
