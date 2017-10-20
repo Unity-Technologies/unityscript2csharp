@@ -35,6 +35,11 @@ namespace UnityScript2CSharp
                 return -3;
             }
 
+            RedirectConsoleOutput(options.Value.OutputFile);
+
+            if (!ReadResponseFile(options.Value))
+                return -4;
+
             try
             {
                 options.Value.ProjectPath = Path.GetFullPath(options.Value.ProjectPath);
@@ -92,9 +97,67 @@ namespace UnityScript2CSharp
                         Console.WriteLine("Consider running converter with '-i' option.");
                 }
             }
+
             return 0;
         }
 
+        private static bool ReadResponseFile(CommandLineArguments args)
+        {
+            var responseFile = args.ResponseFile;
+            if (string.IsNullOrWhiteSpace(responseFile))
+                return true;
+
+            if (!File.Exists(responseFile))
+            {
+                Console.WriteLine($"Response file '{responseFile}' not found.");
+                return false;
+            }
+
+            using (var reader = new StreamReader(File.OpenRead(responseFile)))
+            {
+                var line = string.Empty;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    var collonIndex = line.IndexOf(':');
+                    if (collonIndex == -1)
+                    {
+                        Console.WriteLine($"Invalid line (ignored) in response file: '{line}'");
+                        continue;
+                    }
+
+                    var option = line.Substring(0, collonIndex).Trim();
+                    var value = line.Substring(collonIndex + 1).Trim();
+                    switch (option)
+                    {
+                        case "-r":
+                            args.References.Add(value);
+                            break;
+
+                        case "-s":
+                            args.Symbols.Add(value);
+                            break;
+
+                        default:
+                            Console.WriteLine($"Invalid option in response file: '{option}'");
+                            break;
+                    }
+                }
+            }
+            return true;
+        }
+
+        private static void RedirectConsoleOutput(string outputFile)
+        {
+            if (string.IsNullOrWhiteSpace(outputFile))
+                return;
+
+            var consoleWriter = new StreamWriter(File.OpenWrite(outputFile));
+            consoleWriter.AutoFlush = true;
+
+            Console.SetOut(consoleWriter);
+            Console.SetError(consoleWriter);
+        }
+        
         private static bool IsValid(ParserResult<CommandLineArguments> options)
         {
             var hasErrors = options.Errors.Any();
@@ -215,6 +278,9 @@ namespace UnityScript2CSharp
             var found = Directory.GetFiles(testPath, "*.dll").Any(file => unityProbePathRegex.IsMatch(file));
             if (found)
             {
+                if (verbose)
+                    Console.WriteLine("Found assemblies root folder at '{0}'", testPath);
+
                 unityAssembliesRootPath = testPath;
                 return true;
             }

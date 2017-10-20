@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using CommandLine;
 
@@ -13,7 +12,7 @@ namespace UnityScript2CSharp
         public string ProjectPath { get; set; }
 
         [Option('r', "references", Min = 0, Max = 100, HelpText = "Assembly references required by the scripts (space separated list).")]
-        public IEnumerable<string> References { get; set; }
+        public IList<string> InternalReferences { get; set; }
 
         [Option('g', "no-game-assemblies", HelpText = "Ignores previously built game assemblies references (Assembly-*.dll under Library/).")] public bool IgnoreGameAssemblyReferences { get; set; }
 
@@ -38,8 +37,24 @@ namespace UnityScript2CSharp
 
         [Option('v', "verbose", HelpText = "Show verbose messages.")] public bool Verbose { get; set; }
 
-        public IEnumerable<string> Symbols {  get { return _symbols;  } }
+        [Option("outputFile", HelpText = "Path of file to be used to write messages instead of the console.")] public string OutputFile { get; set; }
+
+        [Option("responseFile")] public string ResponseFile { get; set; }
+
+        public IList<string> Symbols {  get { return _symbols;  } }
+
+        public IList<string> References
+        {
+            get
+            {
+                if (_references == null)
+                    _references = new List<string>(InternalReferences);
+
+                return _references;
+            }
+        }
 
         private IList<string> _symbols = new List<string>();
+        private IList<string> _references = null;
     }
 }
