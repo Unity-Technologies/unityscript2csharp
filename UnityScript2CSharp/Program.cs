@@ -278,6 +278,9 @@ namespace UnityScript2CSharp
             var found = Directory.GetFiles(testPath, "*.dll").Any(file => unityProbePathRegex.IsMatch(file));
             if (found)
             {
+                if (verbose)
+                    Console.WriteLine("Found assemblies root folder at '{0}'", testPath);
+
                 unityAssembliesRootPath = testPath;
                 return true;
             }

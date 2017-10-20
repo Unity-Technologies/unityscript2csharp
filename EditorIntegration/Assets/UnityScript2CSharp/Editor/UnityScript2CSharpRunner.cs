@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Pipes;
 using System.Linq;
 using System.Threading;
 using Assets.Editor;
@@ -33,33 +34,40 @@ public class UnityScript2CSharpRunner
     }
 
     [MenuItem(MenuEntry)]
-	public static void Convert()
-	{
-	    var scene = SceneManager.GetActiveScene();
-	    if (scene.isDirty)
-	    {
-	        EditorUtility.DisplayDialog(Title, "Please, save your project / scene before running the conversion tool.", "Ok");
-	        return;
-	    }
+    public static void Convert()
+    {
+        var scene = SceneManager.GetActiveScene();
+        if (scene.isDirty)
+        {
+            EditorUtility.DisplayDialog(Title, "Please, save your project / scene before running the conversion tool.", "Ok");
+            return;
+        }
 
         var assetsFolder = Application.dataPath;
 
-	    var usSources = FindUnityScriptSourcesIn(assetsFolder);
-	    if (usSources.Count == 0)
-	    {
-	        EditorUtility.DisplayDialog("Result", "No UnityScripts found to be converted.", "Ok");
-	        return;
-	    }
+        var usSources = FindUnityScriptSourcesIn(assetsFolder);
+        if (usSources.Count == 0)
+        {
+            EditorUtility.DisplayDialog("Result", "No UnityScripts found to be converted.", "Ok");
+            return;
+        }
 
         var unityInstallPath = Path.GetDirectoryName(EditorApplication.applicationPath);
-        var converterPath = ExtractConverter(assetsFolder, unityInstallPath);
+        string converterPath = string.Empty;
 
-	    RunCoverter(converterPath);
-	}
+        if (TryExtractConverter(assetsFolder, unityInstallPath, out converterPath))
+        {
+            RunCoverter(converterPath);
+        }
+        else
+        {
 
-    private static string ExtractConverter(string assetsFolder, string unityInstallFolder)
+        }
+    }
+
+    private static bool TryExtractConverter(string assetsFolder, string unityInstallFolder, out string converterPath)
     {
-        var converterPath = Path.Combine(Path.GetTempPath(), "Unity3D/UnityScript2CSharp");
+        converterPath = Path.Combine(Path.GetTempPath(), "Unity3D/UnityScript2CSharp");
         if (Directory.Exists(converterPath))
             Directory.Delete(converterPath, true);
 
@@ -91,16 +99,20 @@ public class UnityScript2CSharpRunner
             if (!process.HasExited)
             {
                 EditorUtility.DisplayDialog("Error", "Failed to extract the conversion tool.", "Ok");
+                return false;
             }
 
             if (process.ExitCode != 0)
             {
                 Debug.Log(string.Join("\r\n", stdOut.GetOutput()));
                 Debug.Log(string.Join("\r\n", stdErr.GetOutput()));
+                
                 EditorUtility.DisplayDialog("Error", "Failed to extract the conversion tool. Exit code = " + process.ExitCode, "Ok");
+                return false;
             }
 
-            return Path.Combine(converterPath, "UnityScript2CSharp.exe");
+            converterPath = Path.Combine(converterPath, "UnityScript2CSharp.exe");
+            return true;
         }
     }
   
@@ -116,28 +128,17 @@ public class UnityScript2CSharpRunner
 
         var startInfo = new ProcessStartInfo
         {
-            CreateNoWindow = false,
+            CreateNoWindow = true,
             RedirectStandardError = true,
             RedirectStandardOutput = true,
             WorkingDirectory = Application.dataPath + "/..",
             UseShellExecute = false
         };
 
-        switch (Application.platform)
-        {
-            case RuntimePlatform.OSXEditor:
-                // Run converter using Mono
-                startInfo.Arguments = converterPath + " " + ComputeConverterCommandLineArguments();
-                startInfo.FileName = Path.Combine(MonoInstallationFinder.GetMonoBleedingEdgeInstallation(), "bin/mono");
-                break;
-                
-            case RuntimePlatform.WindowsEditor:
-                // Run converter using .NET
-                startInfo.Arguments = ComputeConverterCommandLineArguments();
-                startInfo.FileName = converterPath;
-                break;
-        }
-
+        var monoExecutableExtension = Application.platform == RuntimePlatform.WindowsEditor ? ".exe" : "";
+        startInfo.Arguments = converterPath + " " + ComputeConverterCommandLineArguments();
+        startInfo.FileName = Path.Combine(MonoInstallationFinder.GetMonoBleedingEdgeInstallation(), "bin/mono" + monoExecutableExtension);
+        
         Console.WriteLine("--------- UnityScript2CSharp Arguments\r\n\r\n{0}\n\r---------", startInfo.Arguments);
 
         using (var p = Process.Start(startInfo))
@@ -145,7 +146,8 @@ public class UnityScript2CSharpRunner
             var sw = new Stopwatch();
             sw.Start();
 
-            var value = 1.0f;
+            var value = 0.1f;
+            var increment = 0.05f;
             while (!p.HasExited && sw.ElapsedMilliseconds < 60000)
             {
                 if (EditorUtility.DisplayCancelableProgressBar("Runing", "converting from UnityScript -> C#", value))
@@ -154,8 +156,10 @@ public class UnityScript2CSharpRunner
                     return;
                 }
                 
+                value += increment;
+                increment = Math.Max(0.001f, increment - 0.001f);
+
                 Thread.Sleep(100);
-                value = (value + 5.0f) % 100;
             }
             
             EditorUtility.ClearProgressBar();
