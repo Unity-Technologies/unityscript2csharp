@@ -86,7 +86,7 @@ namespace UnityScript2CSharp
                     else
                         last = token;
                 }
-                catch (TokenStreamRecognitionException tre)
+                catch (TokenStreamRecognitionException)
                 {
                     //TODO: Collect errors from this phase so we can at least show them to user ?
                 }
@@ -96,7 +96,7 @@ namespace UnityScript2CSharp
                     {
                         token = lexer.nextToken();
                     }
-                    catch (TokenStreamRecognitionException tre)
+                    catch (TokenStreamRecognitionException)
                     {
                     }
                 }

@@ -96,6 +96,8 @@ namespace UnityScript2CSharp
                     if (!options.Value.IgnoreErrors)
                         Console.WriteLine("Consider running converter with '-i' option.");
                 }
+
+                return -5;
             }
 
             return 0;
