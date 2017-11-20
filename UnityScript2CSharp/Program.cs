@@ -222,9 +222,17 @@ namespace UnityScript2CSharp
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Could not find UnityEngine.dll / UnityEditor.dll in {0}", options.UnityPath);
                 Console.ForegroundColor = previous;
+
                 return references;
             }
 
+            AppendUnityAssembliesReferences(unityAssembliesRootPath, references);
+
+            return references;
+        }
+
+        private static void AppendUnityAssembliesReferences(string unityAssembliesRootPath, List<string> references)
+        {
             var modularizedUnityEngineFolder = Path.Combine(unityAssembliesRootPath, "UnityEngine");
             if (Directory.Exists(modularizedUnityEngineFolder))
             {
@@ -237,8 +245,6 @@ namespace UnityScript2CSharp
                 references.Add(Path.Combine(unityAssembliesRootPath, "UnityEngine.dll"));
 
             references.Add(Path.Combine(unityAssembliesRootPath, "UnityEditor.dll"));
-
-            return references;
         }
 
         private static void AppendGameAssemblies(List<string> references, CommandLineArguments options, AssemblyType assemblyType)
