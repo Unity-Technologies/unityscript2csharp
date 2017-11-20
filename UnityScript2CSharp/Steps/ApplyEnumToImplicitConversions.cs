@@ -57,6 +57,21 @@ namespace UnityScript2CSharp.Steps
             }
         }
 
+        public override void OnSlice(Slice node)
+        {
+            if (node.Begin.NodeType != NodeType.OmittedExpression && node.Begin.ExpressionType.IsEnum)
+            {
+                node.Replace(node.Begin, CodeBuilder.CreateCast(TypeSystemServices.IntType, node.Begin));
+            }
+
+            if (node.End != null && node.End.NodeType != NodeType.OmittedExpression && node.End.ExpressionType.IsEnum)
+            {
+                node.Replace(node.End, CodeBuilder.CreateCast(TypeSystemServices.IntType, node.End));
+            }
+
+            base.OnSlice(node);
+        }
+
         public override void OnReturnStatement(ReturnStatement node)
         {
             var declaringMethod = node.GetAncestor<Method>();

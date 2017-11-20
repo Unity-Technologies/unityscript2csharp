@@ -380,10 +380,11 @@ namespace UnityScript2CSharp.Tests
         [TestCase("F(i, e)", "this.F((System.ConsoleColor) i, (int) e)")]
         [TestCase("F(0, System.ConsoleColor.Blue)", "this.F((System.ConsoleColor) 0, (int) System.ConsoleColor.Blue)")]
         [TestCase("return e", "return (int) e", TestName = "Return enum from int method")]
+        [TestCase("return arr[f]", "return this.arr[((int) this.f)]", TestName = "Indexer")]
         public void Enums_Int_Implicit_Conversions(string usSnippet, string csSnippet)
         {
-            var sourceFiles = SingleSourceFor("enum_int_implicit_conversions.js", $"function F(e: System.ConsoleColor, i:int) : int {{ {usSnippet}; return i; }}");
-            var expectedConvertedContents = SingleSourceFor("enum_int_implicit_conversions.cs", DefaultGeneratedClass + $"enum_int_implicit_conversions : MonoBehaviour {{ public virtual int F(System.ConsoleColor e, int i) {{ {csSnippet}; return i; }} }}");
+            var sourceFiles = SingleSourceFor("enum_int_implicit_conversions.js", $"var arr: int[]; var f:System.ConsoleColor; function F(e: System.ConsoleColor, i:int) : int {{ {usSnippet}; return i; }}");
+            var expectedConvertedContents = SingleSourceFor("enum_int_implicit_conversions.cs", DefaultGeneratedClass + $"enum_int_implicit_conversions : MonoBehaviour {{ public int[] arr; public System.ConsoleColor f; public virtual int F(System.ConsoleColor e, int i) {{ {csSnippet}; return i; }} }}");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
