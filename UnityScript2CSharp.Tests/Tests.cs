@@ -656,6 +656,16 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
+        [TestCase("Run", "function(i) i == 10", "(i) => { return i == 10; }", TestName = "Func<int,bool>")]
+        [TestCase("RunAction", "function(i) Dummy.Foo(i)", "(i) => { Dummy.Foo(i); }", TestName = "Action<int>")]
+        public void Test_Function_With_Untyped_Parameter_Types(string common, string usSnipet, string csSnipet)
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "function_untyped_parameter.js", Contents = $"import UnityScript2CSharp.Tests; function F() {{ DelegateInvocation.{common}({usSnipet} ); }}" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "function_untyped_parameter.cs", Contents = "using UnityScript2CSharp.Tests; " + DefaultUsingsForClasses + $" public partial class function_untyped_parameter : MonoBehaviour {{ public virtual void F() {{ DelegateInvocation.{common}({csSnipet} ); }} }}" } };
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
         [Test]
         public void Test_Function_Fields()
         {
