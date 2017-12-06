@@ -12,6 +12,8 @@ using UnityScript2CSharp.Extensions;
 using Attribute = Boo.Lang.Compiler.Ast.Attribute;
 using ExceptionHandler = Boo.Lang.Compiler.Ast.ExceptionHandler;
 using Module = Boo.Lang.Compiler.Ast.Module;
+using TypeDefinition = Boo.Lang.Compiler.Ast.TypeDefinition;
+using TypeReference = Boo.Lang.Compiler.Ast.TypeReference;
 
 namespace UnityScript2CSharp
 {
@@ -941,6 +943,13 @@ namespace UnityScript2CSharp
             WriteComments(node, AnchorKind.Above);
             WriteComments(node, AnchorKind.Left);
             _writer.Write("base");
+
+            if (node.ParentNode.NodeType == NodeType.MethodInvocationExpression)
+            {
+                var declaringMethod = node.GetRootAncestor<Method>();
+                _writer.Write(".");
+                _writer.Write(declaringMethod.Name);
+            }
             WriteComments(node, AnchorKind.Right);
         }
 

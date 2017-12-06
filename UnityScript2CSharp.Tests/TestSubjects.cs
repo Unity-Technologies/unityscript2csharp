@@ -36,6 +36,7 @@ namespace UnityScript2CSharp.Tests
     public class Base
     {
         public virtual void M() {}
+        public virtual void M(int i) { }
     }
 
     public class C

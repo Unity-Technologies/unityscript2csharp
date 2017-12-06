@@ -207,6 +207,14 @@ namespace UnityScript2CSharp.Tests
         }
 
         [Test]
+        public void Base_Method_Invocation()
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "base_method_invocation.js", Contents = "import UnityScript2CSharp.Tests; class Foo extends Base { function M(i:int) { super(i); i = i + 1; super(i); } }" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "base_method_invocation.cs", Contents = "using UnityScript2CSharp.Tests; " + DefaultUsingsNoUnityType + " public class Foo : Base { public override void M(int i) { base.M(i); i = i + 1; base.M(i); } }" } };
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
         public void String_Static_Member_Reference()
         {
             var sourceFiles = new[] { new SourceFile { FileName = "string_member.js", Contents = "function M() { return String.Concat(1); }" } };
