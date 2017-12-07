@@ -12,6 +12,8 @@ using UnityScript2CSharp.Extensions;
 using Attribute = Boo.Lang.Compiler.Ast.Attribute;
 using ExceptionHandler = Boo.Lang.Compiler.Ast.ExceptionHandler;
 using Module = Boo.Lang.Compiler.Ast.Module;
+using TypeDefinition = Boo.Lang.Compiler.Ast.TypeDefinition;
+using TypeReference = Boo.Lang.Compiler.Ast.TypeReference;
 
 namespace UnityScript2CSharp
 {
@@ -281,7 +283,7 @@ namespace UnityScript2CSharp
 
         public override void OnBlockExpression(BlockExpression node)
         {
-            WriteParameterList(node.Parameters);
+            WriteParameterListOrParameterNames(node, node.Parameters);
             _writer.Write(" => ");
             node.Body.Accept(this);
         }
@@ -941,6 +943,13 @@ namespace UnityScript2CSharp
             WriteComments(node, AnchorKind.Above);
             WriteComments(node, AnchorKind.Left);
             _writer.Write("base");
+
+            if (node.ParentNode.NodeType == NodeType.MethodInvocationExpression)
+            {
+                var declaringMethod = node.GetRootAncestor<Method>();
+                _writer.Write(".");
+                _writer.Write(declaringMethod.Name);
+            }
             WriteComments(node, AnchorKind.Right);
         }
 
@@ -1200,6 +1209,43 @@ namespace UnityScript2CSharp
 
             if (mustWrap && posfix != null)
                 _writer.Write(posfix);
+        }
+
+        private void WriteParameterListOrParameterNames<T>(T node, ParameterDeclarationCollection parameters) where T : Expression
+        {
+            _writer.Write(_brackets.Peek()[0]);
+
+            var elements = CanInferLambdaParameterTypesFromUsage(node) 
+                                            ? (IEnumerable<Node>) parameters.Select(p => new SimpleTypeReference(p.Name)).ToList()
+                                            : parameters;
+
+            WriteCommaSeparatedList(elements, (arg1, i) => { });
+
+            _writer.Write(_brackets.Peek()[1]);
+        }
+
+        private bool CanInferLambdaParameterTypesFromUsage(Expression node)
+        {
+            var invocationExpression = node.ParentNode as MethodInvocationExpression;
+            if (invocationExpression == null)
+                return false;
+
+            var usedAtIndex = invocationExpression.Arguments.IndexOf(node);
+            if (usedAtIndex == -1)
+                return false;
+
+            // This may happen if we have overloads and UnityScript compiler cannot infer which 
+            // overload is being invoked (that is resolved at runtime)
+            // But in this case we there's nothing we can do anyway.
+            if (invocationExpression.Target.Entity.EntityType == EntityType.BuiltinFunction)
+                return false;
+
+            var paramType = (ITypedEntity)((IMethod)invocationExpression.Target.Entity).GetParameters().ElementAt(usedAtIndex);
+            var genArgs = paramType.Type.ConstructedInfo?.GenericArguments;
+            if (genArgs == null)
+                return false;
+
+            return paramType.Type.FullName.Contains("System.Func") || paramType.Type.FullName.Contains("System.Action");
         }
 
         private void WriteParameterList<T>(IEnumerable<T> parameters, Action<T, int> preWrite = null) where T : Node

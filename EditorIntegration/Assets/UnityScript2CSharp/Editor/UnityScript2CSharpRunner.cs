@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Pipes;
 using System.Linq;
 using System.Threading;
 using Assets.Editor;
@@ -13,7 +12,8 @@ using UnityEngine.SceneManagement;
 using Application = UnityEngine.Application;
 using Debug = UnityEngine.Debug;
 
-public class UnityScript2CSharpRunner
+[Serializable]
+public class UnityScript2CSharpRunner : UnityEditor.EditorWindow
 {
     private const string Title = "UnityScript2CSharp Conversion Tool";
     private const string MenuEntry = "Tools/Convert Project from UnityScript to C#";
@@ -23,16 +23,43 @@ public class UnityScript2CSharpRunner
     [InitializeOnLoadMethod]
     public static void StartUp()
     {
-        ShowConversionResultsInConsole();
+        ShowConversionResultsInConsole(0);
 
         unityScriptCount = FindUnityScriptSourcesIn(Application.dataPath).Count;
         if (unityScriptCount == 0)
             return;
 
+        if (!ShouldDisplayUsageDialog())
+            return;
+
+#if UNITY_2017_3_OR_NEWER        
         var msg = string.Format("To convert your project to C# go to {0}.\r\n\r\nMake sure you have a backup of your project before runing the conversion tool.", MenuEntry);
         EditorUtility.DisplayDialog(Title, msg, "Ok");
+#else            
+        EditorUtility.DisplayDialog(Title, string.Format("You are using Unity version {0}.\r\n\r\nTo use the graphical tool, you need at least Unity version 2017.3\r\n(you can still run the command line tool though)", Application.unityVersion), "Ok");
+#endif
     }
 
+    private static bool ShouldDisplayUsageDialog()
+    {
+        var checkFilePath = Path.Combine(Path.GetTempPath(), Path.GetDirectoryName(Application.dataPath) + "_" + Application.dataPath.GetHashCode() + "_" + Application.unityVersion + "_"  + DateTime.Now.Month + ".check");
+        if (File.Exists(checkFilePath))
+            return false;
+
+        File.WriteAllText(checkFilePath, "used to avoid showing the same message over and over");
+        return true;
+    }
+
+    bool showBtn = false;
+
+    public void OnGUI()
+    {
+        showBtn = EditorGUILayout.Toggle("Show Button", showBtn);
+        if (showBtn && GUILayout.Button("Close"))
+            this.Close();
+    }
+
+#if UNITY_2017_3_OR_NEWER        
     [MenuItem(MenuEntry)]
     public static void Convert()
     {
@@ -59,11 +86,8 @@ public class UnityScript2CSharpRunner
         {
             RunCoverter(converterPath);
         }
-        else
-        {
-
-        }
     }
+#endif        
 
     private static bool TryExtractConverter(string assetsFolder, string unityInstallFolder, out string converterPath)
     {
@@ -77,7 +101,7 @@ public class UnityScript2CSharpRunner
                                             ? Path.Combine(unityInstallFolder, "Unity.app/Contents/Tools/7za")
                                             : Path.Combine(unityInstallFolder, "Data/Tools/7z.exe");
         
-        var compressedConverterPath = Quote(assetsFolder + "/UnityScript2CSharp/UnityScript2CSharp_*.zip"); 
+        var compressedConverterPath = Quote(Path.Combine(Path.Combine(assetsFolder, ConverterPackageFolder), "UnityScript2CSharp_*.zip")); 
 
         var startInfo = new ProcessStartInfo
         {
@@ -115,14 +139,21 @@ public class UnityScript2CSharpRunner
             return true;
         }
     }
-  
+
+    private static string ConverterPackageFolder
+    {
+        get { return "UnityScript2CSharp"; }
+    }
+
     private static void RunCoverter(string converterPath)
     {
-        var accepted = EditorUtility.DisplayDialog(Title, "Run the conversion tool (this process may take several minutes) ?\r\n\r\n" 
-                                                        + "Make sure you have a backup of your project before continuing.", "Ok", "Cancel");
-        if (!accepted)
+        var option = EditorUtility.DisplayDialogComplex(
+                                            Title, 
+                                            "Run the conversion tool (this process may take several minutes) ?\r\n\r\n" +
+                                            "Make sure you have a backup of your project before continuing.", "Convert", "Convert (verbose logging)", "Cancel");
+        if (option == 2)
         {
-            Debug.Log("User did not allow converter to run.");
+            Debug.Log("User choose to not allow converter to run.");
             return;
         }
 
@@ -136,7 +167,7 @@ public class UnityScript2CSharpRunner
         };
 
         var monoExecutableExtension = Application.platform == RuntimePlatform.WindowsEditor ? ".exe" : "";
-        startInfo.Arguments = converterPath + " " + ComputeConverterCommandLineArguments();
+        startInfo.Arguments = converterPath + " " + ComputeConverterCommandLineArguments(option == 1);
         startInfo.FileName = Path.Combine(MonoInstallationFinder.GetMonoBleedingEdgeInstallation(), "bin/mono" + monoExecutableExtension);
         
         Console.WriteLine("--------- UnityScript2CSharp Arguments\r\n\r\n{0}\n\r---------", startInfo.Arguments);
@@ -146,8 +177,9 @@ public class UnityScript2CSharpRunner
             var sw = new Stopwatch();
             sw.Start();
 
-            var value = 0.1f;
-            var increment = 0.05f;
+            var sleepTime = 100; // ms
+            var value = 0.0f;
+            var increment = 0.5f / unityScriptCount; // Assumes that each script will take 2 x seepTime
             while (!p.HasExited && sw.ElapsedMilliseconds < 60000)
             {
                 if (EditorUtility.DisplayCancelableProgressBar("Runing", "converting from UnityScript -> C#", value))
@@ -157,9 +189,8 @@ public class UnityScript2CSharpRunner
                 }
                 
                 value += increment;
-                increment = Math.Max(0.001f, increment - 0.001f);
 
-                Thread.Sleep(100);
+                Thread.Sleep(sleepTime);
             }
             
             EditorUtility.ClearProgressBar();
@@ -171,19 +202,25 @@ public class UnityScript2CSharpRunner
             }
             else
             {
-                ShowConversionResultsInConsole();
+                ShowConversionResultsInConsole(p.ExitCode);
                 AssetDatabase.Refresh();
             }
         }
     }
 
-    private static void ShowConversionResultsInConsole()
+    private static void ShowConversionResultsInConsole(int retCode)
     {
+
         var logFilePath = GetLogFileNameForProject();
         if (!File.Exists(logFilePath))
             return;
 
-        Debug.Log("UnityScript2CSharp converter finished.\r\n\r\n" + File.ReadAllText(logFilePath));
+        if (retCode == 0)
+            Debug.Log("UnityScript2CSharp converter finished (You can remove '" + ConverterPackageFolder + "' if you dont plan to run the converter in ths project again).\r\n\r\n" + File.ReadAllText(logFilePath));
+        else            
+            Debug.Log("UnityScript2CSharp was not able to convert your project:.\r\n\r\n" + File.ReadAllText(logFilePath));
+
+
         var prevFilePath = logFilePath + ".prev";
         if (File.Exists(prevFilePath))
             File.Delete(prevFilePath);
@@ -191,16 +228,18 @@ public class UnityScript2CSharpRunner
         File.Move(logFilePath, prevFilePath);
     }
 
-    private static string ComputeConverterCommandLineArguments()
+
+    private static string ComputeConverterCommandLineArguments(bool verboseLogging)
     {
+#if UNITY_2017_3_OR_NEWER
         var unityInstallPath = Path.GetDirectoryName(EditorApplication.applicationPath);
 
         var responseFilePath = Path.GetTempFileName();
         using (var writer = new StreamWriter(File.OpenWrite(responseFilePath)))
         {
             var defines = CompilationPipeline.GetAssemblies()
-                .SelectMany(a => a.defines)
-                .Distinct();
+                                                .SelectMany(a => a.defines)
+                                                .Distinct();
 
             foreach (var define in defines)
             {
@@ -208,8 +247,8 @@ public class UnityScript2CSharpRunner
             }
 
             var referencedAssemblies = CompilationPipeline.GetAssemblies()
-                .SelectMany(a => a.compiledAssemblyReferences)
-                .Where(a => !a.Contains(unityInstallPath));
+                                            .SelectMany(a => a.compiledAssemblyReferences)
+                                            .Where(a => !a.Contains(unityInstallPath) || a.Contains("UnityExtensions"));
             
             foreach (var assemblyPath in referencedAssemblies)
             {
@@ -219,10 +258,18 @@ public class UnityScript2CSharpRunner
 
         var projectPath = Path.GetDirectoryName(Application.dataPath);
 
-        return "--responseFile " + Quote(responseFilePath)
-               + " -p " + Quote(projectPath)
-               + " -u " + Quote(unityInstallPath)
-               + " --outputFile " + Quote(GetLogFileNameForProject());
+        var args = "--responseFile " + Quote(responseFilePath)
+                    + " -p " + Quote(projectPath)
+                    + " -u " + Quote(unityInstallPath)
+                    + " --outputFile " + Quote(GetLogFileNameForProject());
+
+        if (verboseLogging)
+            args = args + " -v";
+
+        return args;
+#else
+    return string.Empty;               
+#endif               
     }
 
     private static string GetLogFileNameForProject()

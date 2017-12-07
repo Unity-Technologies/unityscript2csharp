@@ -207,6 +207,14 @@ namespace UnityScript2CSharp.Tests
         }
 
         [Test]
+        public void Base_Method_Invocation()
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "base_method_invocation.js", Contents = "import UnityScript2CSharp.Tests; class Foo extends Base { function M(i:int) { super(i); i = i + 1; super(i); } }" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "base_method_invocation.cs", Contents = "using UnityScript2CSharp.Tests; " + DefaultUsingsNoUnityType + " public class Foo : Base { public override void M(int i) { base.M(i); i = i + 1; base.M(i); } }" } };
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
         public void String_Static_Member_Reference()
         {
             var sourceFiles = new[] { new SourceFile { FileName = "string_member.js", Contents = "function M() { return String.Concat(1); }" } };
@@ -644,6 +652,16 @@ namespace UnityScript2CSharp.Tests
         {
             var sourceFiles = new[] { new SourceFile { FileName = "function.js", Contents = $"function M(f : Function) {{ f(10); f (f); }} function M2(o: System.Object) {{ {usExp}; }} function M3() {{ return 42; }}" } };
             var expectedConvertedContents = new[] { new SourceFile { FileName = "function.cs", Contents = DefaultGeneratedClass + $"function : MonoBehaviour {{ public virtual void M(System.Delegate f) {{ f.DynamicInvoke(new object[] {{10}}); f.DynamicInvoke(new object[] {{f}}); }} public virtual void M2(object o) {{ {csharpExp}; }} public virtual int M3() {{ return 42; }} }}" } };
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [TestCase("Run", "function(i) i == 10", "(i) => { return i == 10; }", TestName = "Func<int,bool>")]
+        [TestCase("RunAction", "function(i) Dummy.Foo(i)", "(i) => { Dummy.Foo(i); }", TestName = "Action<int>")]
+        public void Test_Function_With_Untyped_Parameter_Types(string common, string usSnipet, string csSnipet)
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "function_untyped_parameter.js", Contents = $"import UnityScript2CSharp.Tests; function F() {{ DelegateInvocation.{common}({usSnipet} ); }}" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "function_untyped_parameter.cs", Contents = "using UnityScript2CSharp.Tests; " + DefaultUsingsForClasses + $" public partial class function_untyped_parameter : MonoBehaviour {{ public virtual void F() {{ DelegateInvocation.{common}({csSnipet} ); }} }}" } };
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }

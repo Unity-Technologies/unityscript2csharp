@@ -42,8 +42,17 @@ namespace UnityScript2CSharp
             if (conditionExpression == null || !IsCaseEntry(firstSwitchCheckStatement, conditionVarInitialization.Left))
                 return false;
 
-            WriteSwitchStatement(candidateBlock, conditionVarInitialization);
+            WriteSwitchStatement(candidateBlock, conditionVarInitialization, SwitchConditionCastFor(firstSwitchCheckStatement));
             return true;
+        }
+
+        private CastExpression SwitchConditionCastFor(IfStatement firstSwitchCheckStatement)
+        {
+            var castExpression = ((BinaryExpression) firstSwitchCheckStatement.Condition).Left as CastExpression;
+            if (castExpression == null)
+                return null;
+
+            return castExpression;
         }
 
         private static bool IsSwitchVariableInitialization(BinaryExpression conditionVarInitialization)
@@ -54,10 +63,20 @@ namespace UnityScript2CSharp
                 && conditionVarInitialization.Left.ToCodeString().Contains("$switch");
         }
 
-        private void WriteSwitchStatement(Block node, BinaryExpression conditionVarInitialization)
+        private void WriteSwitchStatement(Block node, BinaryExpression conditionVarInitialization, CastExpression castFromConditionToCases)
         {
             _writer.Write("switch (");
-            conditionVarInitialization.Right.Accept(_us2CsVisitor);
+
+            Expression conditionExpression = conditionVarInitialization.Right;
+            if (castFromConditionToCases != null)
+            {
+                _writer.Write("(");
+                castFromConditionToCases.Type.Accept(_us2CsVisitor);
+                _writer.Write(") ");
+            }
+
+            conditionExpression.Accept(_us2CsVisitor);
+
             _writer.WriteLine(")");
             _writer.WriteLine("{");
 
@@ -101,6 +120,10 @@ namespace UnityScript2CSharp
             var leftAsBinary = comparison.Left as BinaryExpression;
             if (leftAsBinary != null)
                 return IsCaseEntry(leftAsBinary, expectedLocalVarInComparison);
+
+            var leftAsCast = comparison.Left as CastExpression;
+            if (leftAsCast != null && ((IType)leftAsCast.Type.Entity)?.IsEnum == true)
+                return true;
 
             return false;
         }

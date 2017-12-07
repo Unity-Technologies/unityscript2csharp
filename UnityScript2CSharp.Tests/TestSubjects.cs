@@ -25,6 +25,21 @@ namespace UnityEditor
 
 namespace UnityScript2CSharp.Tests
 {
+    public class Dummy
+    {
+        public static void Foo(object o) { }
+    }
+
+    public struct DelegateInvocation
+    {
+        public static bool Run(Func<int, bool> f) { return f(10); }
+
+        // We can't overload Run() otherwise UnityScript compiler will not be able to figure out which 
+        // overload is being invoked and try to resolve it at runtime (replacing the method call with 
+        // a call to Quack()
+        public static void RunAction(Action<int> f) { }
+    }
+
     public class Outer
     {
         public class Inner
@@ -36,6 +51,7 @@ namespace UnityScript2CSharp.Tests
     public class Base
     {
         public virtual void M() {}
+        public virtual void M(int i) { }
     }
 
     public class C

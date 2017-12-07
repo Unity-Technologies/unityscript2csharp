@@ -109,7 +109,17 @@ namespace UnityScript2CSharp.Tests
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
-        
+
+
+        [Test]
+        public void Switch_With_Int_Expression_As_Condition_And_Enum_As_Comparison()
+        {
+            var sourceFiles = SingleSourceFor("switch_int_enum.js", "enum E {A, B} function F(i:int) { switch(i) { case E.A: return 1; case E.B: return 2; } return 0; }");
+            var expectedConvertedContents = SingleSourceFor("switch_int_enum.cs", DefaultUsings + " public enum E { A = 0, B = 1 } " + SerializableAttr  + " public partial class switch_int_enum : MonoBehaviour { public virtual int F(int i) { switch ((E) i) { case E.A: return 1; break; case E.B: return 2; break; } return 0; } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
         private static IEnumerable Switch_On_Non_Const_Scenarios()
         {
             yield return new TestCaseData(
