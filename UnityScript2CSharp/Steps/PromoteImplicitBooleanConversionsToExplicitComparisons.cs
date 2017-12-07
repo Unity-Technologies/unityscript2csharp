@@ -44,7 +44,10 @@ namespace UnityScript2CSharp.Steps
 
         public override bool EnterBinaryExpression(BinaryExpression node)
         {
-            FixBooleanExpression(node);
+            FixBooleanExpressionTypeIfRequired(node);
+
+            if (FixMixedBooleanExpressionComparison(node))
+                return false;
 
             if (node.ExpressionType == TypeSystemServices.BoolType || (AstUtil.GetBinaryOperatorKind(node.Operator) != BinaryOperatorKind.Comparison && AstUtil.GetBinaryOperatorKind(node.Operator) != BinaryOperatorKind.Logical))
                 return true;
@@ -57,7 +60,38 @@ namespace UnityScript2CSharp.Steps
             return false;
         }
 
-        private void FixBooleanExpression(BinaryExpression node)
+        private bool FixMixedBooleanExpressionComparison(BinaryExpression node)
+        {
+            if (AstUtil.GetBinaryOperatorKind(node) != BinaryOperatorKind.Comparison)
+                return false;
+
+            if (node.ExpressionType != TypeSystemServices.BoolType || (node.Left.ExpressionType == TypeSystemServices.BoolType && node.Right.ExpressionType == TypeSystemServices.BoolType))
+                return false;
+
+            if (FixMixedBooleanExpressionOperand(node, node.Left, node.Right))
+                return true;
+
+
+            return FixMixedBooleanExpressionOperand(node, node.Right, node.Left);
+        }
+
+        private bool FixMixedBooleanExpressionOperand(BinaryExpression node, Expression booleanSide, Expression nonBooleanSide)
+        {
+            if (booleanSide.ExpressionType == TypeSystemServices.BoolType && TypeSystemServices.IsNumber(nonBooleanSide.ExpressionType))
+            {
+                var literalExpression = nonBooleanSide as LiteralExpression;
+                Expression replacementNode = literalExpression != null
+                                                ? (Expression)CodeBuilder.CreateBoolLiteral(Convert.ToInt32(literalExpression.ValueObject) != 0)
+                                                : CodeBuilder.CreateBoundBinaryExpression(booleanSide.ExpressionType, BinaryOperatorType.Inequality, nonBooleanSide, CodeBuilder.CreateIntegerLiteral(0));
+
+                node.Replace(nonBooleanSide, replacementNode);
+                return true;
+            }
+
+            return false;
+        }
+
+        private void FixBooleanExpressionTypeIfRequired(BinaryExpression node)
         {
             if (AstUtil.GetBinaryOperatorKind(node) != BinaryOperatorKind.Comparison)
                 return;
@@ -76,7 +110,10 @@ namespace UnityScript2CSharp.Steps
             }
 
             if (expression.ExpressionType == TypeSystemServices.BoolType)
+            {
+                expression.Accept(this);
                 return;
+            }
 
             var binaryExpression = expression as BinaryExpression;
             if (binaryExpression != null && (AstUtil.GetBinaryOperatorKind(binaryExpression) == BinaryOperatorKind.Logical || AstUtil.GetBinaryOperatorKind(binaryExpression) == BinaryOperatorKind.Comparison))

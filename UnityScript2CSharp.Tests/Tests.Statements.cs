@@ -23,6 +23,11 @@ namespace UnityScript2CSharp.Tests
         }
 
         [TestCase("boolean", "var b = !p;", "bool b = !p;", "bool")]
+        [TestCase("boolean", "var i = 10; var b = p == i || i == p;", "int i = 10; bool b = (p == (i != 0)) || ((i != 0) == p);", "bool", TestName = "bool == var int")]
+        [TestCase("boolean", "var b = p == 1 || 1 == p;", "bool b = (p == true) || (true == p);", "bool", TestName = "bool == int (1)")]
+        [TestCase("boolean", "var b = p == 0 && 0 == p;", "bool b = (p == false) && (false == p);", "bool", TestName = "bool == int (0)")]
+        [TestCase("boolean", "var b = p == 1.5f || 1.5f == p;", "bool b = (p == true) || (true == p);", "bool", TestName = "bool == float (1.5f)")]
+        [TestCase("boolean", "var b = p == 0f && 0f == p;", "bool b = (p == false) && (false == p);", "bool", TestName = "bool == float (0f)")]
 
         [TestCase("float", "var b = !p;", "bool b = p == 0f;")]
         [TestCase("float", "if (p) {}", "if (p != 0f) { }")]
@@ -50,9 +55,10 @@ namespace UnityScript2CSharp.Tests
 
         [TestCase("int", "if(p && (p || !p)) {} ", "if ((p != 0) && ((p != 0) || (p == 0))) { }", TestName = "Multiple binary expressions")]
         [TestCase("int", "if(++p) {} ", "if (++p != 0) { }", TestName = "Pre Increment")]
+        [TestCase("int", "while (System.Console.CapsLock && !p) {}", "while (System.Console.CapsLock && (p == 0)) { }", "int", TestName = "Int in operand of not expression of RHS of Binary Expression")]
         [TestCase("System.IComparable", "if(p && (p.CompareTo(1) || !p)) {} ", "if ((p != null) && ((p.CompareTo(1) != 0) || (p == null))) { }", TestName = "Method in multiple binary expressions")]
         [TestCase("System.IComparable", "if(p.CompareTo(1)) {} ", "if (p.CompareTo(1) != 0) { }", TestName = "Simple Method")]
-        [TestCase("System.IComparable", "var ba = System.Collections.BitArray(10); ba.SetAll(p && p.CompareTo(1));", "BitArray ba = new System.Collections.BitArray(10); ba.SetAll((p != null) && (p.CompareTo(1) != 0));", TestName = "As method parameter")]
+        [TestCase("System.IComparable", "var ba = BitArray(10); ba.SetAll(p && p.CompareTo(1));", "BitArray ba = new BitArray(10); ba.SetAll((p != null) && (p.CompareTo(1) != 0));", TestName = "As method parameter")]
 
         [TestCase("System.Object", "while (p && System.Environment.ProcessorCount > 10) {}", "while ((p != null) && (System.Environment.ProcessorCount > 10)) { }", "object", TestName = "Object as LRS of Binary Expression")]
         [TestCase("System.Object", "while(p) {}", "while (p != null) { }", "object")]
