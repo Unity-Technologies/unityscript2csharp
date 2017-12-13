@@ -25,21 +25,10 @@ namespace UnityScript2CSharp
 
         private bool Convert(Block candidateBlock)
         {
-            if (candidateBlock.Statements.Count < 2 || candidateBlock.Statements[0].NodeType != NodeType.ExpressionStatement)
-                return false;
-
-            var conditionVarInitialization = ((ExpressionStatement)candidateBlock.Statements[0]).Expression as BinaryExpression;
-
-            if (!IsSwitchVariableInitialization(conditionVarInitialization))
-                return false;
-
-            // Next statement should be something like: "if ($switch$1 == 1)"
-            var firstSwitchCheckStatement = candidateBlock.Statements[1] as IfStatement;
-            if (firstSwitchCheckStatement == null)
-                return false;
-
-            var conditionExpression = firstSwitchCheckStatement.Condition as BinaryExpression;
-            if (conditionExpression == null || !IsCaseEntry(firstSwitchCheckStatement, conditionVarInitialization.Left))
+            BinaryExpression conditionVarInitialization;
+            IfStatement firstSwitchCheckStatement;
+            LabelStatement switchEnd;
+            if (!candidateBlock.TryExtractSwitchStatementDetails(out conditionVarInitialization, out firstSwitchCheckStatement, out switchEnd))
                 return false;
 
             WriteSwitchStatement(candidateBlock, conditionVarInitialization, SwitchConditionCastFor(firstSwitchCheckStatement));
@@ -54,15 +43,7 @@ namespace UnityScript2CSharp
 
             return castExpression;
         }
-
-        private static bool IsSwitchVariableInitialization(BinaryExpression conditionVarInitialization)
-        {
-            // First statment of blobk should be something like "$switch$1 = i;"
-            return conditionVarInitialization != null
-                && conditionVarInitialization.Left.NodeType == NodeType.ReferenceExpression
-                && conditionVarInitialization.Left.ToCodeString().Contains("$switch");
-        }
-
+ 
         private void WriteSwitchStatement(Block node, BinaryExpression conditionVarInitialization, CastExpression castFromConditionToCases)
         {
             _writer.Write("switch (");
@@ -83,7 +64,7 @@ namespace UnityScript2CSharp
             var nonConstExpressionCaseEntries = new List<IfStatement>();
             using (new BlockIdentation(_writer))
             {
-                var cases = node.Statements.OfType<IfStatement>().Where(stmt => IsCaseEntry(stmt, conditionVarInitialization.Left));
+                var cases = node.Statements.OfType<IfStatement>().Where(stmt => stmt.IsCaseEntry(conditionVarInitialization.Left));
                 foreach (var caseStatement in cases)
                 {
                     var equalityCheck = caseStatement.Condition as BinaryExpression;
@@ -99,33 +80,6 @@ namespace UnityScript2CSharp
                 WriteDefaultCase(node, nonConstExpressionCaseEntries, conditionVarInitialization);
             }
             _writer.WriteLine("}");
-        }
-
-        private static bool IsCaseEntry(IfStatement statement, Expression expectedLocalVarInComparison)
-        {
-            var comparison = statement.Condition as BinaryExpression;
-            if (comparison == null)
-                return false;
-
-            return IsCaseEntry(comparison, expectedLocalVarInComparison);
-        }
-
-        private static bool IsCaseEntry(BinaryExpression comparison, Expression expectedLocalVarInComparison)
-        {
-            // First statment of blobk should be something like "$switch$1 = i;"
-            var candidateLocalVarReference = comparison.Left as ReferenceExpression;
-            if (candidateLocalVarReference != null && candidateLocalVarReference.Matches(expectedLocalVarInComparison))
-                return true;
-
-            var leftAsBinary = comparison.Left as BinaryExpression;
-            if (leftAsBinary != null)
-                return IsCaseEntry(leftAsBinary, expectedLocalVarInComparison);
-
-            var leftAsCast = comparison.Left as CastExpression;
-            if (leftAsCast != null && ((IType)leftAsCast.Type.Entity)?.IsEnum == true)
-                return true;
-
-            return false;
         }
 
         private void WriteDefaultCase(Block node, IList<IfStatement> nonConstExpressionCaseEntries, BinaryExpression conditionVarInitialization)
@@ -156,7 +110,7 @@ namespace UnityScript2CSharp
             {
                 //TODO: Check false positives
                 var current = node.Statements[i];
-                if (current.NodeType == NodeType.IfStatement && IsCaseEntry((IfStatement)current, expectedLocalVarInComparison))
+                if (current.NodeType == NodeType.IfStatement && ((IfStatement) current).IsCaseEntry(expectedLocalVarInComparison))
                     break;
 
                 // Ignore any "artificial labels"
