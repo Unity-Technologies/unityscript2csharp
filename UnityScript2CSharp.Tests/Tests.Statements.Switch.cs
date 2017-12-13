@@ -10,7 +10,7 @@ namespace UnityScript2CSharp.Tests
         public void Conditional_Continue_Mixed_With_Switch_Inside_For()
         {
             var sourceFiles = SingleSourceFor("conditional_continue_with_switch.js", "function F() { for (var x = 1; x < 10; x++) {  switch(x) { case 1: x = x + 1; break; case 2: continue; }; x = x; } }");
-            var expectedConvertedContents = SingleSourceFor("conditional_continue_with_switch.cs", DefaultGeneratedClass + @"conditional_continue_with_switch : MonoBehaviour { public virtual void F() { int x = 1; while (x < 10) { switch (x) { case 1: x = x + 1; break; case 2: goto Label_for_1; break; } x = x; Label_for_1: x++; } } }");
+            var expectedConvertedContents = SingleSourceFor("conditional_continue_with_switch.cs", DefaultGeneratedClass + @"conditional_continue_with_switch : MonoBehaviour { public virtual void F() { int x = 1; while (x < 10) { switch (x) { case 1: x = x + 1; break; case 2: goto Label_for_1; } x = x; Label_for_1: x++; } } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -30,7 +30,7 @@ namespace UnityScript2CSharp.Tests
         public void Switch(string condition)
         {
             var sourceFiles = SingleSourceFor("switch_statement.js", $"function F(i:int) {{ switch({condition}) {{ case 1: return 1; case 2: return 2; default: return 3; }} }}");
-            var expectedConvertedContents = SingleSourceFor("switch_statement.cs", DefaultGeneratedClass + $"switch_statement : MonoBehaviour {{ public virtual int F(int i) {{ switch ({condition}) {{ case 1: return 1; break; case 2: return 2; break; default: return 3; break; }} }} }}");
+            var expectedConvertedContents = SingleSourceFor("switch_statement.cs", DefaultGeneratedClass + $"switch_statement : MonoBehaviour {{ public virtual int F(int i) {{ switch ({condition}) {{ case 1: return 1; case 2: return 2; default: return 3; break; }} }} }}");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -48,7 +48,7 @@ namespace UnityScript2CSharp.Tests
         public void Switch_On_Extern_Enum()
         {
             var sourceFiles = SingleSourceFor("switch_on_enum.js", "import System; function F(t:DateTimeKind) { switch(t) { case DateTimeKind.Utc: return 0; case DateTimeKind.Local: return 1; } return 2; }");
-            var expectedConvertedContents = SingleSourceFor("switch_on_enum.cs", "using System; " + DefaultGeneratedClass + "switch_on_enum : MonoBehaviour { public virtual int F(DateTimeKind t) { switch (t) { case DateTimeKind.Utc: return 0; break; case DateTimeKind.Local: return 1; break; } return 2; } }");
+            var expectedConvertedContents = SingleSourceFor("switch_on_enum.cs", "using System; " + DefaultGeneratedClass + "switch_on_enum : MonoBehaviour { public virtual int F(DateTimeKind t) { switch (t) { case DateTimeKind.Utc: return 0; case DateTimeKind.Local: return 1; } return 2; } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -57,7 +57,7 @@ namespace UnityScript2CSharp.Tests
         public void Switch_On_Local_Enum()
         {
             var sourceFiles = SingleSourceFor("switch_local_enum.js", "enum E { First, Second } function F(t:E) { switch(t) { case E.First: return 0; case E.Second: return 1; } return 2; }");
-            var expectedConvertedContents = SingleSourceFor("switch_local_enum.cs", DefaultUsings + " public enum E { First = 0, Second = 1 } [System.Serializable] public partial class switch_local_enum : MonoBehaviour { public virtual int F(E t) { switch (t) { case E.First: return 0; break; case E.Second: return 1; break; } return 2; } }");
+            var expectedConvertedContents = SingleSourceFor("switch_local_enum.cs", DefaultUsings + " public enum E { First = 0, Second = 1 } [System.Serializable] public partial class switch_local_enum : MonoBehaviour { public virtual int F(E t) { switch (t) { case E.First: return 0; case E.Second: return 1; } return 2; } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -105,7 +105,7 @@ namespace UnityScript2CSharp.Tests
         public void Switch_Over_String(string condition)
         {
             var sourceFiles = SingleSourceFor("switch_over_string.js", $"function F(s:String) {{ switch({condition}) {{ case \"foo\": return 1; case \"bar\": return 2; }} }}");
-            var expectedConvertedContents = SingleSourceFor("switch_over_string.cs", DefaultGeneratedClass + $"switch_over_string : MonoBehaviour {{ public virtual int F(string s) {{ switch ({condition}) {{ case \"foo\": return 1; break; case \"bar\": return 2; break; }} }} }}");
+            var expectedConvertedContents = SingleSourceFor("switch_over_string.cs", DefaultGeneratedClass + $"switch_over_string : MonoBehaviour {{ public virtual int F(string s) {{ switch ({condition}) {{ case \"foo\": return 1; case \"bar\": return 2; }} }} }}");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -115,7 +115,7 @@ namespace UnityScript2CSharp.Tests
         public void Switch_With_Int_Expression_As_Condition_And_Enum_As_Comparison()
         {
             var sourceFiles = SingleSourceFor("switch_int_enum.js", "enum E {A, B} function F(i:int) { switch(i) { case E.A: return 1; case E.B: return 2; } return 0; }");
-            var expectedConvertedContents = SingleSourceFor("switch_int_enum.cs", DefaultUsings + " public enum E { A = 0, B = 1 } " + SerializableAttr  + " public partial class switch_int_enum : MonoBehaviour { public virtual int F(int i) { switch ((E) i) { case E.A: return 1; break; case E.B: return 2; break; } return 0; } }");
+            var expectedConvertedContents = SingleSourceFor("switch_int_enum.cs", DefaultUsings + " public enum E { A = 0, B = 1 } " + SerializableAttr  + " public partial class switch_int_enum : MonoBehaviour { public virtual int F(int i) { switch ((E) i) { case E.A: return 1; case E.B: return 2; } return 0; } }");
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
@@ -139,7 +139,7 @@ namespace UnityScript2CSharp.Tests
 
             yield return new TestCaseData(
                 "function F(i:int, tbc:int) { switch(i) { case 1: return -1; case tbc: return 2; } }",
-                "public virtual int F(int i, int tbc) { switch (i) { case 1: return -1; break; default: if (i == tbc) { return 2; } break; } }")
+                "public virtual int F(int i, int tbc) { switch (i) { case 1: return -1; default: if (i == tbc) { return 2; } break; } }")
                 .SetName("Mixed Const/Non Const");
 
             yield return new TestCaseData(

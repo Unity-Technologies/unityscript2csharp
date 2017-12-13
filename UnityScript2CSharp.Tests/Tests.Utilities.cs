@@ -20,7 +20,7 @@ namespace UnityScript2CSharp.Tests
         {
             get
             {
-                var installFolder = Environment.GetEnvironmentVariable("UNITY_INSTALL_FOLDER");
+                var installFolder = Environment.GetEnvironmentVariable("UNITY_INSTALL_FOLDER") ?? @"c:\Work\Repo\Trunk\Build\WindowsEditor\";
                 if (installFolder != null)
                     return installFolder;
 

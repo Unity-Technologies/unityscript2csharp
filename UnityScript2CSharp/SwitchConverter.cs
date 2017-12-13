@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Boo.Lang.Compiler.Ast;
-using Boo.Lang.Compiler.TypeSystem;
 using UnityScript2CSharp.Extensions;
 
 namespace UnityScript2CSharp
@@ -64,15 +63,9 @@ namespace UnityScript2CSharp
             var nonConstExpressionCaseEntries = new List<IfStatement>();
             using (new BlockIdentation(_writer))
             {
-                var cases = node.Statements.OfType<IfStatement>().Where(stmt => stmt.IsCaseEntry(conditionVarInitialization.Left));
-                foreach (var caseStatement in cases)
+                foreach (var caseStatement in node.GetSwitchCases(conditionVarInitialization))
                 {
-                    var equalityCheck = caseStatement.Condition as BinaryExpression;
-                    if (equalityCheck == null)
-                    {
-                        // Log: Expecting binary expression in "case", found: actual
-                        continue;
-                    }
+                    var equalityCheck = (BinaryExpression) caseStatement.Condition;
                     if (!WriteSwitchCase(equalityCheck, caseStatement.TrueBlock))
                         nonConstExpressionCaseEntries.Add(caseStatement);
                 }
@@ -94,7 +87,7 @@ namespace UnityScript2CSharp
                 WriteNonConstSwitchCases(nonConstExpressionCaseEntries, conditionVarInitialization.Right);
                 foreach (var stmt in statementIndex)
                 {
-                    if (stmt.NodeType == NodeType.LabelStatement)
+                    if (stmt.NodeType == NodeType.LabelStatement || stmt.ContainsAnnotation("BREAK")) 
                         continue;
 
                     stmt.Accept(_us2CsVisitor);
@@ -120,6 +113,7 @@ namespace UnityScript2CSharp
 
             return index != -1 ? node.Statements.Skip(index) : Enumerable.Empty<Statement>();
         }
+
         private void WriteNonConstSwitchCases(IList<IfStatement> nonConstExpressionCaseEntries, Expression tbc)
         {
             foreach (var caseEntry in nonConstExpressionCaseEntries)
@@ -152,7 +146,6 @@ namespace UnityScript2CSharp
                 {
                     statement.Accept(_us2CsVisitor);
                 }
-                _writer.WriteLine("break;");
             }
 
             return true;

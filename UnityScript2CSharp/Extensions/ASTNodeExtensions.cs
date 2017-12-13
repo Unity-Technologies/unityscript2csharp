@@ -93,6 +93,12 @@ namespace UnityScript2CSharp.Extensions
             return false;
         }
 
+        public static IEnumerable<IfStatement> GetSwitchCases(this Block node, BinaryExpression conditionVarInitialization)
+        {
+            var cases = node.Statements.OfType<IfStatement>().Where(stmt => stmt.IsCaseEntry(conditionVarInitialization.Left) && stmt.Condition.NodeType == NodeType.BinaryExpression);
+            return cases;
+        }
+
         public static bool NeedsQualificationFor(this Node node, INamespace ns)
         {
             return node.GetAncestors<Import>().Any(imp => imp.Namespace == ns.FullName);
