@@ -260,7 +260,7 @@ namespace UnityScript2CSharp
 
             WriteComments(node, AnchorKind.Right);
 
-            _writer.WriteLine(";");
+            _writer.Write(";");
         }
 
         public override void OnProperty(Property node)
