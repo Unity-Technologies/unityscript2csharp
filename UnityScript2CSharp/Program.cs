@@ -281,23 +281,30 @@ namespace UnityScript2CSharp
         private static bool TryFindUnityAssembliesRoot(string testPath, bool verbose, out string unityAssembliesRootPath)
         {
             if (verbose)
-                Console.WriteLine("Probbing {0}", testPath);
+                Console.WriteLine("Probing {0}", testPath);
 
-            var found = Directory.GetFiles(testPath, "*.dll").Any(file => unityProbePathRegex.IsMatch(file));
-            if (found)
+            try
             {
-                if (verbose)
-                    Console.WriteLine("Found assemblies root folder at '{0}'", testPath);
+                var found = Directory.GetFiles(testPath, "*.dll").Any(file => unityProbePathRegex.IsMatch(file));
+                if (found)
+                {
+                    if (verbose)
+                        Console.WriteLine("Found assemblies root folder at '{0}'", testPath);
 
-                unityAssembliesRootPath = testPath;
-                return true;
-            }
-
-            var folders = Directory.GetDirectories(testPath);
-            foreach (var folder in folders)
-            {
-                if (TryFindUnityAssembliesRoot(folder, verbose, out unityAssembliesRootPath))
+                    unityAssembliesRootPath = testPath;
                     return true;
+                }
+
+                var folders = Directory.GetDirectories(testPath);
+                foreach (var folder in folders)
+                {
+                    if (TryFindUnityAssembliesRoot(folder, verbose, out unityAssembliesRootPath))
+                        return true;
+                }
+            }
+            catch (UnauthorizedAccessException e)
+            {
+                Console.WriteLine(e);
             }
 
             unityAssembliesRootPath = null;
