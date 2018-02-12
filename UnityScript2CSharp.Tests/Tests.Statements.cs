@@ -191,6 +191,16 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
+
+        [Test]
+        public void Break_not_as_last_switch_statement()
+        {
+            var sourceFiles = SingleSourceFor("break_not_as_last_switch_statement.js", "function F(i:int, j:int) { switch(i) { case 1: if (j == 1) break; if (j == 0) { i++; break; } j++; break; case 1: break; } }");
+            var expectedConvertedContents = SingleSourceFor("break_not_as_last_switch_statement.cs", DefaultGeneratedClass + "break_not_as_last_switch_statement : MonoBehaviour { public virtual void F(int i, int j) { switch (i) { case 1: if (j == 1) { break; } if (j == 0) { i++; break; } j++; break; case 1: break; } } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
         [Test]
         public void Super()
         {

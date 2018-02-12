@@ -111,6 +111,7 @@
     <Compile Include="Comment.cs" />
     <Compile Include="CommentKind.cs" />
     <Compile Include="CompilerErrorComparer.cs" />
+    <Compile Include="Extensions\StringExtensions.cs" />
     <Compile Include="OrphanCommentVisitor.cs" />
     <Compile Include="Steps\AttachComments.cs" />
     <Compile Include="BlockIdentation.cs" />
@@ -124,6 +125,7 @@
     <Compile Include="Steps\FixClosures.cs" />
     <Compile Include="Steps\FixEnumReferences.cs" />
     <Compile Include="Steps\FixFunctionReferences.cs" />
+    <Compile Include="Steps\FixSwitchBreaks.cs" />
     <Compile Include="Steps\FixSwitchWithOnlyDefault.cs" />
     <Compile Include="Steps\CSharpReservedKeywordIdentifierClashFix.cs" />
     <Compile Include="Steps\FixTypeAccessibility.cs" />
