@@ -481,6 +481,15 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
+        [Test, Ignore("Issue #30 See https://bit.ly/2qFW4HY")]
+        public void Multiple_Assignment_To_Members_Of_ValueTypes_Through_Properties()
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "multiple_value_type_assignment.js", Contents = "import UnityScript2CSharp.Tests; function F(o1:NonGeneric, o2:NonGeneric) { o1.Struct.value = o2.Struct.value = 42; }" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "multiple_value_type_assignment.cs", Contents = "using UnityScript2CSharp.Tests; " + DefaultGeneratedClass + "multiple_value_type_assignment : MonoBehaviour { public virtual void F(NonGeneric o1, NonGeneric o2) { { int _3 = 42; Struct _4 = o1.Struct; _4.value = _3; o1.Struct = _4; Struct _5 = o2.Struct; _5.value = _1; o2.Struct = _5; } } }" } };
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
         [TestCase("10", TestName = "Literal")]
         [TestCase("1 + 1", TestName = "Constant expression")]
         [TestCase("System.String.Format(\"\", 1).Length", TestName = "Method Invocation")]
