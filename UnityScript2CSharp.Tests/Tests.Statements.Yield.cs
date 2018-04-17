@@ -49,5 +49,46 @@ namespace UnityScript2CSharp.Tests
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
+
+        [Test]
+        public void Yield_Variables()
+        {
+            var sourceFiles = SingleSourceFor("yield_variables.js", "function F() { var o:Object = null; yield o; }");
+            var expectedConvertedContents = SingleSourceFor("yield_variables.cs", DefaultGeneratedClass + "yield_variables : MonoBehaviour { public virtual IEnumerator F() { object o = null; yield return o; } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test] public void Yield_Fieds()
+        {
+            var sourceFiles = SingleSourceFor("yield_fields.js", "var o:Object = null; function F() { yield o; }");
+            var expectedConvertedContents = SingleSourceFor("yield_fields.cs", DefaultGeneratedClass + "yield_fields : MonoBehaviour { public object o; public virtual IEnumerator F() { yield return this.o; } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test] public void Yield_Parameters()
+        {
+            var sourceFiles = SingleSourceFor("yield_parameters.js", "function F(o:Object) { yield o; }");
+            var expectedConvertedContents = SingleSourceFor("yield_parameters.cs", DefaultGeneratedClass + "yield_parameters : MonoBehaviour { public virtual IEnumerator F(object o) { yield return o; } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test] public void Yield_Method_Return()
+        {
+            var sourceFiles = SingleSourceFor("yield_method_return.js", "function M() { return 10; } function F() { yield M(); }");
+            var expectedConvertedContents = SingleSourceFor("yield_method_return.cs", DefaultGeneratedClass + "yield_method_return : MonoBehaviour { public virtual int M() { return 10; } public virtual IEnumerator F() { yield return this.M(); } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test] public void Yield_Property()
+        {
+            var sourceFiles = SingleSourceFor("yield_property.js", "function F(s:String) { yield s.Length; }");
+            var expectedConvertedContents = SingleSourceFor("yield_property.cs", DefaultGeneratedClass + "yield_property : MonoBehaviour { public virtual IEnumerator F(string s) { yield return s.Length; } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
     }
 }
