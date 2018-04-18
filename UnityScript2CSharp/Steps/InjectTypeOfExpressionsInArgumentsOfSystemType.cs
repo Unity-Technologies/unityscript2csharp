@@ -30,7 +30,7 @@ namespace UnityScript2CSharp.Steps
         {
             if (HasImplictTypeOfExpression(node))
             {
-                node.ParentNode.Replace(node, CodeBuilder.CreateTypeofExpression((IType)node.Entity));
+                node.ParentNode.Replace(node, CodeBuilder.CreateTypeofExpression( TypeSystemServices.GetType(node)));
                 return;
             }
 
@@ -42,7 +42,7 @@ namespace UnityScript2CSharp.Steps
             if (!HasImplictTypeOfExpression(node))
                 return;
 
-            node.ParentNode.Replace(node, CodeBuilder.CreateTypeofExpression((IType)node.Entity));
+            node.ParentNode.Replace(node, CodeBuilder.CreateTypeofExpression(TypeSystemServices.GetType(node)));
         }
 
         public override void OnArrayLiteralExpression(ArrayLiteralExpression node)
@@ -60,7 +60,7 @@ namespace UnityScript2CSharp.Steps
         {
             if (node.Operator == BinaryOperatorType.Assign && node.Left.ExpressionType == TypeSystemServices.TypeType && node.Right.ExpressionType.EntityType == EntityType.Type && (node.Right.Entity != null && node.Right.Entity.EntityType == EntityType.Type))
             {
-                node.Replace(node.Right, CodeBuilder.CreateTypeofExpression((IType)node.Right.Entity));
+                node.Replace(node.Right, CodeBuilder.CreateTypeofExpression(TypeSystemServices.GetType(node.Right)));
             }
             else if (node.Operator == BinaryOperatorType.TypeTest)
             {
@@ -81,7 +81,10 @@ namespace UnityScript2CSharp.Steps
                 return node.ParentNode.NodeType == NodeType.MethodInvocationExpression || node.ParentNode.NodeType == NodeType.ArrayLiteralExpression;
             }
 
-            return node.ParentNode.NodeType == NodeType.Attribute || node.ParentNode.NodeType == NodeType.YieldStatement;
+            if (node.ParentNode.NodeType == NodeType.YieldStatement)
+                return node.Entity.EntityType == EntityType.Type;
+
+            return node.ParentNode.NodeType == NodeType.Attribute;
         }
     }
 }
