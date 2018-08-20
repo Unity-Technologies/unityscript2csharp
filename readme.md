@@ -3,6 +3,10 @@ A tool to help the conversion from UnityScript -> C#
 
 You can read more about in [this blog post](https://blogs.unity3d.com/pt/2017/08/11/unityscripts-long-ride-off-into-the-sunset/).
 
+### Where can I get help?
+
+If you hit any issues or have any questions feel free to send a message in the conversion forum thread: https://forum.unity.com/threads/unityscript-2-csharp-conversion-tool.487753/
+
 ### How to use
 
 First, download the tool from [here](https://github.com/Unity-Technologies/unityscript2csharp/releases).
@@ -13,9 +17,15 @@ Before running the conversion tool:
 
 1. Keep in mind that you'll have best results (i.e, a smoother conversion process) if your UnityScripts have  *#pragma strict* applied to them.
 
-1. Launch Unity editor (**preferably, 5.6x**) and make sure you allow APIUpdater to run and update any obsolete API usages. This is necessary to avoid compilation errors during the conversion.
+1. Launch Unity editor (**preferably, 2018.2**) and make sure you allow APIUpdater to run and update any obsolete API usages. This is necessary to avoid compilation errors during the conversion.
 
-Next step is to run the application (UnityScript2CSharp.exe) passing the path to the project (**-p**) the Unity root installation folder (**-u**) and any additional assembly references (**-r**) used by the UnityScript scripts. Bellow you can find a list of valid command line arguments and their meaning:
+Next step is to run the converter. For that we recomend trying the _Editor Unity Package Integration_ first:
+
+1. Install the package (downloaded from [here](https://github.com/Unity-Technologies/unityscript2csharp/releases))
+1. Select _Tools/Convert Project from UnityScript to C#_
+1. Follow the steps.
+
+If you need more control over the options used during the conversion, you can use the application (UnityScript2CSharp.exe) passing the path to the project (**-p**) the Unity root installation folder (**-u**) and any additional assembly references (**-r**) used by the UnityScript scripts. Bellow you can find a list of valid command line arguments and their meaning:
 
 | Argument | Meaning |
 |----------------|-----------------------------------|
@@ -43,7 +53,7 @@ UnityScript2CSharp.exe **-p** m:\Work\Repo\4-0_AngryBots **-u** M:\Work\Repo\uni
 
 * *Guarded code* (#if … )
 
-    * UnityScript parser simply ignores guarded code when the condition evaluates to false leaving no traces of the original code when we are visiting the generated AST. The alternative for now is to run the tool multiple times in order to make sure all guarded code will eventually  be processed. Each time the tool is executed user is required to merge the generated code manually.
+    * UnityScript parser simply ignores guarded code when the condition evaluates to false leaving no traces of the original code when we are visiting the generated AST. The alternative for now is to run the tool multiple times in order to make sure all guarded code will eventually be processed. Each time the tool is executed user is required to merge the generated code manually.
 
 * Formatting is not preserved
 
@@ -95,10 +105,10 @@ In case you want to build the tool locally, *"all"* you need to do is:
 
 All tests (in UnityScript2CSharp.Tests.csproj project) can be run with NUnit runner (recommended to use latest version).
 
-###Windows
+### Windows
 If you have Unity installed most likely you don't need any extra step; in case the tests fail to find Unity installation you can follow steps similar to the ones required for OSX/Linux
 
-###OSX / Linux
+### OSX / Linux
 The easiest way to get the tests running is by setting the environment variable **UNITY_INSTALL_FOLDER** to point to the Unity installation folder and launch **Unit** rest runner.
 
 
@@ -127,9 +137,4 @@ In the example above,  if you run the conversion tool specifying the symbol *SYM
 
 The best way to workaround this limitation is to set-up a local VCS repository (git, mercurial or any other of your option) and run the conversion tool with a set of *symbols* then commit the generated code, revert the changes to the UnityScript scripts (i.e, restore the original scripts), run the conversion tool again with a different set of *Symbols* and merge the new version of the converted scripts.
 
-----
-#### **Q**: The conversion fails with exceptions about failures to find Unity types
-
-#### **A**: During the development process we observed some errors like that when refereincing assemblies from Unity 2017.1/2017.2.
-            Please, try to reference Unity assemblies from Unity 5.6.x  (i.e, pass the path to Untiy 5.6 instalation as the command line argument **-u**).
 ----
