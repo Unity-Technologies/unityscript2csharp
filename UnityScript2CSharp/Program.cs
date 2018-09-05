@@ -234,16 +234,8 @@ namespace UnityScript2CSharp
         private static void AppendUnityAssembliesReferences(string unityAssembliesRootPath, List<string> references)
         {
             var modularizedUnityEngineFolder = Path.Combine(unityAssembliesRootPath, "UnityEngine");
-            if (Directory.Exists(modularizedUnityEngineFolder))
-            {
-                foreach (var assemblyPath in Directory.GetFiles(modularizedUnityEngineFolder, "*.dll"))
-                {
-                    references.Add(assemblyPath);
-                }
-            }
-            else
-                references.Add(Path.Combine(unityAssembliesRootPath, "UnityEngine.dll"));
-
+            
+            references.Add(Path.Combine(unityAssembliesRootPath, "UnityEngine.dll"));
             references.Add(Path.Combine(unityAssembliesRootPath, "UnityEditor.dll"));
         }
 
@@ -330,6 +322,13 @@ namespace UnityScript2CSharp
             IEnumerable<string> references = AssemblyReferencesFor(args, assemblyType);
 
             Console.WriteLine("Converting '{0}' ({1} scripts)", assemblyType, scripts.Count);
+
+            if (args.Verbose)
+            {
+                Console.WriteLine("Referenced assemblies:");
+                foreach(var r in references)
+                    System.Console.WriteLine($"\t{r}");
+            }
 
             Action<string, string, int> handler = (scriptPath, context, unsupportedCount) => HandleConvertedScript(scriptPath, context, args.RemoveOriginalFiles, args.Verbose, unsupportedCount);
             if (args.DryRun)

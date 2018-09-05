@@ -2,15 +2,20 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using Assets.Editor;
 using UnityEditor;
-using UnityEditor.Compilation;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using Application = UnityEngine.Application;
 using Debug = UnityEngine.Debug;
+
+#if UNITY_2017_3_OR_NEWER        
+
+using System.Linq;
+using UnityEngine.SceneManagement;
+using UnityEditor.Compilation;
+
+#endif
 
 [Serializable]
 public class UnityScript2CSharpRunner : UnityEditor.EditorWindow
@@ -248,7 +253,8 @@ public class UnityScript2CSharpRunner : UnityEditor.EditorWindow
 
             var referencedAssemblies = CompilationPipeline.GetAssemblies()
                                             .SelectMany(a => a.compiledAssemblyReferences)
-                                            .Where(a => !a.Contains(unityInstallPath) || a.Contains("UnityExtensions"));
+                                            .Where(a => !a.Contains(unityInstallPath) || a.Contains("UnityExtensions"))
+                                            .Distinct(StringComparer.InvariantCultureIgnoreCase);
             
             foreach (var assemblyPath in referencedAssemblies)
             {

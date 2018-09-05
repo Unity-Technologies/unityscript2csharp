@@ -17,7 +17,7 @@ Before running the conversion tool:
 
 1. Keep in mind that you'll have best results (i.e, a smoother conversion process) if your UnityScripts have  *#pragma strict* applied to them.
 
-1. Launch Unity editor (**preferably, 2018.2**) and make sure you allow APIUpdater to run and update any obsolete API usages. This is necessary to avoid compilation errors during the conversion.
+1. Launch Unity editor (**preferably, 2018.1**) and make sure you allow APIUpdater to run and update any obsolete API usages. This is necessary to avoid compilation errors during the conversion.
 
 Next step is to run the converter. For that we recomend trying the _Editor Unity Package Integration_ first:
 
