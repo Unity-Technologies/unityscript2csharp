@@ -223,7 +223,7 @@ public class UnityScript2CSharpRunner : UnityEditor.EditorWindow
         if (retCode == 0)
             Debug.Log("UnityScript2CSharp converter finished (You can remove '" + ConverterPackageFolder + "' if you dont plan to run the converter in ths project again).\r\n\r\n" + File.ReadAllText(logFilePath));
         else            
-            Debug.Log("UnityScript2CSharp was not able to convert your project:.\r\n\r\n" + File.ReadAllText(logFilePath));
+            Debug.Error("UnityScript2CSharp was not able to convert your project:.\r\n\r\n" + File.ReadAllText(logFilePath));
 
 
         var prevFilePath = logFilePath + ".prev";
