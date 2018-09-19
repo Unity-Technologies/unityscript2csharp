@@ -62,7 +62,7 @@ goto End
 goto :eof
 
 :CheckExecutable
-   where %1 > NULL 2>&1
+   where %1 > NUL 2>&1
 
    if errorlevel 1 @echo %1 not found. Please, add it to search path.
    if [%ERRORLEVEL%]==[1] Set %~2=%ERRORLEVEL%
