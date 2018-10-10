@@ -259,7 +259,7 @@ public class UnityScript2CSharpRunner : UnityEditor.EditorWindow
                                             .SelectMany(a => a.compiledAssemblyReferences)
                                             .Where(a => !a.Contains(unityInstallPath) || a.Contains("UnityExtensions"))
                                             .Distinct(StringComparer.InvariantCultureIgnoreCase);
-            
+
             foreach (var assemblyPath in referencedAssemblies)
             {
                 writer.WriteLine("-r:{0}", assemblyPath);

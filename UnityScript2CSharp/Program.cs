@@ -233,8 +233,12 @@ namespace UnityScript2CSharp
         private static void AppendUnityAssembliesReferences(string unityAssembliesRootPath, List<string> references)
         {
             var modularizedUnityEngineFolder = Path.Combine(unityAssembliesRootPath, "UnityEngine");
+            if (!Directory.Exists(modularizedUnityEngineFolder))
+                throw new Exception("The version of Unity passed as the Unity Editor path is too old. Details: Could not find the module assembly folder.");
+
             
-            references.Add(Path.Combine(unityAssembliesRootPath, "UnityEngine.dll"));
+            var assemblies = Directory.GetFiles(modularizedUnityEngineFolder, "*.dll");
+            references.AddRange(assemblies);
             references.Add(Path.Combine(unityAssembliesRootPath, "UnityEditor.dll"));
         }
 
