@@ -89,7 +89,7 @@ public class UnityScript2CSharpRunner : UnityEditor.EditorWindow
 
         if (TryExtractConverter(assetsFolder, unityInstallPath, out converterPath))
         {
-            RunCoverter(converterPath);
+            RunConverter(converterPath);
         }
     }
 #endif        
@@ -150,7 +150,7 @@ public class UnityScript2CSharpRunner : UnityEditor.EditorWindow
         get { return "UnityScript2CSharp"; }
     }
 
-    private static void RunCoverter(string converterPath)
+    private static void RunConverter(string converterPath)
     {
         var option = EditorUtility.DisplayDialogComplex(
                                             Title, 
@@ -215,16 +215,20 @@ public class UnityScript2CSharpRunner : UnityEditor.EditorWindow
 
     private static void ShowConversionResultsInConsole(int retCode)
     {
-
         var logFilePath = GetLogFileNameForProject();
         if (!File.Exists(logFilePath))
             return;
 
+        const string successMsgPrefix = "UnityScript2CSharp converter finished successfully";
         if (retCode == 0)
-            Debug.Log("UnityScript2CSharp converter finished (You can remove '" + ConverterPackageFolder + "' if you dont plan to run the converter in ths project again).\r\n\r\n" + File.ReadAllText(logFilePath));
+            Debug.Log(successMsgPrefix + " (You can remove '" + ConverterPackageFolder + "' if you dont plan to run the converter in ths project again).\r\n\r\n" + File.ReadAllText(logFilePath));
+        else if (retCode == 1)
+        {
+            Debug.LogWarning(successMsgPrefix + " but your project contains conditional compilation. See log below:\r\n\r\n" + File.ReadAllText(logFilePath));
+            Debug.unityLogger.filterLogType = LogType.Warning;
+        }
         else            
             Debug.LogError("UnityScript2CSharp was not able to convert your project:.\r\n\r\n" + File.ReadAllText(logFilePath));
-
 
         var prevFilePath = logFilePath + ".prev";
         if (File.Exists(prevFilePath))
@@ -255,7 +259,7 @@ public class UnityScript2CSharpRunner : UnityEditor.EditorWindow
                                             .SelectMany(a => a.compiledAssemblyReferences)
                                             .Where(a => !a.Contains(unityInstallPath) || a.Contains("UnityExtensions"))
                                             .Distinct(StringComparer.InvariantCultureIgnoreCase);
-            
+
             foreach (var assemblyPath in referencedAssemblies)
             {
                 writer.WriteLine("-r:{0}", assemblyPath);

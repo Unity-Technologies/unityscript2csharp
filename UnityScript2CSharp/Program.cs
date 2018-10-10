@@ -80,7 +80,8 @@ namespace UnityScript2CSharp
                 ConvertScripts(AssemblyType.RuntimePlugins, pluginScripts, converter, options.Value, referencedSymbols, errors);
                 ConvertScripts(AssemblyType.EditorPlugins, pluginEditorScritps, converter, options.Value, referencedSymbols, errors);
 
-                ReportConversionFinished(runtimeScripts.Length + editorScripts.Length + pluginScripts.Length, options.Value, referencedSymbols, errors);
+                var foundConditionalCompilation = ReportConversionFinished(runtimeScripts.Length + editorScripts.Length + pluginScripts.Length, options.Value, referencedSymbols, errors);
+                return foundConditionalCompilation ? 1 : 0;
             }
             catch (Exception ex)
             {
@@ -99,8 +100,6 @@ namespace UnityScript2CSharp
 
                 return -5;
             }
-
-            return 0;
         }
 
         private static bool ReadResponseFile(CommandLineArguments args)
@@ -234,8 +233,12 @@ namespace UnityScript2CSharp
         private static void AppendUnityAssembliesReferences(string unityAssembliesRootPath, List<string> references)
         {
             var modularizedUnityEngineFolder = Path.Combine(unityAssembliesRootPath, "UnityEngine");
+            if (!Directory.Exists(modularizedUnityEngineFolder))
+                throw new Exception("The version of Unity passed as the Unity Editor path is too old. Details: Could not find the module assembly folder.");
+
             
-            references.Add(Path.Combine(unityAssembliesRootPath, "UnityEngine.dll"));
+            var assemblies = Directory.GetFiles(modularizedUnityEngineFolder, "*.dll");
+            references.AddRange(assemblies);
             references.Add(Path.Combine(unityAssembliesRootPath, "UnityEditor.dll"));
         }
 
@@ -351,7 +354,7 @@ namespace UnityScript2CSharp
             }
         }
 
-        private static void ReportConversionFinished(int totalScripts, CommandLineArguments args, IEnumerable<SymbolInfo> referencedSymbols, IEnumerable<CompilerError> compilerErrors)
+        private static bool ReportConversionFinished(int totalScripts, CommandLineArguments args, IEnumerable<SymbolInfo> referencedSymbols, IEnumerable<CompilerError> compilerErrors)
         {
             var errorCount = compilerErrors.Count();
 
@@ -383,7 +386,7 @@ namespace UnityScript2CSharp
             }
 
             if (!referencedSymbols.Any())
-                return;
+                return false;
 
             var projectPathLength = args.ProjectPath.Length;
             using (WithConsoleColors.SetTo(ConsoleColor.Cyan, ConsoleColor.Black))
@@ -396,6 +399,8 @@ namespace UnityScript2CSharp
                     Console.WriteLine($"\t{symbolInfo.Source.Substring(projectPathLength)}({symbolInfo.LineNumber}) : {symbolInfo.PreProcessorExpression}");
                 }
             }
+
+            return true;
         }
 
         private static string CallStackFrom(CompilerError error)
