@@ -89,7 +89,7 @@ public class UnityScript2CSharpRunner : UnityEditor.EditorWindow
 
         if (TryExtractConverter(assetsFolder, unityInstallPath, out converterPath))
         {
-            RunCoverter(converterPath);
+            RunConverter(converterPath);
         }
     }
 #endif        
@@ -150,7 +150,7 @@ public class UnityScript2CSharpRunner : UnityEditor.EditorWindow
         get { return "UnityScript2CSharp"; }
     }
 
-    private static void RunCoverter(string converterPath)
+    private static void RunConverter(string converterPath)
     {
         var option = EditorUtility.DisplayDialogComplex(
                                             Title, 
