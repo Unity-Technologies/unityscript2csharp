@@ -84,8 +84,7 @@ UnityScript2CSharp.exe **-p** m:\Work\Repo\4-0_AngryBots **-u** M:\Work\Repo\uni
     * Macros
     * Literals
         * Regular expressions
-
-    * Exception handling
+    
 
 Note that any unsupported language construct (a.k.a, AST node type), will inject a comment in the converted source including the piece of code that is not supported and related source/line information.
 
