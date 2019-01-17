@@ -227,5 +227,59 @@ namespace UnityScript2CSharp.Tests
 
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
+
+        [TestCase("", TestName = "EmptyTryCatch")]
+        [TestCase("i++;", TestName = "TryCatchWithSimpleExpression")]
+        public void SimpleTryCatch(string tryBody)
+        {
+            var testName = TestContext.CurrentContext.Test.Name;
+            var sourceFiles = SingleSourceFor($"{testName}.js", $"function Foo(i:int, o:Object) {{ try {{ {tryBody} }} catch (e) {{ Foo(i, e); }} }}");
+            var expectedConvertedContents = SingleSourceFor($"{testName}.cs", DefaultGeneratedClass + $"{testName} : MonoBehaviour {{ public virtual void Foo(int i, object o) {{ try {{ {tryBody} }} catch(System.Exception e) {{ this.Foo(i, e); }} }} }}");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
+        public void NestedTryCatch()
+        {
+            var testName = TestContext.CurrentContext.Test.Name;
+            var sourceFiles = SingleSourceFor($"{testName}.js", "function Foo(i:int) { try { i++; try { i--; } catch (a:System.ArgumentException) {} } catch (e) {} }");
+            var expectedConvertedContents = SingleSourceFor($"{testName}.cs", DefaultGeneratedClass + $"{testName} : MonoBehaviour {{ public virtual void Foo(int i) {{ try {{  i++; try {{ i--; }} catch(System.ArgumentException a) {{ }} }} catch(System.Exception e) {{ }} }} }}");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [TestCase("", TestName = "EmptyTryFinally")]
+        [TestCase("i++;", TestName = "TryFinallyWithSimpleExpression")]
+        public void SimpleTryFinally(string tryBody)
+        {
+            var testName = TestContext.CurrentContext.Test.Name;
+            var sourceFiles = SingleSourceFor($"{testName}.js", $"function Foo(i:int) {{ try {{ {tryBody} }} finally {{ }} }}");
+            var expectedConvertedContents = SingleSourceFor($"{testName}.cs", DefaultGeneratedClass + $"{testName} : MonoBehaviour {{ public virtual void Foo(int i) {{ try {{ {tryBody} }} finally {{ }} }} }}");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [TestCase("new System.ArgumentException(\"no arguments!\")", TestName = "SimpleThrow")]
+        [TestCase("Bar()", "this.Bar()", TestName = "ThrowReturnOfMethod")]
+        public void Throw(string throwExpression, string csharpThrowExpression = null)
+        {
+            var testName = TestContext.CurrentContext.Test.Name;
+            var sourceFiles = SingleSourceFor($"{testName}.js", $"function Foo() {{ throw {throwExpression};; }} function Bar() {{ return new System.ArgumentException(\"no arguments!\"); }}");
+            var expectedConvertedContents = SingleSourceFor(
+                                                $"{testName}.cs", 
+                                                DefaultGeneratedClass + $"{testName} : MonoBehaviour {{ public virtual void Foo() {{ throw {csharpThrowExpression ?? throwExpression}; }} public virtual System.ArgumentException Bar() {{ return new System.ArgumentException(\"no arguments!\"); }} }}");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
+        public void Rethrow()
+        {
+            var sourceFiles = SingleSourceFor("rethrow_statement.js", "function Foo() { try {} catch(e) { throw; } } ");
+            var expectedConvertedContents = SingleSourceFor("rethrow_statement.cs", DefaultGeneratedClass + "rethrow_statement : MonoBehaviour { public virtual void Foo() { try { } catch(System.Exception e) { throw; } } }");
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
     }
 }
