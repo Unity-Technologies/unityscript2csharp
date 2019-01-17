@@ -507,14 +507,23 @@ namespace UnityScript2CSharp
 
         public override void OnTryStatement(TryStatement node)
         {
-            NotSupported(node);
-            base.OnTryStatement(node);
+            _writer.Write("try");
+            node.ProtectedBlock.Accept(this);
+
+            foreach(var handlerNode in node.ExceptionHandlers)
+                handlerNode.Accept(this);
+
+            if (node.EnsureBlock != null)
+            {
+                _writer.Write("finally");
+                node.EnsureBlock.Accept(this);
+            }
         }
 
         public override void OnExceptionHandler(ExceptionHandler node)
         {
-            NotSupported(node);
-            base.OnExceptionHandler(node);
+            _writer.Write($"catch({node.Declaration.Type} {node.Declaration.Name})");
+            node.Block.Accept(this);
         }
 
         public override void OnIfStatement(IfStatement node)
@@ -632,8 +641,13 @@ namespace UnityScript2CSharp
 
         public override void OnRaiseStatement(RaiseStatement node)
         {
-            NotSupported(node);
-            base.OnRaiseStatement(node);
+            _writer.Write($"throw");
+            if (node.Exception != null)
+            {
+                _writer.Write(" ");
+                node.Exception.Accept(this);
+            }
+           _writer.WriteLine(";");
         }
 
         public override void OnUnpackStatement(UnpackStatement node)

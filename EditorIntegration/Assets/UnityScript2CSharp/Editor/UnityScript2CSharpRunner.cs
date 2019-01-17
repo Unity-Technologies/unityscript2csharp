@@ -34,6 +34,11 @@ public class UnityScript2CSharpRunner : UnityEditor.EditorWindow
         if (unityScriptCount == 0)
             return;
 
+#if UNITY_2018_2_OR_NEWER
+        EditorUtility.DisplayDialog(Title, string.Format("You are using Unity version {0}.\r\n\r\nThis verion of Unity does not support UnityScript. Use versions 2017.3 ~ 2018.1", Application.unityVersion), "Ok");
+        return;
+#endif
+
         if (!ShouldDisplayUsageDialog())
             return;
 
