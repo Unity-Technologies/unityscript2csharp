@@ -261,7 +261,7 @@ public class UnityScript2CSharpRunner : UnityEditor.EditorWindow
             }
 
             var referencedAssemblies = CompilationPipeline.GetAssemblies()
-                                            .SelectMany(a => a.compiledAssemblyReferences)
+                                            .SelectMany(a => a.allReferences)
                                             .Where(a => !a.Contains(unityInstallPath) || a.Contains("UnityExtensions"))
                                             .Distinct(StringComparer.InvariantCultureIgnoreCase);
 
