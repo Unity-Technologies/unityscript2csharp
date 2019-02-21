@@ -331,6 +331,10 @@ namespace UnityScript2CSharp
                 Console.WriteLine("Referenced assemblies:");
                 foreach(var r in references)
                     System.Console.WriteLine($"\t{r}");
+                
+                Console.WriteLine("Defined Symbols:");
+                foreach(var ds in args.Symbols)
+                    System.Console.WriteLine($"\t{ds}");
             }
 
             Action<string, string, int> handler = (scriptPath, context, unsupportedCount) => HandleConvertedScript(scriptPath, context, args.RemoveOriginalFiles, args.Verbose, unsupportedCount);
