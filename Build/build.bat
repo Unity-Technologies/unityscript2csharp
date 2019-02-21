@@ -56,7 +56,7 @@ set EXPORTED_PACKAGE_PATH=%temp%\UnityScript2CSharp_Conversion_%CONVERTER_VERSIO
 @echo Exporting unity package (%UNITYSCRIPT2CSHARP_IN_ASSETS_FOLDER%) to %EXPORTED_PACKAGE_PATH%
 unity.exe --createProject -batchmode -projectPath %UNITYSCRIPT2CSHARP_PROJECT_ROOT% -exportPackage Assets %EXPORTED_PACKAGE_PATH% -quit
 
-if errorlevel 0 goto PackagingSucceeded
+if %ERRORLEVEL% EQU 0 goto PackagingSucceeded
 
 @echo Error while exporting Unity package. Error code = %errorlevel%
 goto End
