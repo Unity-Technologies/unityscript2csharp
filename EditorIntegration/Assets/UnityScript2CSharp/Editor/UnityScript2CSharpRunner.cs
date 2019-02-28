@@ -287,16 +287,19 @@ public class UnityScript2CSharpRunner : UnityEditor.EditorWindow
 #endif               
     }
 
-    private static string[] ReferencesFromAssembly(Assembly a)
-    {
 #if UNITY_2018_1_OR_NEWER
+    private static string[] ReferencesFromAssembly(UnityEditor.Compilation.Assembly a)
+    {
         // on 2018.1 `allReferences` returns the list of referenced assemblies
         return a.allReferences;
+    }
 #else
+    private static string[] ReferencesFromAssembly(Assembly a)
+    {
         // on 2017.4 `compiledAssemblyReferences` returns the list of referenced assemblies, `allReferences` crashes.
         return a.compiledAssemblyReferences;
-#endif                                            
     }
+#endif                                            
 
     private static string GetLogFileNameForProject()
     {
