@@ -261,7 +261,7 @@ public class UnityScript2CSharpRunner : UnityEditor.EditorWindow
             }
 
             var referencedAssemblies = CompilationPipeline.GetAssemblies()
-                                            .SelectMany(a => a.allReferences)
+                                            .SelectMany(ReferencesFromAssembly)
                                             .Where(a => !a.Contains(unityInstallPath) || a.Contains("UnityExtensions"))
                                             .Distinct(StringComparer.InvariantCultureIgnoreCase);
 
@@ -285,6 +285,17 @@ public class UnityScript2CSharpRunner : UnityEditor.EditorWindow
 #else
     return string.Empty;               
 #endif               
+    }
+
+    private static string[] ReferencesFromAssembly(Assembly a)
+    {
+#if UNITY_2018_1_OR_NEWER
+        // on 2018.1 `allReferences` returns the list of referenced assemblies
+        return a.allReferences;
+#else
+        // on 2017.4 `compiledAssemblyReferences` returns the list of referenced assemblies, `allReferences` crashes.
+        return a.compiledAssemblyReferences;
+#endif                                            
     }
 
     private static string GetLogFileNameForProject()
