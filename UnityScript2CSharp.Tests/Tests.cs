@@ -729,6 +729,33 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sources, expectedConverted);
         }
 
+        [TestCase(true)]
+        [TestCase(false)]
+        public void Test_Verbose_Log_Logs_Module_Name(bool verboseLogging)
+        {
+            SourceFile[] sources = { new SourceFile("dummy.js", "function f() {}") };
+            SourceFile[] expectedConverted = { new SourceFile("dummy.cs", "using UnityEngine; using System.Collections; [System.Serializable] public partial class dummy : MonoBehaviour { public virtual void f() { } }") };
+
+            var o = new StringWriter();
+            var current = Console.Out;
+            Console.SetOut(o);
+
+            AssertConversion(sources, expectedConverted, expectError:false, verboseLog:verboseLogging);
+            Console.SetOut(current);
+
+            if (verboseLogging)
+            {
+                Assert.That(o.GetStringBuilder().ToString(), Does.Match(@"Start compiling.*dummy\.js"));
+                Assert.That(o.GetStringBuilder().ToString(), Does.Match(@"Finish compiling.*dummy\.js"));
+                Assert.That(o.GetStringBuilder().ToString(), Does.Match(@"\[Converter\].*dummy\.js"));
+            }
+            else
+            {
+                Assert.That(o.GetStringBuilder().ToString(), Does.Not.Match(@"Start compiling.*dummy\.js"));
+                Assert.That(o.GetStringBuilder().ToString(), Does.Not.Match(@"Finish compiling.*dummy\.js"));
+            }
+        }
+
         [Test]
         public void Test_Formatting()
         {

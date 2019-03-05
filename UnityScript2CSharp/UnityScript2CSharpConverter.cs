@@ -23,11 +23,12 @@ namespace UnityScript2CSharp
         private readonly bool _skipComments;
         private readonly bool _checkOrphanComments;
 
-        public UnityScript2CSharpConverter(bool ignoreErrors = false,  bool skipComments = false, bool checkOrphanComments = true)
+        public UnityScript2CSharpConverter(bool ignoreErrors = false,  bool skipComments = false, bool checkOrphanComments = true, bool verboseLog = false)
         {
             _ignoreErrors = ignoreErrors;
             _skipComments = skipComments;
             _checkOrphanComments = checkOrphanComments;
+            _verboseLogging = verboseLog;
         }
 
         public void Convert(IEnumerable<SourceFile> inputs, IEnumerable<string> definedSymbols, IEnumerable<string> referencedAssemblies, Action<string, string, int> onScriptConverted)
@@ -236,6 +237,9 @@ namespace UnityScript2CSharp
             if (!_skipComments)
                 adjustedPipeline.Add(new AttachComments(comments));
 
+            if (_verboseLogging)
+                adjustedPipeline.Add(new LogModuleName());
+
             _compiler.Parameters.Pipeline = adjustedPipeline;
         }
 
@@ -278,5 +282,6 @@ namespace UnityScript2CSharp
 
         protected UnityScriptCompiler _compiler;
         private IList<SymbolInfo> _referencedPreProcessorSymbols = new List<SymbolInfo>();
+        private bool _verboseLogging;
     }
 }

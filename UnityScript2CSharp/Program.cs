@@ -70,7 +70,7 @@ namespace UnityScript2CSharp
                     DumpScripts("Plugin/Editor", pluginEditorScritps);
                 }
 
-                var converter = new UnityScript2CSharpConverter(options.Value.IgnoreErrors, options.Value.SkipComments, options.Value.ShowOrphanComments);
+                var converter = new UnityScript2CSharpConverter(options.Value.IgnoreErrors, options.Value.SkipComments, options.Value.ShowOrphanComments, options.Value.Verbose);
 
                 var referencedSymbols = new List<SymbolInfo>();
                 var errors = new HashSet<CompilerError>(new CompilerErrorComparer());

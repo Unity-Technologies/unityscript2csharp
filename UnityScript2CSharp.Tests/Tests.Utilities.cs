@@ -20,7 +20,7 @@ namespace UnityScript2CSharp.Tests
         {
             get
             {
-                var installFolder = Environment.GetEnvironmentVariable("UNITY_INSTALL_FOLDER") ?? @"c:\Work\Repo\Trunk\Build\WindowsEditor\";
+                var installFolder = Environment.GetEnvironmentVariable("UNITY_INSTALL_FOLDER") ?? @"d:\Work\Repo\Trunk\Build\WindowsEditor\";
                 if (installFolder != null)
                     return installFolder;
 
@@ -45,10 +45,10 @@ namespace UnityScript2CSharp.Tests
             }
         }
         
-        private static void AssertConversion(IList<SourceFile> sourceFiles, IList<SourceFile> expectedConverted, bool expectError = false)
+        private static void AssertConversion(IList<SourceFile> sourceFiles, IList<SourceFile> expectedConverted, bool expectError = false, bool verboseLog = false)
         {
             var tempFolder = Path.Combine(Path.GetTempPath(), "UnityScript2CSharpConversionTests", SavePathFrom(TestContext.CurrentContext.Test.Name));
-            var converter = ConvertScripts(sourceFiles, tempFolder);
+            var converter = ConvertScripts(sourceFiles, tempFolder, verboseLog);
             if (!expectError)
             {
                 if (converter.CompilerErrors.Any())
@@ -79,11 +79,11 @@ namespace UnityScript2CSharp.Tests
             }
         }
 
-        private static UnityScript2CSharpConverter ConvertScripts(IList<SourceFile> sourceFiles, string saveToFolder)
+        private static UnityScript2CSharpConverter ConvertScripts(IList<SourceFile> sourceFiles, string saveToFolder, bool verboseLog = false)
         {
             Console.WriteLine("Converted files saved to: {0}", saveToFolder);
 
-            var converter = new UnityScript2CSharpConverter(true);
+            var converter = new UnityScript2CSharpConverter(true, skipComments:false, checkOrphanComments:false, verboseLog:verboseLog);
 
             Action<string, string, int> onScriptConverted = (name, content, unsupportedCount) =>
                 {

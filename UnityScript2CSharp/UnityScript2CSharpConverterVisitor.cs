@@ -139,6 +139,7 @@ namespace UnityScript2CSharp
 
         public override void OnModule(Module node)
         {
+            Console.WriteLine($"[Converter] {node.LexicalInfo.FileName}");
             _unsupportedCount = 0;
             _usings = GetImportedNamespaces(node);
             _writer  = new Writer(FormatUsingsFrom(_usings));
