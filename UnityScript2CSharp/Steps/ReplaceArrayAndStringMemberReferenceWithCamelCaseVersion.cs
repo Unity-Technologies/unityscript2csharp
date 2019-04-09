@@ -6,14 +6,17 @@ using Boo.Lang.Compiler.TypeSystem.Reflection;
 
 namespace UnityScript2CSharp.Steps
 {
-    internal class ReplaceArrayMemberReferenceWithCamelCaseVersion : AbstractTransformerCompilerStep
+    internal class ReplaceArrayAndStringMemberReferenceWithCamelCaseVersion : AbstractTransformerCompilerStep
     {
         public override void OnMemberReferenceExpression(MemberReferenceExpression node)
         {
-            if (!IsArray(node) || Char.IsUpper(node.Name[0]))
+            if (Char.IsUpper(node.Name[0]))
                 return;
 
-            if (node.Name == "get_Item" || node.Name == "set_Item")
+            if (!IsArray(node) && !IsUnityScriptStringType(node))
+                return;
+
+            if (node.Name == "get_Item" || node.Name == "set_Item" || node.Name == "get_Chars")
                 return;
 
             var name = new StringBuilder();
@@ -22,12 +25,17 @@ namespace UnityScript2CSharp.Steps
             node.Name = name.ToString();
         }
 
+        static bool IsUnityScriptStringType(MemberReferenceExpression node)
+        {
+            return node.Target.ExpressionType != null && node.Target.ExpressionType.FullName == "String";
+        }
+
         private static bool IsArray(MemberReferenceExpression node)
         {
             if (node.Target.ExpressionType == null)
                 return false;
 
-            if (node.Target.ExpressionType.IsArray || node.Target.ExpressionType.FullName == typeof(System.Array).FullName)
+            if (node.Target.ExpressionType.IsArray || node.Target.ExpressionType.FullName == typeof(Array).FullName)
                 return true;
 
             var expressionType = node.Target.ExpressionType as ExternalType;
