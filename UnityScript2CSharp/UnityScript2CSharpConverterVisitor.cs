@@ -1496,11 +1496,11 @@ namespace UnityScript2CSharp
             }
 
             var parameters = new StringBuilder();
-            var last = genericArgs.LastOrDefault();
-            foreach (var type in genericArgs)
+            var lastIndex = genericArgs.Count - 1;
+            for (int i = 0; i < genericArgs.Count; i++)
             {
-                parameters.Append(TypeNameFor(type));
-                if (type != last)
+                parameters.Append(TypeNameFor(genericArgs[i]));
+                if (i != lastIndex)
                     parameters.Append(",");
             }
 

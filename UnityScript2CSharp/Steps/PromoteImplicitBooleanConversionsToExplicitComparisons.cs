@@ -159,11 +159,11 @@ namespace UnityScript2CSharp.Steps
         }
     }
 
-    // This visitor's reponsability is to take expressions like:
+    // This visitor's responsability is to take expressions like:
     //
     //          var b = s && s.Length > 10;
     //
-    // and converte them to:
+    // and convert them to:
     //          var b = !string.IsNullOrEmpty(s) ? s.Length > 10 : false;
     //
     // (note that US compiler already does part of this conversion; we only need

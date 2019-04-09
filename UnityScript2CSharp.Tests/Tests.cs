@@ -223,7 +223,7 @@ namespace UnityScript2CSharp.Tests
         }
 
         [Test]
-        public void Locals_Infered_Type()
+        public void Locals_Inferred_Type()
         {
             var sourceFiles = SingleSourceFor("locals_inferred.js", "function F() { var i = 2; }");
             var expectedConvertedContents = SingleSourceFor("locals_inferred.cs", DefaultGeneratedClass + "locals_inferred : MonoBehaviour { public virtual void F() { int i = 2; } }");
@@ -557,7 +557,7 @@ namespace UnityScript2CSharp.Tests
 
         [TestCase("", TestName = "No Start Method")]
         [TestCase(" System.Console.WriteLine(\"Within Start\");", TestName = "With Start Method")]
-        public void Glocal_Statements_Are_Injected_In_Begin_Of_Start(string startBody)
+        public void Global_Statements_Are_Injected_In_Begin_Of_Start(string startBody)
         {
             var start = startBody.Length != 0 ? $"function Start() {{ {startBody} }}" : "";
             var sourceFiles = new[] { new SourceFile { FileName = "global_statements.js", Contents = $"System.Console.WriteLine(\"Foo\"); {start}" } };
@@ -570,7 +570,7 @@ namespace UnityScript2CSharp.Tests
         [TestCase("var f = function() { return 2; }", "Func<int> f = () => { return 2; } ", TestName = "Explicit Return")]
         [TestCase("var f = function(i) i % 2", "Func<object,object> f = (object i) => { return ((int) i) % 2; } ", TestName = "Inferred Parameter Type")]
         [TestCase("var f = function(i) { return i + 1; }", "Func<object,object> f = (object i) => { return ((int) i) + 1; } ", TestName = "Inferred Parameter 2")]
-        [TestCase("var f = function(i:int) i % 2", "Func<intint> f = (int i) => { return i % 2; } ", TestName = "Explicit Parameter Type")]
+        [TestCase("var f = function(i:int) i % 2", "Func<int,int> f = (int i) => { return i % 2; } ", TestName = "Explicit Parameter Type")]
         [TestCase("var f = function(i) { var x : int = i; return x + 1; }", "Func<object,int> f = (object i) => { int x = (int) i; return x + 1; } ", TestName = "Inferred Parameter Explicit Type")]   // Object means we infer the lambda parameter type incorrecly
         [TestCase("var f = function(i) i % 2; F( f(1) )", "Func<object,object> f = (object i) => { return ((int) i) % 2; } ; this.F((int) f(1))", TestName = "Inferred parameter with specific argument type")]  // Object means we infer the lambda parameter type incorrecly
         public void Lambda_Expressions(string functionDecl, string csFunctionDecl)
@@ -757,6 +757,15 @@ namespace UnityScript2CSharp.Tests
         }
 
         [Test]
+        public void Test_Members()
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "string_members.js", Contents = "function F(s:String) { return s.length; }" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "string_members.cs", Contents = DefaultGeneratedClass + $"string_members : MonoBehaviour {{ public virtual int F(string s) {{ return s.Length; }} }}" } };
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+
+        [Test]
         public void Test_Formatting()
         {
         }
@@ -840,6 +849,7 @@ namespace UnityScript2CSharp.Tests
                 "lock",
                 "nameof",
                 "namespace",
+                "object",
                 "operator",
                 "out",
                 "params",
@@ -849,11 +859,12 @@ namespace UnityScript2CSharp.Tests
                 "sealed",
                 "sizeof",
                 "stackalloc",
+                "string",
                 "struct",
                 "unchecked",
                 "unsafe",
                 "using",
-                "volatile"
+                "volatile",
             };
 
             foreach (var keyword in keywords)

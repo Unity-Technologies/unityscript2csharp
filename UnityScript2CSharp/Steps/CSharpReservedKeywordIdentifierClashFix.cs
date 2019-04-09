@@ -148,6 +148,7 @@ namespace UnityScript2CSharp.Steps
             "sealed",
             "sizeof",
             "stackalloc",
+            "string",
             "struct",
             "unchecked",
             "unsafe",

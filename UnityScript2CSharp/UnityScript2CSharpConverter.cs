@@ -227,7 +227,7 @@ namespace UnityScript2CSharp
             adjustedPipeline.Add(new RenameArrayDeclaration());
             adjustedPipeline.Add(new ReplaceUnityScriptArrayWithObjectArray());
             adjustedPipeline.Add(new InjectTypeOfExpressionsInArgumentsOfSystemType());
-            adjustedPipeline.Add(new ReplaceArrayMemberReferenceWithCamelCaseVersion());
+            adjustedPipeline.Add(new ReplaceArrayAndStringMemberReferenceWithCamelCaseVersion());
 
             adjustedPipeline.Add(new ReplaceGetSetItemMethodsWithOriginalIndexers());
             adjustedPipeline.Add(new PromoteImplicitBooleanConversionsToExplicitComparisons());
