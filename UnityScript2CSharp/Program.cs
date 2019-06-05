@@ -282,7 +282,7 @@ namespace UnityScript2CSharp
 
             try
             {
-                var found = Directory.GetFiles(testPath, "*.dll").Any(file => unityProbePathRegex.IsMatch(file));
+                var found = Directory.GetFiles(testPath, "*.dll").Any(MatchesUnityEngineInInstallationFolder);
                 if (found)
                 {
                     if (verbose)
@@ -306,6 +306,11 @@ namespace UnityScript2CSharp
 
             unityAssembliesRootPath = null;
             return false;
+        }
+
+        private static bool MatchesUnityEngineInInstallationFolder(string filePath)
+        {
+            return unityProbePathRegex.IsMatch(filePath) && !filePath.Contains("PlaybackEngines");
         }
 
         private static bool ValidateAssemblyReferences(ParserResult<CommandLineArguments> options)
