@@ -15,12 +15,16 @@ namespace UnityScript2CSharp
         static int Main(string[] args)
         {
             ParserResult<CommandLineArguments> options = null;
-
             try
             {
                 options = Parser.Default.ParseArguments<CommandLineArguments>(args);
+                RedirectConsoleOutput(options.Value.OutputFile);
+
                 if (!IsValid(options))
                     return -2;
+                
+                var assembly = typeof(Program).Assembly;
+                Console.WriteLine($"{assembly.GetName().Name} {assembly.GetName().Version}");
             }
             catch
             {
@@ -34,8 +38,6 @@ namespace UnityScript2CSharp
                 
                 return -3;
             }
-
-            RedirectConsoleOutput(options.Value.OutputFile);
 
             if (!ReadResponseFile(options.Value))
                 return -4;
