@@ -10,10 +10,15 @@ using Boo.Lang.Compiler.TypeSystem.Internal;
 using Boo.Lang.Compiler.TypeSystem.Reflection;
 using UnityScript2CSharp.Extensions;
 using Attribute = Boo.Lang.Compiler.Ast.Attribute;
+using BinaryExpression = Boo.Lang.Compiler.Ast.BinaryExpression;
+using BlockExpression = Boo.Lang.Compiler.Ast.BlockExpression;
+using ConditionalExpression = Boo.Lang.Compiler.Ast.ConditionalExpression;
 using ExceptionHandler = Boo.Lang.Compiler.Ast.ExceptionHandler;
+using Expression = Boo.Lang.Compiler.Ast.Expression;
 using Module = Boo.Lang.Compiler.Ast.Module;
 using TypeDefinition = Boo.Lang.Compiler.Ast.TypeDefinition;
 using TypeReference = Boo.Lang.Compiler.Ast.TypeReference;
+using UnaryExpression = Boo.Lang.Compiler.Ast.UnaryExpression;
 
 namespace UnityScript2CSharp
 {
@@ -1249,9 +1254,16 @@ namespace UnityScript2CSharp
             if (usedAtIndex == -1)
                 return false;
 
+
+            if (invocationExpression.Target.ExpressionType == TypeSystemServices.ErrorEntity)
+            {
+                Console.WriteLine($"Error at {node.LexicalInfo}. Expression has no type: {node}");
+                return false;
+            }
+
             // This may happen if we have overloads and UnityScript compiler cannot infer which 
             // overload is being invoked (that is resolved at runtime)
-            // But in this case we there's nothing we can do anyway.
+            // But in this case there's nothing we can do anyway.
             if (invocationExpression.Target.Entity.EntityType == EntityType.BuiltinFunction)
                 return false;
 

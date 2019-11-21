@@ -47,7 +47,7 @@ namespace UnityScript2CSharp.Steps
 
                 node.Replace(node.Right, InjectCast(node.Right));
             }
-            else if (node.Operator == BinaryOperatorType.Assign && node.Left.ExpressionType.FullName == "Function" && TypeSystemServices.IsCallable(node.Right.ExpressionType))
+            else if (node.Operator == BinaryOperatorType.Assign && node.Left?.ExpressionType?.FullName == "Function" && TypeSystemServices.IsCallable(node.Right.ExpressionType))
             {
                 node.Replace(node.Right, InjectCast(node.Right));
             }
