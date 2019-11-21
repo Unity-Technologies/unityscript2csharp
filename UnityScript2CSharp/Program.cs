@@ -229,7 +229,11 @@ namespace UnityScript2CSharp
 
             AppendUnityAssembliesReferences(unityAssembliesRootPath, references);
 
-            return references;
+            return references.Where(p =>
+            {
+                var fileName = Path.GetFileName(p);
+                return !Regex.IsMatch(fileName, @"(?:UnityScript|Boo)(?:\.Lang)?(\.dll)") || !Path.GetDirectoryName(fileName).EndsWith("-api");
+            }).ToList();
         }
 
         private static void AppendUnityAssembliesReferences(string unityAssembliesRootPath, List<string> references)
