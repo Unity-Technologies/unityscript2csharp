@@ -789,6 +789,15 @@ namespace UnityScript2CSharp.Tests
         }
         
         [Test]
+        public void Test_Mathf_Log10()
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "mathf_tests.js", Contents = "function F() { return UnityEngine.Mathf.Log10(100); }" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "mathf_tests.cs", Contents = DefaultGeneratedClass + "mathf_tests : MonoBehaviour { public virtual float F() { return UnityEngine.Mathf.Log10(100); } }" } };
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }        
+        
+        [Test]
         public void Test_Formatting()
         {
         }

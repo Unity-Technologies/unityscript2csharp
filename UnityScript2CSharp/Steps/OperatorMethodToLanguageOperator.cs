@@ -46,6 +46,12 @@ namespace UnityScript2CSharp.Steps
 
         private bool UnaryExpressionFor(ExternalMethod method, out UnaryOperatorType op)
         {
+            if (!method.Name.StartsWith("op_"))
+            {
+                op = 0;
+                return false;
+            }
+            
             return Enum.TryParse(method.Name.Substring("op_".Length), true, out op);
         }
 
