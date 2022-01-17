@@ -765,6 +765,38 @@ namespace UnityScript2CSharp.Tests
             AssertConversion(sourceFiles, expectedConvertedContents);
         }
 
+        [TestCase("parseInt(\"1\");", "System.Int32.Parse(\"1\");", "int")]
+        [TestCase("parseFloat(\"1.0\");", "System.Single.Parse(\"1.0\");", "float")]
+        [TestCase("parseInt(1);", "1;", "int")]
+        [TestCase("parseInt(4.2);", "(int) 4.2f;", "int")]
+        [TestCase("parseFloat(1.0);", "1f;", "float")]
+        [TestCase("parseFloat(1);", "(float) 1;", "float")]
+        public void Test_UnityBuiltin_Parse(string originalStatement, string expectedStatement, string expectedReturnType)
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "unity_builtins_parseX.js", Contents = $"function F() {{ return {originalStatement} }}" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "unity_builtins_parseX.cs", Contents = DefaultUsingsForClasses + $" public partial class unity_builtins_parseX : MonoBehaviour {{ public virtual {expectedReturnType} F() {{ return {expectedStatement} }} }}" } };
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+        
+        [Test]
+        public void Test_UnityBuiltins_ParseInt_WithCalled_AsParameter()
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "unity_builtins_parseint.js", Contents = $"function F(f: function():String) {{ return parseInt(f()); }}" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "unity_builtins_parseint.cs", Contents = "using System; using UnityEngine; using System.Collections; [System.Serializable] public partial class unity_builtins_parseint : MonoBehaviour { public virtual int F(Func<string> f) { return System.Int32.Parse(f()); } }" } };
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }
+        
+        [Test]
+        public void Test_Mathf_Log10()
+        {
+            var sourceFiles = new[] { new SourceFile { FileName = "mathf_tests.js", Contents = "function F() { return UnityEngine.Mathf.Log10(100); }" } };
+            var expectedConvertedContents = new[] { new SourceFile { FileName = "mathf_tests.cs", Contents = DefaultGeneratedClass + "mathf_tests : MonoBehaviour { public virtual float F() { return UnityEngine.Mathf.Log10(100); } }" } };
+
+            AssertConversion(sourceFiles, expectedConvertedContents);
+        }        
+        
         [Test]
         public void Test_Formatting()
         {

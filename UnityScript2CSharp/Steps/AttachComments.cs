@@ -128,7 +128,7 @@ namespace UnityScript2CSharp.Steps
             return (IList<Comment>) node[COMMENTS_KEY];
         }
 
-        // This method returns an aproximation for the *end column* of the passed node.
+        // This method returns an approximation for the *end column* of the passed node.
         private int EndColumnOf(Node node)
         {
             switch (node.NodeType)

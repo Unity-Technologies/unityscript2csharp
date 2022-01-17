@@ -15,6 +15,7 @@ namespace UnityScript2CSharp.Steps
      * 
      * 1) references to Boo.Lang.ICallable interface with "System.Delegate" (parameters, fields, locals)  (injecting casts to Action<T> / Func<T> as needed) 
      * 2) Boo.Lang.ICallable.Call() method with "System.Delegate.DynamicInvoke()"
+     * 3) UnityScript.Lang.UnityBuiltins.parseInt/parseFloat => Int32/Single.Parse()
      */
     class FixFunctionReferences : AbstractTransformerCompilerStep
     {
@@ -55,6 +56,15 @@ namespace UnityScript2CSharp.Steps
 
         public override void OnMethodInvocationExpression(MethodInvocationExpression node)
         {
+            if (node.Target.Entity != null && node.Target.Entity.EntityType == EntityType.Method && node.Target.Entity.Name == "parseInt")
+            {
+                HandleUnityScriptLangUtilsParseXInvocations(node, TypeSystemServices.IntType, new ReferenceExpression(typeof(int).FullName));
+            }
+            else if (node.Target.Entity != null && node.Target.Entity.EntityType == EntityType.Method && node.Target.Entity.Name == "parseFloat")
+            {
+                HandleUnityScriptLangUtilsParseXInvocations(node, TypeSystemServices.SingleType, new ReferenceExpression(typeof(float).FullName));
+            }
+            
             if (node.Target.Entity != null && node.Target.Entity == TypeSystemServices.ICallableType.GetMembers().Single(m => m.Name == "Call"))
             {
                 var mreOriginal = (MemberReferenceExpression) node.Target;
@@ -77,6 +87,24 @@ namespace UnityScript2CSharp.Steps
             }
 
             base.OnMethodInvocationExpression(node);
+        }
+
+        private void HandleUnityScriptLangUtilsParseXInvocations(MethodInvocationExpression node, IType targetType, ReferenceExpression targetTypeAsExpression)
+        {
+            if (node.Arguments[0].ExpressionType == TypeSystemServices.StringType)
+            {
+                var parseMethod = targetType.GetMembers().OfType<IMethod>().Single(m => m.Name == "Parse" && m.GetParameters().Length == 1);
+                node.Replace(node.Target, CodeBuilder.CreateMemberReference(targetTypeAsExpression, parseMethod));
+            }
+            else if (node.Arguments[0].ExpressionType != targetType)
+            {
+                Console.WriteLine($"Warning: call to {node} ({node.LexicalInfo}) should be translated to `checked( ({targetType.Name}) {node.Arguments[0]});` but the converter does not support `checked expressions`. Consider adding it manually to the generated code. ");
+                ReplaceCurrentNode(CodeBuilder.CreateCast(targetType, node.Arguments[0]));
+            }
+            else
+            {
+                ReplaceCurrentNode(node.Arguments[0]);
+            }
         }
 
         private Expression InjectCast(Expression exp)

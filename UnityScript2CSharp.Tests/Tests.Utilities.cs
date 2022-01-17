@@ -65,7 +65,7 @@ namespace UnityScript2CSharp.Tests
                 return;
             }
 
-            var r = new Regex("\\s{2,}|\\r\\n", RegexOptions.Multiline | RegexOptions.Compiled);
+            var r = new Regex("\\s{2,}|\\r\\n|\\n(?!\\r)", RegexOptions.Multiline | RegexOptions.Compiled);
             for (int i = 0; i < sourceFiles.Count; i++)
             {
                 var convertedFilePath = Path.Combine(tempFolder, expectedConverted[i].FileName);
@@ -98,8 +98,8 @@ namespace UnityScript2CSharp.Tests
             var referencedAssemblies = new[]
             {
                 typeof(object).Assembly.Location,
-                $@"{UnityInstallFolder}Data\Managed\UnityEngine.dll",
-                $@"{UnityInstallFolder}Data\Managed\UnityEditor.dll",
+                $@"{UnityInstallFolder}Data/Managed/UnityEngine.dll",
+                $@"{UnityInstallFolder}Data/Managed/UnityEditor.dll",
             };
 
             sourceFiles = sourceFiles.Select(s => new SourceFile(Path.Combine(Directory.GetCurrentDirectory(), s.FileName), s.Contents)).ToList();
